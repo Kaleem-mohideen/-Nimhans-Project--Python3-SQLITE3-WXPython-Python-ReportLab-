@@ -1,0 +1,18 @@
+Test - > Report format
+
+
+Report format is designed using JSON
+
+1) Header information : [list of headers required]
+
+Ana Profile
+{
+	"Header Information" : [["UHID","MRD", "Patient Name" ....], ["Reg Date", "DAte of request" ...]],
+
+	"Sample Details" : True,
+	"Test Name" : True,
+	"Method of Testing" : True,
+	"Result Text" : True,
+	"Result Table" : ["Anti Bodies", "Report", "Comments"]
+}
+

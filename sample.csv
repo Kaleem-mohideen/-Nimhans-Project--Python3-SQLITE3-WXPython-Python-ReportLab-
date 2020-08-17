@@ -1,0 +1,6 @@
+'ID','Incoming Number','Date & Time','Read','Sent/Replied','Body','Seen'
+1,'555-555-5555','23-01-2018 17:03:52',1,1,'Where are you at? Are you on your way yet?',1
+2,'555-555-5555','23-01-2018 17:04:08',1,2,'Yes I am driving at the moment',1
+3,'555-555-5555','23-01-2018 17:04:34',1,1,'Be here soon or I'm going to call you',1
+4,'555-555-5555','23-01-2018 17:05:10',1,2,'Yes I will try and pick up the speed and make up time. I'm breaking the speed limit already.',1
+5,'555-555-5555','23-01-2018 17:05:46',1,1,'Ok',1
