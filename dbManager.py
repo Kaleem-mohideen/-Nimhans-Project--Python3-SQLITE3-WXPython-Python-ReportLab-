@@ -37,6 +37,11 @@ def selectQuery(_queryString, _values=None):
             cur.close()
             con.close()
 
+def getAssayList():
+    _rows = selectQuery('SELECT * FROM assayMaster')
+    if(_rows[0]):
+        return [e['assayName'] for e in _rows[1]]
+    return []
 
 
 if __name__ == '__main__':
