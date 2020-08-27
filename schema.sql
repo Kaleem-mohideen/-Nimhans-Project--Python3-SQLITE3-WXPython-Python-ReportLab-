@@ -34,7 +34,7 @@ CREATE TABLE antiBodies(
 CREATE TABLE antiBodyOptions(
 	optionId 		INTEGER PRIMARY KEY,
 	assayId			INTEGER NOT NULL,
-	anitBodyId		INTEGER NOT NULL,
+	antiBodyId		INTEGER NOT NULL,
 	optionText		TEXT NOT NULL,
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
 	UNIQUE(optionId, antiBodyId, assayId),
@@ -73,7 +73,7 @@ CREATE TABLE patientReport(
 	antiBodyId	INTEGER NOT NULL,
 	optionId	INTEGER NOT NULL,
 	updateTime	DATETIME NOT NULL DEFAULT(datetime('now')),
-	FOREIGN KEY(antiBodyId, antiBody, assayId) REFERENCES antiBodyOptions(antiBodyId, antiBody, assayId),
+	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodyOptions(antiBodyId, assayId),
 	FOREIGN KEY(requestId, assayId) REFERENCES patientRequestLis(requestId, assayId),
 	FOREIGN KEY(requestId) REFERENCES patientRequest(requestId),
 	FOREIGN KEY(assayId) REFERENCES assayMaster(assayId));
