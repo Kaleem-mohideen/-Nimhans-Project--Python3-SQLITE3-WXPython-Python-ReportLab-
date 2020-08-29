@@ -38,15 +38,17 @@ def selectQuery(_queryString, _values=None):
             con.close()
 
 def getAssayList():
-    _rows = selectQuery('SELECT * FROM assayMaster')
+    _rows = selectQuery('SELECT * FROM assayMaster WHERE enabled = 1 ORDER BY assayName')
     if(_rows[0]):
-        return [e['assayName'] for e in _rows[1]]
+        return [{e['assayId'] : {'Name': e['assayName'], 'Description': e['assayDescription']}} for e in _rows[1]]
     return []
+
+
 
 
 if __name__ == '__main__':
     print('works')
-    _rows = selectQuery('SELECT * FROM assayMaster')
-    if(_rows[0]):
-        for _e in _rows[1]:
-            print(_e['assayId'], _e['assayName'])
+    _assays = getAssayList()
+    for _assay in _assays:
+        _id, _details = next(iter(_assay.items()))
+        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
