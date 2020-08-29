@@ -37,6 +37,64 @@ def selectQuery(_queryString, _values=None):
             cur.close()
             con.close()
 
+
+
+def insertUpdateMany(_queryString, _values):
+    """[summary]
+
+    Arguments:
+        _queryString {[type]} -- [description]
+        _values {[type]} -- [description]
+
+    Returns:
+        [type] -- [description]
+    """
+    con, cur = getCursor()
+    print("Yep")
+    print (_queryString, _values)
+    if cur!= None and con != None:
+        try:
+            cur.execute('BEGIN')
+            cur.executemany(_queryString, _values)
+            cur.execute ('COMMIT')
+            return [True,'']
+        except Exception as ex:
+            cur.execute('ROLLBACK')
+            print ('Error exeuting \n{0},{1} \n {2}'.format( _queryString, _values, ex))
+            return [False, ex]
+        finally:
+            cur.close()
+            con.close()
+
+def insertUpdateQuery(_queryString, _values):
+    """[summary]
+
+    Arguments:
+        _queryString {[type]} -- [description]
+        _values {[type]} -- [description]
+
+    Returns:
+        [type] -- [description]
+    """
+    con, cur = getCursor()
+    print("Yep")
+    print (_queryString, _values)
+    if cur!= None and con != None:
+        try:
+            cur.execute('BEGIN')
+            cur.execute (_queryString, _values)
+            lastrowid = cur.lastrowid
+            cur.execute ('COMMIT')
+            return [True,lastrowid]
+        except Exception as ex:
+            cur.execute('ROLLBACK')
+            print ('Error exeuting \n{0},{1} \n {2}'.format( _queryString, _values, ex))
+            return [False, ex]
+        finally:
+            cur.close()
+            con.close()
+
+
 def getAssayList():
     _rows = selectQuery('SELECT * FROM assayMaster WHERE enabled = 1 ORDER BY assayName')
     if(_rows[0]):
@@ -50,9 +108,19 @@ def disableAssay(_assayId):
     if any other type is sent we will throw expception
 
     '''
-    if _assayId:
-        return False
-    return True
+    if type(_assayId) == int:
+        _results = selectQuery('SELECT * FROM assayMaster WHERE assayId = ?', (_assayId,))
+        if _results[0]:
+            if len(_results[1]) == 0:
+                raise ValueError('assayId {0} invalid'.format(_assayId))
+        _query = 'UPDATE assayMaster SET enabled = 0 WHERE assayId = ?'
+        _status = insertUpdateQuery(_query, (_assayId,))
+        if _status[0]:
+            return True
+        else:
+            return False
+    else:
+        raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
 
 
 def addAssay(_name, _description=''):
@@ -75,4 +143,22 @@ if __name__ == '__main__':
     _assays = getAssayList()
     for _assay in _assays:
         _id, _details = next(iter(_assay.items()))
+        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
+    try:
+        disableAssay('vivek')
+    except Exception as ex:
+        print(ex)
+    try:
+        disableAssay(45)
+    except Exception as ex:
+        print(ex)
+    _assays = getAssayList()
+    try:
+        disableAssay(1)
+    except Exception as ex:
+        print(ex)
+    _assays = getAssayList()
+    for _assay in _assays:
+        _id, _details = next(iter(_assay.items()))
+        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
 
