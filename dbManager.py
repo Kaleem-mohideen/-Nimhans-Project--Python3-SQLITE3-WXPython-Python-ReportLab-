@@ -123,12 +123,25 @@ def disableAssay(_assayId):
         raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
 
 
-def addAssay(_name, _description=''):
+def addAssay(_assayName, _assayDescription=''):
     '''
     '''
-    if _name:
-        return False
-    return True
+    if(type(_assayName) != str):
+        raise TypeError('assayName needs to be string got {0}, {1}'.format(type(_assayName), _assayName))
+    _query = 'INSERT INTO assayMaster (assayName) VALUES (?)'
+    _insertTuple = (_assayName,)
+    if _assayDescription:
+        if(type(_assayDescription) != str):
+            raise TypeError('description needs to be string got {0}, {1}'.format(type(_assayDescription), _assayDescription))
+        _query = 'INSERT INTO assayMaster (assayName, assayDescription) VALUES (?,?)'
+        _insertTuple = (_assayName, _assayDescription)
+    _results = insertUpdateQuery(_query, _insertTuple)
+    if _results[0]:
+        return _results[1]
+    return -1
+
+ 
+
 
 def getAntibodies(_assayId=None):
     '''
@@ -155,6 +168,20 @@ if __name__ == '__main__':
     _assays = getAssayList()
     try:
         disableAssay(1)
+    except Exception as ex:
+        print(ex)
+    _assays = getAssayList()
+    for _assay in _assays:
+        _id, _details = next(iter(_assay.items()))
+        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
+    try:
+        _assayId = addAssay('Vivek1')
+        print('Vivek1:', _assayId)
+    except Exception as ex:
+        print(ex)
+    try:
+        _assayId = addAssay('Vivek1', 'whattay vivek')
+        print('Vivek1:', _assayId)
     except Exception as ex:
         print(ex)
     _assays = getAssayList()
