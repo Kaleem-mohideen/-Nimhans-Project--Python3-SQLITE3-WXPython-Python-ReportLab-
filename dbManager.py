@@ -44,11 +44,35 @@ def getAssayList():
     return []
 
 
+def disableAssay(_assayId):
+    '''
+    _assayId is integer
+    if any other type is sent we will throw expception
 
+    '''
+    if _assayId:
+        return False
+    return True
+
+
+def addAssay(_name, _description=''):
+    '''
+    '''
+    if _name:
+        return False
+    return True
+
+def getAntibodies(_assayId=None):
+    '''
+    '''
+    if _assayId:
+        return {antibodyId: { 'Name' : antibodyName, 'Options': {optionId : optionName }}}
+    return {assayId:{antibodyId: { 'Name' : antibodyName, 'Options': {optionId : optionName }}}}
+    
 
 if __name__ == '__main__':
     print('works')
     _assays = getAssayList()
     for _assay in _assays:
         _id, _details = next(iter(_assay.items()))
-        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
+
