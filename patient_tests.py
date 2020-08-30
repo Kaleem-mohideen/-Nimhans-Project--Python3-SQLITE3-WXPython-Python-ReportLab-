@@ -284,7 +284,7 @@ class MyDialog(wx.Dialog, TestMasterPanel):
 
         if testInput is not None and testInput not in self.parent.test_items:
             lstrowid = db.addAssay(testInput)
-            if lstrowid !=1:
+            if lstrowid != -1:
                 self.parent.test_itemsid[testInput] = lstrowid
                 self.parent.test_items.append(testInput)
                 self.parent.testsList.Set(self.parent.test_items)
@@ -308,7 +308,8 @@ class AntibodyMasterPanel(wx.Frame):
         self.InitUI()
         self.Centre() 
         self.Show()      
-        self.Antibdy_index = None   
+        self.Antibdy_index = None 
+        self.Result_index = None  
         self.choices = []
 
     def InitUI(self):
@@ -326,21 +327,26 @@ class AntibodyMasterPanel(wx.Frame):
         self.sizer.Add(self.AntibdyList, pos = (1,0), flag = wx.BOTTOM|wx.LEFT|wx.EXPAND, border = 40)
         self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.AntibdyList)
 
-        discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
-        addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+        self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
+        self.addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
 
-        self.sizer.Add(discardBtn, pos = (2,3), flag = wx.RIGHT, border = 50)
-        self.sizer.Add(addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 50)
+        self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
 
-        discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
-        addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+        self.sizer.Add(self.discardBtn, pos = (2,3), flag = wx.RIGHT, border = 50)
+        self.sizer.Add(self.addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 50)
 
         self.sizer.AddGrowableCol(0)
         self.panel.SetSizerAndFit(self.sizer)
 
     def onListboxSelection(self, evt):
-        #pass
         self.Antibdy_index = evt.GetSelection()
+
+        # self.listResult.Deselect(self.Result_index)
+        # self.Result_index = None
+
+        if self.Antibdy_index != None:
+            self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
+
         if not self.choices:
             self.choices=['+ve', '-ve', 'C']
             self.listResult = wx.ListBox(self.panel, choices= self.choices, size=(270, 100), style=wx.LB_MULTIPLE)
@@ -354,6 +360,17 @@ class AntibodyMasterPanel(wx.Frame):
             self.listResult.Set(aList)
             #self.listResult.SetSelection(0)
             self.SetSizer(self.sizer)
+        self.Bind(wx.EVT_LISTBOX, self.onListbox1Selection, self.listResult)
+        #self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd1)
+
+    def onListbox1Selection(self, evt):
+        self.Result_index = evt.GetSelection()
+
+        self.AntibdyList.Deselect(self.Antibdy_index)
+        self.Antibdy_index = None
+        
+        if self.Result_index != None:
+            self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard1)
 
 
     def onDiscard(self, evt):
@@ -367,6 +384,7 @@ class AntibodyMasterPanel(wx.Frame):
                 self.AntibdyList.Deselect(self.Antibdy_index)
                 self.Antibdy_index = None
                 self.AntibdyList.Set(self.Antibdy_items)
+                self.listResult.Clear()
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
@@ -375,6 +393,19 @@ class AntibodyMasterPanel(wx.Frame):
         #self.AntibdyList.Deselect(Antibdy_index)
         self.Antibdy_index = None   
         dlg1.Destroy()
+
+    def onDiscard1(self, evt):
+        if self.Result_index != None:
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard?', 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dia = dialog.ShowModal() 
+            if dia == wx.ID_YES:
+                self.selected_String1 = str(self.listResult.GetString(self.Result_index))
+                print(self.selected_String1)
+                self.choices.remove(self.selected_String1)
+                self.listResult.Deselect(self.Result_index)
+                self.Result_index = None
+                self.listResult.Set(self.choices)
+                
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class MyDialog1(wx.Dialog, TestMasterPanel):
 
