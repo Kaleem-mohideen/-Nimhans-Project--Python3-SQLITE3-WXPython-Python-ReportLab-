@@ -73,9 +73,19 @@ CREATE TABLE patientReport(
 	antiBodyId	INTEGER NOT NULL,
 	optionId	INTEGER NOT NULL,
 	updateTime	DATETIME NOT NULL DEFAULT(datetime('now')),
-	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodyOptions(antiBodyId, assayId),
+	FOREIGN KEY(optionId, antiBodyId, assayId) REFERENCES antiBodyOptions(optionId, antiBodyId, assayId),
 	FOREIGN KEY(requestId, assayId) REFERENCES patientRequestLis(requestId, assayId),
 	FOREIGN KEY(requestId) REFERENCES patientRequest(requestId),
 	FOREIGN KEY(assayId) REFERENCES assayMaster(assayId));
+
+
+CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.assayDescription, 
+					body.antiBodyId, body.antiBody,
+					options.optionId, options.optionText 
+			FROM assayMaster assay LEFT JOIN antiBodies body 
+			ON assay.assayId = body.assayId
+			LEFT JOIN antiBodyOptions options 
+			ON body.assayId = options.assayId AND body.antiBodyId = options.antiBodyId
+			WHERE assay.enabled = 1 AND body.enabled = 1 AND options.enabled = 1;
 
 

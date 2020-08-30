@@ -135,7 +135,7 @@ def addAssay(_assayName, _assayDescription=''):
             raise TypeError('description needs to be string got {0}, {1}'.format(type(_assayDescription), _assayDescription))
         _query = 'INSERT INTO assayMaster (assayName, assayDescription) VALUES (?,?)'
         _insertTuple = (_assayName, _assayDescription)
-    _results = insertUpdateQuery(_query, _insertTuple)
+    T_results = insertUpdateQuery(_query, _insertTuple)
     if _results[0]:
         return _results[1]
     return -1
@@ -143,12 +143,47 @@ def addAssay(_assayName, _assayDescription=''):
  
 
 
-def getAntibodies(_assayId=None):
+def getAntiBodies(_assayId=None):
     '''
     '''
     if _assayId:
-        return {antibodyId: { 'Name' : antibodyName, 'Options': {optionId : optionName }}}
-    return {assayId:{antibodyId: { 'Name' : antibodyName, 'Options': {optionId : optionName }}}}
+        if type(_assayId) != int:
+            raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
+        _query = 'SELECT * FROM viewAntiBodyOptions WHERE assayId = ?'
+        _results = selectQuery(_query, (_assayId,))
+        if _results[0]:
+            _ret = {}
+            for _row in _results[1]:
+                _antiBodyId = _row['antiBodyId']
+                _antiBodyName  = _row['antiBody']
+                _optionId = _row['optionId']
+                _option = _row['optionText']
+                if _antiBodyId in _ret:
+                    _ret[_antiBodyId]['Options'][_optionId] = _option
+                else:
+                    _ret[_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}}
+            return _ret
+        else:
+            raise Exception(_results[1])
+    else:
+        _query = 'SELECT * FROM viewAntiBodyOptions'
+        _results = selectQuery(_query,(_assayId))
+        if _results[0]:
+            _ret = {}
+            for _row in _results[1]:
+                _assayId = _row['assayId']
+                _antiBodyId = _row['antiBodyId']
+                _antiBodyName  = _row['antiBody']
+                _optionId = _row['optionId']
+                _option = _row['optionText']
+                if _assayId in _ret:
+                    if _antiBodyId in _ret[_assayId]:
+                        _ret[_assayId][_antiBodyId]['Options'][_optionId] = _option
+                    else:
+                        _ret[_assayId][_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}}
+                else:
+                    _ret[_assayId] = {_antiBodyId : { 'Name' : _antiBodyName, 'Options': {_optionId : _option}}}
+            return _ret
     
 
 if __name__ == '__main__':
@@ -188,4 +223,7 @@ if __name__ == '__main__':
     for _assay in _assays:
         _id, _details = next(iter(_assay.items()))
         print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
+    _results = getAntiBodies()
+    for e in _results:
+        print(e,'\n', _results[e], '\n\n')
 
