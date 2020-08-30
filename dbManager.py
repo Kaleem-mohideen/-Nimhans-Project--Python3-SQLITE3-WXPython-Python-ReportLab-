@@ -135,10 +135,20 @@ def addAssay(_assayName, _assayDescription=''):
             raise TypeError('description needs to be string got {0}, {1}'.format(type(_assayDescription), _assayDescription))
         _query = 'INSERT INTO assayMaster (assayName, assayDescription) VALUES (?,?)'
         _insertTuple = (_assayName, _assayDescription)
-    T_results = insertUpdateQuery(_query, _insertTuple)
+    _results = insertUpdateQuery(_query, _insertTuple)
     if _results[0]:
         return _results[1]
-    return -1
+    else:
+        if type(_results[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
+            _query = 'UPDATE assayMaster SET enabled = 1, assayDescription = ? WHERE assayName = ?'
+            _updateResults = insertUpdateQuery(_query, (_assayDescription, _assayName))
+            if _updateResults[0]:
+                #we need to get assayId
+                _query = 'SELECT assayId from assayMaster where assayName = ?'
+                _assayIdResults = selectQuery(_query, (_assayName,))
+                if _assayIdResults[0]:
+                    return _assayIdResults[1][0]['assayId']
+        return -1
 
  
 
@@ -185,9 +195,7 @@ def getAntiBodies(_assayId=None):
                     _ret[_assayId] = {_antiBodyId : { 'Name' : _antiBodyName, 'Options': {_optionId : _option}}}
             return _ret
     
-
-if __name__ == '__main__':
-    print('works')
+def temp():
     _assays = getAssayList()
     for _assay in _assays:
         _id, _details = next(iter(_assay.items()))
@@ -227,3 +235,8 @@ if __name__ == '__main__':
     for e in _results:
         print(e,'\n', _results[e], '\n\n')
 
+
+if __name__ == '__main__':
+    print('works')
+    disableAssay(1)
+    print(addAssay('Ana'))
