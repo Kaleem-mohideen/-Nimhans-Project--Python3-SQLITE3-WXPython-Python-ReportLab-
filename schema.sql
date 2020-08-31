@@ -21,6 +21,12 @@ CREATE TABLE assayMaster(
 	reportId		INTEGER,/*JSON*/
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
 	FOREIGN KEY(reportId) REFERENCES reportFormats(reportId));
+CREATE TRIGGER disableAssay
+	AFTER UPDATE ON assayMaster
+	WHEN NEW.enabled = 0 AND OLD.enabled = 1
+		BEGIN
+			UPDATE antiBodies SET enabled = 0 WHERE assayId = NEW.assayId;
+		END;
 
 CREATE TABLE antiBodies(
 	antiBodyId		INTEGER PRIMARY KEY,
@@ -28,8 +34,15 @@ CREATE TABLE antiBodies(
 	assayId			INTEGER NOT NULL,
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
 	UNIQUE(antiBodyId, assayId),
+	UNIQUE (antiBody, assayId),
 	UNIQUE(antiBodyId, antiBody, assayId),
 	FOREIGN KEY(assayId) REFERENCES assayMaster(assayId));
+CREATE TRIGGER disableAntibody
+	AFTER UPDATE ON antiBodies
+	WHEN NEW.enabled = 0 AND OLD.enabled = 1
+		BEGIN
+			UPDATE antiBodyOptions SET enabled = 0 WHERE assayId = NEW.assayId AND antiBodyId = NEW.antibodyId;
+		END;
 
 CREATE TABLE antiBodyOptions(
 	optionId 		INTEGER PRIMARY KEY,
