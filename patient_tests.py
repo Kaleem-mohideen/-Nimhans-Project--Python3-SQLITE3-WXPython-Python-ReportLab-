@@ -189,14 +189,18 @@ class TestMasterPanel(wx.Frame):
                     self.index = None
                     self.testsList.Set(self.test_items)
                     print(self.test_itemsid)
+                else:
+                    wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
+        if self.index != None:
+            self.testsList.Deselect(self.index)
+            self.index = None
         dlg = MyDialog(self)
         print(self.test_itemsid)
-        #self.testsList.Deselect(self.index)
-        self.index = None
         dlg.Destroy()
 
         # wx.Frame.__init__(self, None, -1, "My Frame", size=(300, 300))
@@ -215,7 +219,7 @@ class TestMasterPanel(wx.Frame):
         if self.index != None:
             selectedString = str(self.testsList.GetString(self.index))
             app = wx.App(redirect=False)
-            Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master', selectedString)
+            Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master', selectedString, self.test_itemsid)
             self.testsList.Deselect(self.index)
             self.index = None
             Antibdy_Frame.SetSize((800, 580))
@@ -289,6 +293,9 @@ class MyDialog(wx.Dialog, TestMasterPanel):
                 self.parent.test_items.append(testInput)
                 self.parent.testsList.Set(self.parent.test_items)
                 self.Close()
+            else:
+                wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
         elif testInput is not None:
             msgBox = wx.MessageBox('The Test had already exists, Try Adding New Test', 'Existing Error', wx.OK| wx.ICON_WARNING)
             # print(msgBox)
@@ -301,16 +308,18 @@ class MyDialog(wx.Dialog, TestMasterPanel):
                 self.addtext.SetHint("Enter the test name")  # This text is grey, and disappears when you type
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class AntibodyMasterPanel(wx.Frame):
-    def __init__(self, parent, title, selectedString):
+    def __init__(self, parent, title, selectedString, assayIdDict):
         super(AntibodyMasterPanel, self).__init__(parent, title = title)
         self.parentFrame = parent
         self.testName = selectedString
-        self.InitUI()
-        self.Centre() 
-        self.Show()      
+        self.assayId = assayIdDict[self.testName]
         self.Antibdy_index = None 
         self.Result_index = None  
         self.choices = []
+        self.flag = 1
+        self.InitUI()
+        self.Centre() 
+        self.Show()      
 
     def InitUI(self):
         self.panel = wx.Panel(self)
@@ -321,8 +330,10 @@ class AntibodyMasterPanel(wx.Frame):
         self.test_name.SetFont(font)
         self.sizer.Add(self.test_name, pos = (0,0), flag = wx.TOP|wx.LEFT|wx.EXPAND, border = 4)
 
-        self.Antibdy_items = ['Anca', 'Ana', 'Pro', 'Anti']
+        self.antibdy_itemsid = {antibody['Name'] : anti_id  for anti_id, antibody in db.getAntiBodies(self.assayId).items()}
+        self.Antibdy_items = [antibodyNames for antibodyNames in self.antibdy_itemsid]
         self.AntibdyList = wx.ListBox(self.panel, choices=self.Antibdy_items, size=(270, 100), style=wx.LB_MULTIPLE)
+        print(self.antibdy_itemsid)
         #self.AntibdyList.SetSelection(0)
         self.sizer.Add(self.AntibdyList, pos = (1,0), flag = wx.BOTTOM|wx.LEFT|wx.EXPAND, border = 40)
         self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.AntibdyList)
@@ -331,6 +342,7 @@ class AntibodyMasterPanel(wx.Frame):
         self.addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
 
         self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+        self.discardBtn.Bind(wx.EVT_BUTTON, self.onMsg)
 
         self.sizer.Add(self.discardBtn, pos = (2,3), flag = wx.RIGHT, border = 50)
         self.sizer.Add(self.addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 50)
@@ -338,40 +350,51 @@ class AntibodyMasterPanel(wx.Frame):
         self.sizer.AddGrowableCol(0)
         self.panel.SetSizerAndFit(self.sizer)
 
+    def onMsg(self, evt):
+        if self.Antibdy_index == None and self.Result_index == None:
+            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+
     def onListboxSelection(self, evt):
         self.Antibdy_index = evt.GetSelection()
 
-        # self.listResult.Deselect(self.Result_index)
-        # self.Result_index = None
+        if self.Result_index != None:
+            self.listResult.Deselect(self.Result_index)
+            self.Result_index = None
 
-        if self.Antibdy_index != None:
-            self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
+        self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
 
-        if not self.choices:
-            self.choices=['+ve', '-ve', 'C']
+        if not self.choices and self.flag:
+            antiId = self.antibdy_itemsid[str(self.AntibdyList.GetString(self.Antibdy_index))]
+            self.choicesid ={choice: choiceId for choiceId, choice in db.getAntiBodies(self.assayId)[antiId]['Options'].items()}
+            print(self.choicesid)
+            self.choices= [choice for choice in self.choicesid]
             self.listResult = wx.ListBox(self.panel, choices= self.choices, size=(270, 100), style=wx.LB_MULTIPLE)
+            self.addBtnResult = wx.Button(self.panel, label = "Add", size=(90, 28))
             #self.listResult.SetSelection(0)
-            self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 250)
-            #self.sizer.AddGrowableCol(0)
-            self.sizer.AddGrowableCol(1)
-            self.panel.SetSizerAndFit(self.sizer)
-        else:
-            aList = ['1' , '2', '3']
-            self.listResult.Set(aList)
-            #self.listResult.SetSelection(0)
-            self.SetSizer(self.sizer)
-        self.Bind(wx.EVT_LISTBOX, self.onListbox1Selection, self.listResult)
-        #self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd1)
+            self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 40)
+            self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 50)
+            self.sizer.AddGrowableCol(5)
 
+        else:
+            antiId = self.antibdy_itemsid[str(self.AntibdyList.GetString(self.Antibdy_index))]
+            self.choicesid ={choice: choiceId for choiceId, choice in db.getAntiBodies(self.assayId)[antiId]['Options'].items()}
+            print(self.choicesid)
+            self.choices= [choice for choice in self.choicesid]
+            self.listResult.Set(self.choices)
+            self.addBtnResult.Enable()
+
+        self.Bind(wx.EVT_LISTBOX, self.onListbox1Selection, self.listResult)
+        self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
+        self.panel.SetSizerAndFit(self.sizer)
+        
     def onListbox1Selection(self, evt):
         self.Result_index = evt.GetSelection()
 
-        self.AntibdyList.Deselect(self.Antibdy_index)
-        self.Antibdy_index = None
-        
-        if self.Result_index != None:
-            self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard1)
+        if self.Antibdy_index != None:
+            self.AntibdyList.Deselect(self.Antibdy_index)
+            self.Antibdy_index = None
 
+        self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscardResult)
 
     def onDiscard(self, evt):
         if self.Antibdy_index != None:
@@ -385,16 +408,20 @@ class AntibodyMasterPanel(wx.Frame):
                 self.Antibdy_index = None
                 self.AntibdyList.Set(self.Antibdy_items)
                 self.listResult.Clear()
+                self.addBtnResult.Disable()
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
+        if self.Antibdy_index != None:
+            self.AntibdyList.Deselect(self.Antibdy_index)
+            self.Antibdy_index = None
+            self.listResult.Clear()
+            self.addBtnResult.Disable()
         dlg1 = MyDialog1(self)
-        #self.AntibdyList.Deselect(Antibdy_index)
-        self.Antibdy_index = None   
         dlg1.Destroy()
 
-    def onDiscard1(self, evt):
+    def onDiscardResult(self, evt):
         if self.Result_index != None:
             dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard?', 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             dia = dialog.ShowModal() 
@@ -402,18 +429,29 @@ class AntibodyMasterPanel(wx.Frame):
                 self.selected_String1 = str(self.listResult.GetString(self.Result_index))
                 print(self.selected_String1)
                 self.choices.remove(self.selected_String1)
+                if not self.choices:
+                    self.flag = 0
                 self.listResult.Deselect(self.Result_index)
                 self.Result_index = None
                 self.listResult.Set(self.choices)
-                
+        else:
+            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+
+    def onAddResult(self, evt):
+        if self.Result_index != None:
+            self.listResult.Deselect(self.Result_index)
+            self.Result_index = None
+
+        dlg2 = MyDialog2(self)
+        dlg2.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class MyDialog1(wx.Dialog, TestMasterPanel):
+class MyDialog1(wx.Dialog, AntibodyMasterPanel):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
-        self.text = wx.StaticText(self.addPanel, -1, "Enter the test name that you want to Add:", pos=(10, 12))
+        self.text = wx.StaticText(self.addPanel, -1, "Enter the Antibody name that you want to Add:", pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
         font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
@@ -459,7 +497,7 @@ class MyDialog1(wx.Dialog, TestMasterPanel):
             self.parent.AntibdyList.Set(self.parent.Antibdy_items)
             self.Close()
         elif testInput is not None:
-            msgBox = wx.MessageBox('The Test had already exists, Try Adding New Test', 'Existing Error', wx.OK| wx.ICON_WARNING)
+            msgBox = wx.MessageBox('The Antibody had already exists, Try Adding New Antibody', 'Existing Error', wx.OK| wx.ICON_WARNING)
             #msg = msgBox.ShowModal()
             # print(msgBox)
             # print(wx.OK)
@@ -469,6 +507,72 @@ class MyDialog1(wx.Dialog, TestMasterPanel):
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the Antibody name")  # This text is grey, and disappears when you type
+
+#---------------------------------------------------------------------------------------------------------------------------------------------
+
+class MyDialog2(wx.Dialog, AntibodyMasterPanel):
+
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
+        self.parent = parent
+        self.addPanel = wx.Panel(self)
+        self.text1 = wx.StaticText(self.addPanel, -1, "Enter the Option that you want to Add:", pos=(10, 12))
+        self.addtext1 = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
+        self.addBtn1 = wx.Button(self.addPanel, label = "Add", size=(75, 28))
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        self.addtext1.SetFont(font)
+        self.addtext1.SetForegroundColour('#848484') 
+        self.addtext1.SetHint("Enter the Option name")  # This text is grey, and disappears when you type
+        self.addPanel.SetFocus()
+
+        self.panel_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel_sizer.Add(self.text1, 0, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addtext1, 1, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addBtn1, 2, wx.ALL, 5)
+        self.addPanel.SetSizer(self.panel_sizer)
+
+        self.addBtn1.Bind(wx.EVT_BUTTON, self.onAdd1)
+        self.addtext1.Bind(wx.EVT_TEXT_ENTER,self.onAdd1)
+        self.addtext1.Bind(wx.EVT_TEXT,self.onFirstClick1)  
+
+
+
+        self.ShowModal()
+        #wx.CallAfter(self.panel_sizer.Layout)
+
+    def onFirstClick1(self, evt):
+        if self.addtext1.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext1.SetFont(font)
+            self.addtext1.SetForegroundColour(wx.BLACK)
+
+    def onAdd1(self, evt):
+        testInput = None
+        if self.addtext1.GetValue(): testInput =self.addtext1.GetValue()
+        if self.addtext1.GetValue() and self.addtext1.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext1.SetFont(font)
+            self.addtext1.SetForegroundColour(wx.BLACK)
+        else:
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            self.addtext1.SetFont(font)
+            self.addtext1.SetForegroundColour('#848484') 
+        if testInput is not None and testInput not in self.parent.choices:
+            self.parent.choices.append(testInput)
+            self.parent.listResult.Set(self.parent.choices)
+            self.Close()
+        elif testInput is not None:
+            msgBox = wx.MessageBox('The Option had already exists, Try Adding New Option', 'Existing Error', wx.OK| wx.ICON_WARNING)
+            #msg = msgBox.ShowModal()
+            # print(msgBox)
+            # print(wx.OK)
+            if msgBox == wx.OK:
+                self.addtext1.SetValue('')
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                self.addtext1.SetFont(font)
+                self.addtext1.SetForegroundColour('#848484')
+                self.addtext1.SetHint("Enter the Option name")  # This text is grey, and disappears when you type
+
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class PatientDetails(wx.Frame): 
     def __init__(self, parent, title):
