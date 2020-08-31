@@ -123,6 +123,7 @@ def disableAssay(_assayId):
         raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
 
 
+
 def addAssay(_assayName, _assayDescription=''):
     '''
     '''
@@ -150,7 +151,46 @@ def addAssay(_assayName, _assayDescription=''):
                     return _assayIdResults[1][0]['assayId']
         return -1
 
- 
+def disableAntiBody(_assayId, _antiBody):
+    '''
+    '''
+    if type(_assayId) != int:
+        raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
+    if(type(_antiBodyId) != int):
+        raise TypeError('assayName needs to be integer got {0}, {1}'.format(type(_assayName), _assayName))
+    _results = selectQuery('SELECT * FROM antiBodies WHERE assayId = ? AND antiBodyId = ?', (_assayId, _antiBodyId))
+    if _results[0]:
+        if len(_results[1]) == 0:
+            raise ValueError('assayId {0} invalid'.format(_assayId))
+    _query = 'UPDATE antiBodies SET enabled = 0 WHERE assayId = ? AND antiBody = ?'
+    _status = insertUpdateQuery(_query, (_assayId, _antiBodyId))
+    if _status[0]:
+        return True
+    else:
+        return False
+  
+def addAntiBody(_assayId, _antiBody):
+    '''
+    '''
+    if type(_assayId) != int:
+        raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
+    if(type(_antiBody) != str):
+        raise TypeError('assayName needs to be string got {0}, {1}'.format(type(_assayName), _assayName))
+    _query = 'INSERT INTO antiBodies (assayId, antiBody) VALUES (?,?)'
+    _status = insertUpdateQuery(_query, (_assayId, _antiBody))
+    if _status[0]:
+        return _status[1] #antiBodyId
+    else:
+        if type(_results[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
+            if 'UNIQUE' in str(_results[1]):
+                _query = 'UPDATE antiBodies SET enabled = 1 WHERE _assayId = ? AND antiBody = ?'
+                _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBody))
+                if _updateStaus[0]:
+                    return _updateStatus[1]
+        else:
+            raise Exception(_results[1])
+    return -1
+
 
 
 def getAntiBodies(_assayId=None):
@@ -195,48 +235,8 @@ def getAntiBodies(_assayId=None):
                     _ret[_assayId] = {_antiBodyId : { 'Name' : _antiBodyName, 'Options': {_optionId : _option}}}
             return _ret
     
-def temp():
-    _assays = getAssayList()
-    for _assay in _assays:
-        _id, _details = next(iter(_assay.items()))
-        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
-    try:
-        disableAssay('vivek')
-    except Exception as ex:
-        print(ex)
-    try:
-        disableAssay(45)
-    except Exception as ex:
-        print(ex)
-    _assays = getAssayList()
-    try:
-        disableAssay(1)
-    except Exception as ex:
-        print(ex)
-    _assays = getAssayList()
-    for _assay in _assays:
-        _id, _details = next(iter(_assay.items()))
-        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
-    try:
-        _assayId = addAssay('Vivek1')
-        print('Vivek1:', _assayId)
-    except Exception as ex:
-        print(ex)
-    try:
-        _assayId = addAssay('Vivek1', 'whattay vivek')
-        print('Vivek1:', _assayId)
-    except Exception as ex:
-        print(ex)
-    _assays = getAssayList()
-    for _assay in _assays:
-        _id, _details = next(iter(_assay.items()))
-        print('assayId:{0}\nassayName:{1}\nassayDescription{2}\n\n'.format(_id, _details['Name'], _details['Description']))
-    _results = getAntiBodies()
-    for e in _results:
-        print(e,'\n', _results[e], '\n\n')
 
 
 if __name__ == '__main__':
     print('works')
-    disableAssay(1)
-    print(addAssay('Ana'))
+    addAntiBody(1, 'buffalo')
