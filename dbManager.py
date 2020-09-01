@@ -183,7 +183,7 @@ def addAntiBody(_assayId, _antiBody):
     else:
         if type(_status[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
             if 'UNIQUE' in str(_status[1]):
-                _query = 'UPDATE antiBodies SET enabled = 1 WHERE _assayId = ? AND antiBody = ?'
+                _query = 'UPDATE antiBodies SET enabled = 1 WHERE assayId = ? AND antiBody = ?'
                 _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBody))
                 if _updateStatus[0]:
                     return _updateStatus[1]
@@ -241,3 +241,4 @@ if __name__ == '__main__':
     print('works')
     addAntiBody(1, 'buffalo')
     disableAntiBody(1,11)
+    addAntiBody(1, 'buffalo')
