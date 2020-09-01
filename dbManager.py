@@ -151,7 +151,7 @@ def addAssay(_assayName, _assayDescription=''):
                     return _assayIdResults[1][0]['assayId']
         return -1
 
-def disableAntiBody(_assayId, _antiBody):
+def disableAntiBody(_assayId, _antiBodyId):
     '''
     '''
     if type(_assayId) != int:
@@ -162,7 +162,7 @@ def disableAntiBody(_assayId, _antiBody):
     if _results[0]:
         if len(_results[1]) == 0:
             raise ValueError('assayId {0} invalid'.format(_assayId))
-    _query = 'UPDATE antiBodies SET enabled = 0 WHERE assayId = ? AND antiBody = ?'
+    _query = 'UPDATE antiBodies SET enabled = 0 WHERE assayId = ? AND antiBodyId = ?'
     _status = insertUpdateQuery(_query, (_assayId, _antiBodyId))
     if _status[0]:
         return True
@@ -181,11 +181,11 @@ def addAntiBody(_assayId, _antiBody):
     if _status[0]:
         return _status[1] #antiBodyId
     else:
-        if type(_results[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
-            if 'UNIQUE' in str(_results[1]):
+        if type(_status[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
+            if 'UNIQUE' in str(_status[1]):
                 _query = 'UPDATE antiBodies SET enabled = 1 WHERE _assayId = ? AND antiBody = ?'
                 _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBody))
-                if _updateStaus[0]:
+                if _updateStatus[0]:
                     return _updateStatus[1]
         else:
             raise Exception(_results[1])
@@ -240,3 +240,4 @@ def getAntiBodies(_assayId=None):
 if __name__ == '__main__':
     print('works')
     addAntiBody(1, 'buffalo')
+    disableAntiBody(1,11)
