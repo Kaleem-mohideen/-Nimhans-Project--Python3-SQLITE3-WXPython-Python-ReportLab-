@@ -113,13 +113,7 @@ class MasterMenu(wx.Menu):
         testMasterItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&Test Master', kind=wx.ITEM_NORMAL)
         self.Append(testMasterItem)
         self.Bind(wx.EVT_MENU, handler=self.onTestMaster, source=testMasterItem) 
-        #pass
-        # copyItem = wx.MenuItem(self, 100,text = "Copy",kind = wx.ITEM_NORMAL)
-        # self.Append(copyItem) 
-        # cutItem = wx.MenuItem(self, 101,text = "Cut",kind = wx.ITEM_NORMAL) 
-        # self.Append(cutItem) 
-        # pasteItem = wx.MenuItem(self, 102,text = "Paste",kind = wx.ITEM_NORMAL) 
-        # self.Append(pasteItem)
+
     def onTestMaster(self, event):
         app = wx.App(redirect=False)
         frame = TestMasterPanel(None, 'Test Master')
@@ -203,18 +197,6 @@ class TestMasterPanel(wx.Frame):
         print(self.test_itemsid)
         dlg.Destroy()
 
-        # wx.Frame.__init__(self, None, -1, "My Frame", size=(300, 300))
-        # panel = wx.Panel(self, -1)
-        # #panel.Bind(wx.EVT_MOTION,  self.OnMove)
-        # wx.StaticText(panel, -1, "Pos:", pos=(10, 12))
-        # self.posCtrl = wx.TextCtrl(panel, -1, "", pos=(40, 10))
-        # self.Show(True)
-
-    # def OnMove(self, event):
-    #     pos = event.GetPosition()
-    #     self.posCtrl.SetValue("%s, %s" % (pos.x, pos.y))
-
-
     def onAntibodiesClick(self, evt):
         if self.index != None:
             selectedString = str(self.testsList.GetString(self.index))
@@ -226,16 +208,9 @@ class TestMasterPanel(wx.Frame):
             Antibdy_Frame.Show()
             app.MainLoop()
 
-
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
-
-        # app = wx.App(redirect=False)
-        # Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master')
-        # Antibdy_Frame.SetSize((800, 580))
-        # Antibdy_Frame.Show()
-        # app.MainLoop()
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class MyDialog(wx.Dialog, TestMasterPanel):
 
@@ -287,9 +262,9 @@ class MyDialog(wx.Dialog, TestMasterPanel):
 
 
         if testInput is not None and testInput not in self.parent.test_items:
-            lstrowid = db.addAssay(testInput)
-            if lstrowid != -1:
-                self.parent.test_itemsid[testInput] = lstrowid
+            addedAssayId = db.addAssay(testInput)
+            if addedAssayId != -1:
+                self.parent.test_itemsid[testInput] = addedAssayId
                 self.parent.test_items.append(testInput)
                 self.parent.testsList.Set(self.parent.test_items)
                 self.Close()
@@ -402,13 +377,19 @@ class AntibodyMasterPanel(wx.Frame):
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 self.selected_String = str(self.AntibdyList.GetString(self.Antibdy_index))
-                print(self.selected_String)
-                self.Antibdy_items.remove(self.selected_String)
-                self.AntibdyList.Deselect(self.Antibdy_index)
-                self.Antibdy_index = None
-                self.AntibdyList.Set(self.Antibdy_items)
-                self.listResult.Clear()
-                self.addBtnResult.Disable()
+                print(self.antibdy_itemsid[self.selected_String])
+                if db.disableAntiBody(self.assayId, self.antibdy_itemsid[self.selected_String]):
+                    del self.antibdy_itemsid[self.selected_String]
+                    self.Antibdy_items.remove(self.selected_String)
+                    self.AntibdyList.Deselect(self.Antibdy_index)
+                    self.Antibdy_index = None
+                    self.AntibdyList.Set(self.Antibdy_items)
+                    self.listResult.Clear()
+                    self.addBtnResult.Disable()
+                    print(self.antibdy_itemsid)
+                else:
+                    wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
@@ -419,6 +400,7 @@ class AntibodyMasterPanel(wx.Frame):
             self.listResult.Clear()
             self.addBtnResult.Disable()
         dlg1 = MyDialog1(self)
+        print(self.antibdy_itemsid)
         dlg1.Destroy()
 
     def onDiscardResult(self, evt):
@@ -493,9 +475,15 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
         if testInput is not None and testInput not in self.parent.Antibdy_items:
-            self.parent.Antibdy_items.append(testInput)
-            self.parent.AntibdyList.Set(self.parent.Antibdy_items)
-            self.Close()
+            addedAntibdyId = db.addAntiBody(self.parent.assayId, testInput)
+            if addedAntibdyId != -1:
+                self.parent.antibdy_itemsid[testInput] = addedAntibdyId
+                self.parent.Antibdy_items.append(testInput)
+                self.parent.AntibdyList.Set(self.parent.Antibdy_items)
+                self.Close()
+            else:
+                wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
         elif testInput is not None:
             msgBox = wx.MessageBox('The Antibody had already exists, Try Adding New Antibody', 'Existing Error', wx.OK| wx.ICON_WARNING)
             #msg = msgBox.ShowModal()
