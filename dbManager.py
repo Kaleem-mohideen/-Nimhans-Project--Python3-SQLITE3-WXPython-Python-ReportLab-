@@ -186,11 +186,70 @@ def addAntiBody(_assayId, _antiBody):
                 _query = 'UPDATE antiBodies SET enabled = 1 WHERE assayId = ? AND antiBody = ?'
                 _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBody))
                 if _updateStatus[0]:
-                    return _updateStatus[1]
-        else:
-            raise Exception(_results[1])
+                    #we need to get assayId
+                    _query = 'SELECT antiBodyId FROM antiBodies WHERE assayId= ? AND antiBody = ?'
+                    _antiBodyIdResults = selectQuery(_query, (_assayId, _antiBody))
+                    if _antiBodyIdResults[0]:
+                        return _antiBodyIdResults[1][0]['assayId']
     return -1
 
+def disableOption(_assayId, _antiBodyId, _optionId):
+    '''
+    '''
+    _checkQuery = 'SELECT * FROM antiBodyOptions WHERE assayID = ? AND antiBodyId = ? AND optionId = ?'
+    _results = selectQuery(_query, (_assayId, _antiBodyId, _optionId))
+    if _results[0]:
+        if len(_results[1]) != 1:
+            raise Exception ('No such combination of assayId:{0}, antiBodyId:{1} and optionId:{2}'.format(_assayId, _antiBodyId, _optionId))
+        if _results[1]['enabled']:
+            _query = 'UPDATE antiBodyOptions SET enabled = 0 WHERE _optionId = ?'#WE DONT NEED THE OTHER TWO
+            _status = insertUpdateQuery(_query, (_optionId))
+            if _status[0]:
+                return _status[1]
+            else:
+                return -1
+    else:
+        if isInstance(_results[1], Exception):
+            raise _results[1]
+        raise Exception(_results[1])
+
+
+
+
+def addOption(_assayId, _antiBodyId, _option):
+    '''
+    check if _assayId and _antiBodyId are enabled
+    check if _option already exists
+    insert into antiBodyOptions
+    or update antiBodyOption
+    '''
+    _checkQuery = 'SELECT * FROM antiBodies WHERE assayID = ? AND antiBodyId = ?'
+    _results = selectQuery(_query, (_assayId, _antiBodyId))
+    if _results[0]:
+        if len(_results[1]) ==  0:
+            if _results[1]['enabled'] == 0:
+                raise Exception('No such enabled combination of assayId:{0} and antiBodyId{0}'.format(_assayId, _antiBodyId))
+            _insertQuery = 'INSERT INTO antiBodyOption (assayId, antiBodyId, optionText) VALUES (?,?,?)'
+            _status = insertUpdateQuery(_insertQuery, (_assayId, _antiBodyId, _option))
+            if _status[1]:
+                return _status[2]
+            else:
+                if type(_status[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
+                    if 'UNIQUE' in str(_status[1]):
+                        _query = 'UPDATE antiBodyOptions SET enabled = 1 WHERE assayId = ? AND antiBodyId = ? AND optionText = ?'
+                        _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBody, _option))
+                        if _updateStatus[0]:
+                            #we need to get assayId
+                            _query = 'SELECT optionId FROM antiBodyOptions WHERE assayId= ? AND antiBody = ? AND optionText = ?'
+                            _optionIdResults = selectQuery(_query, (_assayId, _antiBodyId, _option))
+                            if _optionIdResults[0]:
+                                return _optionIdResults[1][0]['assayId']
+        else:
+            raise Exception('No such combination of assayId:{0} and antiBodyId{0}'.format(_assayId, _antiBodyId))
+    else:
+        if isInstance(_results[1], Exception):
+            raise _results[1]
+        raise Exception(_results[1])
 
 
 def getAntiBodies(_assayId=None):
