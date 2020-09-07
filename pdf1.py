@@ -49,7 +49,7 @@ pdf.setTitle(documentTitle)
 pdf.line(50, 795, 550,795)
 pdf.setFont("Helvetica-Bold", 10)
 
-with open('/home/mirkalim/Downloads/Format2_sample3.json', 'r') as f:
+with open('Format2_sample3.json', 'r') as f:
 	s = f.read()
 	s = s.replace('\t','')
 	s = s.replace("'", '"')
@@ -67,7 +67,7 @@ for item in data1.items():
 		flag = True
 
 # Data from CSV
-with open('/home/mirkalim/Documents/Python/CPC .ipynb files/csv_text_ files/sample.csv', "r") as csvfile:
+with open('sample.csv', "r") as csvfile:
     data = list(csv.reader(csvfile))
 
 
