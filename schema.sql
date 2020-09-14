@@ -53,7 +53,8 @@ CREATE TABLE antiBodyOptions(
 	UNIQUE(optionId, antiBodyId, assayId),
 	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodies(antiBodyId, assayId));
 
-
+CREATE TABLE hospitalMaster(
+	hospitalName		TEXT PRIMARY KEY);
 
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,
@@ -62,12 +63,13 @@ CREATE TABLE patientRequest(
 	uhid   			TEXT,
 	mrd 			TEXT,
 	collectionPoint		TEXT,
-	referingHospital	TEXT,
+	hospitalName		TEXT,
 	referingDepartment	TEXT,
 	collectionDate		DATE,
 	labReferenceNumber	TEXT,
 	reportDate		DATE,
 	labName			TEXT,
+	FOREIGN KEY(hospitalName) REFERENCES hospitalMaster(hospitalName),
 	FOREIGN KEY(patientId) REFERENCES patientMaster(patientId));
 
 
