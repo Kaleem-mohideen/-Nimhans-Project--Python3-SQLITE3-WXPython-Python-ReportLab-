@@ -54,7 +54,8 @@ CREATE TABLE antiBodyOptions(
 	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodies(antiBodyId, assayId));
 
 CREATE TABLE hospitalMaster(
-	hospitalName		TEXT PRIMARY KEY);
+	hospitalName		TEXT PRIMARY KEY,
+	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)));
 
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,
