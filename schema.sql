@@ -63,6 +63,10 @@ CREATE TABLE departmentMaster(
 	departmentName		TEXT PRIMARY KEY,
 	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)) DEFAULT 1);
 
+CREATE TABLE labMaster(
+	labName			TEXT PRIMARY KEY,
+	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)) DEFAULT 1);
+
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,
 	requestTime		DATETIME NOT NULL DEFAULT(datetime('now')),
@@ -76,6 +80,8 @@ CREATE TABLE patientRequest(
 	labReferenceNumber	TEXT,
 	reportDate		DATE,
 	labName			TEXT,
+	reportFile		TEXT,/*FILE NAME OF REPORT TO BE STORED HERE*/
+	FOREIGN KEY(labName) REFERENCES labMaster(labName),
 	FOREIGN KEY(departmentName) REFERENCES departmentMaster(departmentName),
 	FOREIGN KEY(hospitalName) REFERENCES hospitalMaster(hospitalName),
 	FOREIGN KEY(patientId) REFERENCES patientMaster(patientId));
