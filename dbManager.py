@@ -1,6 +1,7 @@
 #!env/bin/python
 import sqlite3 as lite
 from datetime import datetime
+from datetime import date
 import os
 
 
@@ -239,10 +240,10 @@ def addOption(_assayId, _antiBodyId, _option):
                 if type(_status[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
                     if 'UNIQUE' in str(_status[1]):
                         _query = 'UPDATE antiBodyOptions SET enabled = 1 WHERE assayId = ? AND antiBodyId = ? AND optionText = ?'
-                        _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBody, _option))
+                        _updateStatus = insertUpdateQuery(_query, (_assayId, _antiBodyId, _option))
                         if _updateStatus[0]:
                             #we need to get assayId
-                            _query = 'SELECT optionId FROM antiBodyOptions WHERE assayId= ? AND antiBody = ? AND optionText = ?'
+                            _query = 'SELECT optionId FROM antiBodyOptions WHERE assayId= ? AND antiBodyId = ? AND optionText = ?'
                             _optionIdResults = selectQuery(_query, (_assayId, _antiBodyId, _option))
                             print('option?1')
                             if _optionIdResults[0]:
