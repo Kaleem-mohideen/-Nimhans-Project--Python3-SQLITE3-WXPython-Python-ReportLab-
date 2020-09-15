@@ -56,12 +56,12 @@ CREATE TABLE antiBodyOptions(
 
 CREATE TABLE hospitalMaster(
 	hospitalName		TEXT PRIMARY KEY,
-	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)));
+	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)) DEFAULT 1);
 
 
 CREATE TABLE departmentMaster(
 	departmentName		TEXT PRIMARY KEY,
-	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)));
+	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)) DEFAULT 1);
 
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,

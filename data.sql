@@ -48,3 +48,10 @@ INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES
 			(3,10, 'Positive +3'),
 			(3,10, 'Positive'),
 			(3,10, 'Negative');
+
+INSERT INTO hospitalMaster(hospitalName) VALUES
+	('Apollo'), ('VMC'), ('VDC');
+
+
+INSERT INTO departmentMaster(departmentName) VALUES
+	('Biochemistry'), ('Ward');
