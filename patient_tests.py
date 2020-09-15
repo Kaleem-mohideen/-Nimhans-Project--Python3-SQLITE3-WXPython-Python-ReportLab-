@@ -6,6 +6,8 @@ import datetime
 import wx.adv
 import wx.lib.scrolledpanel as scrolled
 import dbManager as db
+import string
+import wx.richtext as rt
 
 filename="regis.jpeg"
 class MyApp(wx.App):
@@ -179,10 +181,10 @@ class TestMasterPanel(wx.Frame):
 
     def onDiscard(self, evt):
         if self.index != None:
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard?', 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            self.selectedString = str(self.testsList.GetString(self.index))
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} test?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
-                self.selectedString = str(self.testsList.GetString(self.index))
                 #print(self.selectedString)
                 print(self.test_itemsid[self.selectedString])
                 if db.disableAssay(self.test_itemsid[self.selectedString]):
@@ -199,7 +201,7 @@ class TestMasterPanel(wx.Frame):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Choosen, Try Choosing Test that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.index != None:
@@ -230,7 +232,7 @@ class MyDialog(wx.Dialog, TestMasterPanel):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
-        self.text = wx.StaticText(self.addPanel, -1, "Enter the test name that you want to Add:", pos=(10, 12))
+        self.text = wx.StaticText(self.addPanel, -1, "Enter the test that you want to Add:", pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
         font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
@@ -338,7 +340,7 @@ class AntibodyMasterPanel(wx.Frame):
         self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
         self.discardBtn.Bind(wx.EVT_BUTTON, self.onMsg)
 
-        self.sizer.Add(self.discardBtn, pos = (2,3), flag = wx.RIGHT, border = 50)
+        self.sizer.Add(self.discardBtn, pos = (2,2), flag = wx.RIGHT, border = 50)
         self.sizer.Add(self.addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 50)
 
         if not self.Antibdy_items:
@@ -350,8 +352,8 @@ class AntibodyMasterPanel(wx.Frame):
         self.panel.SetSizerAndFit(self.sizer)
 
     def onMsg(self, evt):
-        if self.Antibdy_index == None and self.Result_index == None:
-            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+        if self.Antibdy_index == None :  
+            wx.MessageBox('None of them Choosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onListboxSelection(self, evt):
         self.Antibdy_index = evt.GetSelection()
@@ -379,6 +381,7 @@ class AntibodyMasterPanel(wx.Frame):
                 self.choices= [choice for choice in self.choicesid if choice]
             self.listResult = wx.ListBox(self.panel, choices= self.choices, size=(270, 100), style=wx.LB_MULTIPLE)
             self.addBtnResult = wx.Button(self.panel, label = "Add", size=(90, 28))
+            self.discardBtnResult = wx.Button(self.panel, label = "Discard", size=(90, 28))
             font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
             self.antibdytitletResult = wx.StaticText(self.panel, label = self.antibdy_selectedText)
             self.antibdytitletResult.SetFont(font)
@@ -386,7 +389,9 @@ class AntibodyMasterPanel(wx.Frame):
             self.sizer.Add(self.antibdytitletResult, pos = (0,5), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
             self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 40)
             self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 50)
+            self.sizer.Add(self.discardBtnResult, pos = (2,5), flag = wx.LEFT, border = 200)
             self.sizer.AddGrowableCol(5)
+            self.sizer.AddGrowableCol(4)
 
         else:
             if len(self.choicesid)==1 and list(self.choicesid.keys())[0] == None and list(self.choicesid.values())[0] == None:
@@ -398,22 +403,21 @@ class AntibodyMasterPanel(wx.Frame):
             self.antibdytitletResult.SetLabel(self.antibdy_selectedText)
             self.listResult.Set(self.choices)
             self.addBtnResult.Enable()
+            self.discardBtnResult.Enable()
         self.Bind(wx.EVT_LISTBOX, self.onListbox1Selection, self.listResult)
         self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
+        self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onMsg1)
         self.panel.SetSizerAndFit(self.sizer)
-        
-    def onListbox1Selection(self, evt):
-        self.Result_index = evt.GetSelection()
+        #self.panel.SetSize(wx.Size(1000,1400))
 
-        if self.Antibdy_index != None:
-            self.AntibdyList.Deselect(self.Antibdy_index)
-            self.Antibdy_index = None
+    def onMsg1(self, evt):
+        if self.Result_index == None :  
+            wx.MessageBox('None of them Choosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
-        self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscardResult)
 
     def onDiscard(self, evt):
         if self.Antibdy_index != None:
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Antibody->{0} from Test->{1}?'.format(self.antibdy_selectedText, self.testName), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Antibody->{0} for {1} Test?'.format(self.antibdy_selectedText, self.testName), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 print(self.antibdy_itemsid[self.antibdy_selectedText])
@@ -428,12 +432,13 @@ class AntibodyMasterPanel(wx.Frame):
                     self.listResult.Clear()
                     self.antibdytitletResult.SetLabel('')
                     self.addBtnResult.Disable()
+                    self.discardBtnResult.Disable()
                     print(self.antibdy_itemsid)
                 else:
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Choosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.Antibdy_index != None:
@@ -442,14 +447,24 @@ class AntibodyMasterPanel(wx.Frame):
             self.listResult.Clear()
             self.antibdytitletResult.SetLabel('')
             self.addBtnResult.Disable()
+            self.discardBtnResult.Disable()
         dlg1 = MyDialog1(self)
         print(self.antibdy_itemsid)
         dlg1.Destroy()
 
+    def onListbox1Selection(self, evt):
+        self.Result_index = evt.GetSelection()
+
+        if self.Antibdy_index != None:
+            self.AntibdyList.Deselect(self.Antibdy_index)
+            self.Antibdy_index = None
+
+        self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onDiscardResult)
+
     def onDiscardResult(self, evt):
         if self.Result_index != None:
             self.selected_String1 = str(self.listResult.GetString(self.Result_index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Option->{0} from Antibody->{1}?'.format(self.selected_String1, self.antibdy_selectedText), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Option->{0} for {1} Antibody?'.format(self.selected_String1, self.antibdy_selectedText), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 optionId = self.choicesid[self.selected_String1]
@@ -460,6 +475,7 @@ class AntibodyMasterPanel(wx.Frame):
                     self.choices.remove(self.selected_String1)
                     if not self.choices:
                         self.flag = 0
+                        self.discardBtnResult.Disable()
                     self.listResult.Deselect(self.Result_index)
                     self.Result_index = None
                     self.listResult.Set(self.choices)
@@ -468,7 +484,7 @@ class AntibodyMasterPanel(wx.Frame):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Choosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAddResult(self, evt):
         if self.Result_index != None:
@@ -485,7 +501,7 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
-        self.text = wx.StaticText(self.addPanel, -1, 'Enter the Antibody name that you want to Add in Test->{0}:'.format(self.parent.testName), pos=(10, 12))
+        self.text = wx.StaticText(self.addPanel, -1, 'Enter the Antibody that you want to Add in Test->{0}:'.format(self.parent.testName), pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
         font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
@@ -604,6 +620,7 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
                 self.parent.choicesid[testInput] = addedChoiceId
                 self.parent.choices.append(testInput)
                 self.parent.listResult.Set(self.parent.choices)
+                self.parent.discardBtnResult.Enable()
                 self.Close()
             else:
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
@@ -621,99 +638,221 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
                 self.addtext1.SetHint("Enter the Option name")  # This text is grey, and disappears when you type
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
+class CharValidator(wx.Validator):
+    ''' Validates data as it is entered into the text controls. '''
+
+    #----------------------------------------------------------------------
+    def __init__(self, flag):
+        wx.Validator.__init__(self)
+        self.flag = flag
+        self.Bind(wx.EVT_CHAR, self.OnChar)
+
+    #----------------------------------------------------------------------
+    def Clone(self):
+        '''Required Validator method'''
+        return CharValidator(self.flag)
+
+    #----------------------------------------------------------------------
+    def Validate(self, win):
+        return True
+
+    #----------------------------------------------------------------------
+    def TransferToWindow(self):
+        return True
+
+    #----------------------------------------------------------------------
+    def TransferFromWindow(self):
+        return True
+
+    #----------------------------------------------------------------------
+    def OnChar(self, event):
+        keycode = int(event.GetKeyCode())
+        if keycode < 256:
+            #print keycode
+            key = chr(keycode)
+            #print key
+            if self.flag == 'only-digit' and key in string.ascii_letters or key in string.punctuation:
+                return
+            if self.flag == 'only-alpha' and key in string.digits or key in string.punctuation:
+                return
+        event.Skip()
+class MouseNavigate(wx.Validator):
+    ''' Validates data as it is entered into the text controls. This validator is used to ensure that the user has entered something
+         into the text object editor dialog's text field.'''
+
+    #----------------------------------------------------------------------
+    def __init__(self, parent):
+        """ Standard constructor."""
+        wx.Validator.__init__(self)
+        self.parent = parent
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
+        self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+
+      #----------------------------------------------------------------------
+    def Clone(self):
+        '''Required Validator method. Standard cloner.
+             Note that every validator must implement the Clone() method.'''
+        return MouseNavigate(self.parent)
+
+      #----------------------------------------------------------------------
+    def Validate(self, win):
+        return True
+
+      #----------------------------------------------------------------------
+    def TransferToWindow(self):
+        """ Transfer data from validator to window.
+
+             The default implementation returns False, indicating that an error
+             occurred.  We simply return True, as we don't do any data transfer.
+         """
+        return True
+      #----------------------------------------------------------------------
+    def TransferFromWindow(self):
+        """ Transfer data from window to validator.
+
+             The default implementation returns False, indicating that an error
+             occurred.  We simply return True, as we don't do any data transfer.
+         """
+        return True # Prevent wxDialog from complaining
+      #----------------------------------------------------------------------
+    """ Validate the contents of the given text control.
+         """
+    def OnMouseEvent(self, event):
+        if event.Moving():
+            self.parent.SetCursor(wx.STANDARD_CURSOR)
+
+    def OnSetFocus(self, event):
+        self.parent.Navigate(wx.NavigationKeyEvent.IsForward)
+
 class PatientDetails(wx.Frame): 
     def __init__(self, parent, title):
         super(PatientDetails, self).__init__(parent, title = title, size = (700, 500)) 
-        #self = parent
         self.parentFrame = parent  
+        #HIGHLIGHT_COLOR = (255, 0, 0)
+        #self.highligt_color = wx.Colour(HIGHLIGHT_COLOR)
+        self.windowFrameColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME)
         self.InitUI() 
         self.Centre() 
         self.Show()      
-         
+
+    def Assign(self, rtc, strng):
+        #print(strng)
+        rtc.WriteText(strng)
+        rtc.BeginFontSize(12)
+        rtc.BeginBold()
+        rtc.BeginTextColour('red')
+        rtc.WriteText ("*")
+        rtc.EndTextColour()
+        rtc.EndBold()
+        rtc.EndFontSize()
+        rtc.EnableVerticalScrollbar(False)
+        rtc.GetCaret().Hide()
+        rtc.SetBackgroundColour(self.windowFrameColor)
+
     def InitUI(self): 
        
-        panel = wx.Panel(self) 
+        self.panel = wx.Panel(self) 
         sizer = wx.GridBagSizer(0,0)
             
-        text = wx.StaticText(panel, label = "UHID:") 
+        #text = wx.StaticText(self.panel, label = "UHID:") 
+        text = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        self.Assign(text, "UHID:")
         sizer.Add(text, pos = (0, 0), flag = wx.ALL, border = 5)
-            
-        self.tc = wx.TextCtrl(panel) 
+        
+        self.tc = wx.TextCtrl(self.panel, validator=CharValidator('only-digit')) 
         sizer.Add(self.tc, pos = (0, 1), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.tc.SetToolTip("Enter UHID No.")
 
-        text1 = wx.StaticText(panel, label = "Referring Hospital:")
+        #text1 = wx.StaticText(self.panel, label = "Referring Hospital:")
+        text1 = rt.RichTextCtrl(self.panel,size=(170,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        self.Assign(text1, "Referring Hospital:")
         sizer.Add(text1, pos = (0, 2), flag = wx.ALL, border = 5)
 
-        self.tc1 = wx.TextCtrl(panel) 
+        self.tc1 = wx.Choice(self.panel, choices=['H1', 'H2', 'H3'])
+        #self._droplist.Bind(wx.EVT_CHOICE, self.choice_click) 
         sizer.Add(self.tc1, pos = (0,3),flag = wx.EXPAND|wx.ALL, border = 5)
          
-        text2 = wx.StaticText(panel, label = "MRD No:") 
+        text2 = wx.StaticText(self.panel, label = " MRD No:") 
         sizer.Add(text2, pos = (1, 0), flag = wx.ALL, border = 5)
             
-        self.tc2 = wx.TextCtrl(panel) 
+        self.tc2 = wx.TextCtrl(self.panel, validator=CharValidator('only-digit')) 
         sizer.Add(self.tc2, pos = (1,1), flag = wx.ALL|wx.EXPAND, border = 5) 
 
-        text3 = wx.StaticText(panel,label = "Referring Dept:") 
+        text3 = wx.StaticText(self.panel,label = " Referring Dept:") 
         sizer.Add(text3, pos = (1, 2), flag = wx.ALL, border = 5)
 
-        self.tc3 = wx.TextCtrl(panel) 
+        self.tc3 = wx.Choice(self.panel, choices=['D1', 'D2', 'D3'])
         sizer.Add(self.tc3, pos = (1,3),flag = wx.EXPAND|wx.ALL, border = 5)
          
-        text4 = wx.StaticText(panel,label = "Patient Name:") 
+        #text4 = wx.StaticText(self.panel,label = "Patient Name:")
+        text4 = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        self.Assign(text4, "Patient Name:")
         sizer.Add(text4, pos = (2, 0), flag = wx.ALL, border = 5) 
             
-        self.tc4 = wx.TextCtrl(panel) 
+        self.tc4 = wx.TextCtrl(self.panel, validator=CharValidator('only-alpha')) 
         sizer.Add(self.tc4, pos = (2,1), flag = wx.ALL|wx.EXPAND, border = 5) 
             
-        text5 = wx.StaticText(panel,label = "Sample Collection Date:") 
+        text5 = wx.StaticText(self.panel,label = " Sample Collection Date:") 
         sizer.Add(text5, pos = (2, 2), flag = wx.ALL, border = 5)
-            
-        self.tc5 = wx.TextCtrl(panel) 
-        sizer.Add(self.tc5, pos = (2,3),flag = wx.EXPAND|wx.ALL, border = 5) 
+
+        self.date1 = wx.adv.DatePickerCtrl( self.panel, wx.ID_ANY, size=(120,-1), style = wx.TAB_TRAVERSAL| wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE)
+        self.date1.SetValue(wx.DefaultDateTime)
+        self.date1.SetToolTip("Select date of Sample Collection")
+        sizer.Add(self.date1, pos = (2,3),flag = wx.EXPAND|wx.ALL, border = 5)
+        #invaliddt = wx.DateTime()
+        #.SetValue(invaliddt)
          
-        text6 = wx.StaticText(panel, label = "Age:") 
-        sizer.Add(text6, pos = (3, 0), flag = wx.ALL, border = 5) 
-            
-        self.tc6 = wx.TextCtrl(panel) 
-        sizer.Add(self.tc6, pos = (3,1), flag = wx.ALL|wx.EXPAND, border = 5) 
+        #text6 = wx.StaticText(self.panel, label = "Date of Birth:") 
+        text6 = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        self.Assign(text6, "Date of Birth:")
+        sizer.Add(text6, pos = (3, 0), flag = wx.ALL, border = 5)
+
+        self.date2 = wx.adv.DatePickerCtrl( self.panel, wx.ID_ANY, size=(120,-1), style = wx.TAB_TRAVERSAL| wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE)
+        self.date2.SetValue(wx.DefaultDateTime)
+        self.date2.SetToolTip("Select Date of Birth")
+        sizer.Add(self.date2, pos = (3,1), flag = wx.ALL|wx.EXPAND, border = 5)
+        #self.Age.SetMaxLength(3)   
         #sizer.AddGrowableRow(3)
 
-        text7 = wx.StaticText(panel,label = "Lab Reference No:") 
+        text7 = wx.StaticText(self.panel,label = " Lab Reference No:") 
         sizer.Add(text7, pos = (3, 2), flag = wx.ALL, border = 5)
 
-        self.tc7 = wx.TextCtrl(panel) 
+        self.tc7 = wx.TextCtrl(self.panel, validator=CharValidator('only-digit')) 
         sizer.Add(self.tc7, pos = (3,3), flag = wx.EXPAND|wx.ALL, border = 5)
 
-        text8 = wx.StaticText(panel,label = "Gender:")
+        #text8 = wx.StaticText(self.panel,label = "Gender:")
+        text8 = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        self.Assign(text8, "Gender:")
         sizer.Add(text8, pos = (4, 0), flag = wx.ALL, border = 5) 
             
         sampleList = ['Male', 'Female']
-        self.gender = wx.RadioBox(panel, -1, "", wx.DefaultPosition, wx.DefaultSize, sampleList, 2, wx.RA_SPECIFY_COLS) 
+        self.gender = wx.RadioBox(self.panel, -1, "", wx.DefaultPosition, wx.DefaultSize, sampleList, 2, wx.RA_SPECIFY_COLS) 
         sizer.Add(self.gender, pos = (4,1), flag = wx.ALL, border = 5) 
 
-        text9 = wx.StaticText(panel,label = "Report Generated Date:") 
+        # text9 = wx.StaticText(self.panel,label = "Report Generated Date:") 
+        # sizer.Add(text9, pos = (4, 2), flag = wx.ALL, border = 5)
+
+        # self.tc9 = wx.TextCtrl(self.panel) 
+        # sizer.Add(self.tc9, pos = (4,3),flag = wx.ALL|wx.EXPAND, border = 5)
+
+        text9 = wx.StaticText(self.panel,label = " Lab Name:") 
         sizer.Add(text9, pos = (4, 2), flag = wx.ALL, border = 5)
 
-        self.tc9 = wx.TextCtrl(panel) 
-        sizer.Add(self.tc9, pos = (4,3),flag = wx.ALL|wx.EXPAND, border = 5)
+        self.tc8 = wx.TextCtrl(self.panel) 
+        sizer.Add(self.tc8, pos = (4,3),flag = wx.EXPAND|wx.ALL, border = 5) 
 
-        text10 = wx.StaticText(panel,label = "Ward Name/Collection Centre:") 
+        text10 = wx.StaticText(self.panel,label = " Ward Name/Collection Centre:") 
         sizer.Add(text10, pos = (5, 0), flag = wx.ALL, border = 5) 
             
-        self.tc10 = wx.TextCtrl(panel) 
-        sizer.Add(self.tc10, pos = (5,1), flag = wx.ALL|wx.EXPAND, border = 5) 
-
-        text11 = wx.StaticText(panel,label = "Lab Name:") 
-        sizer.Add(text11, pos = (5, 2), flag = wx.ALL, border = 5)
-
-        self.tc11 = wx.TextCtrl(panel) 
-        sizer.Add(self.tc11, pos = (5,3),flag = wx.EXPAND|wx.ALL, border = 5) 
+        self.tc9 = wx.TextCtrl(self.panel) 
+        sizer.Add(self.tc9, pos = (5,1), flag = wx.ALL|wx.EXPAND, border = 5) 
 
         sizer.AddGrowableCol(1)
         sizer.AddGrowableCol(3)
          
-        saveBtn = wx.Button(panel, label = "Save", size=(90, 28)) 
-        cancelBtn = wx.Button(panel, wx.ID_CLOSE, label = "Cancel", size=(90, 28)) 
+        saveBtn = wx.Button(self.panel, label = "Save", size=(90, 28)) 
+        cancelBtn = wx.Button(self.panel, wx.ID_CLOSE, label = "Cancel", size=(90, 28))
+        saveBtn.SetToolTip("Register")
             
         sizer.Add(cancelBtn, pos = (8, 2), flag = wx.LEFT, border = 50) 
         sizer.Add(saveBtn, pos = (8, 3), flag = wx.RIGHT|wx.BOTTOM, border = 10)
@@ -722,24 +861,57 @@ class PatientDetails(wx.Frame):
         saveBtn.Bind(wx.EVT_BUTTON, self.OnScreen3)
 
         #sizer.AddGrowableRow()
-        panel.SetSizerAndFit(sizer)
+        self.panel.SetSizerAndFit(sizer)
 
     def OnScreen3(self, evt):
         dic = {}
         dic['UHID'] = self.tc.GetValue()
-        dic['Referring Hospital'] = self.tc1.GetValue()
+        dic['Referring Hospital'] = self.tc1.GetStringSelection() if self.tc1.GetStringSelection() else ''
         dic['MRD No'] = self.tc2.GetValue()
-        dic['Referring Dept'] = self.tc3.GetValue()
+        dic['Referring Dept'] = self.tc3.GetStringSelection() if self.tc3.GetStringSelection() else ''
         dic['Patient Name'] = self.tc4.GetValue()
-        dic['Sample Collection Date'] = self.tc5.GetValue()
-        dic['Age'] = self.tc6.GetValue()
+        dic['Sample Collection Date'] = wx.DateTime.FormatISODate(self.date1.GetValue()) if self.date1.GetValue().IsValid() else ''
+        dic['Date of Birth'] = wx.DateTime.FormatISODate(self.date2.GetValue()) if self.date2.GetValue().IsValid() else ''
         dic['Lab Reference No'] = self.tc7.GetValue()
         dic['Gender'] = 'Female' if self.gender.GetSelection() else 'Male'
-        dic['Report Generated Date'] = self.tc9.GetValue()
-        dic['Ward Name/Collection Centre'] = self.tc10.GetValue()
-        dic['Lab Name'] = self.tc11.GetValue()
+        #dic['Report Generated Date'] = self.tc9.GetValue()
+        dic['Lab Name'] = self.tc8.GetValue()
+        dic['Ward Name/Collection Centre'] = self.tc9.GetValue()
         print(dic)
-        Screen3(None, -1, 'listbox')
+        if dic['UHID']:
+            if dic['Referring Hospital']:
+                if dic['Patient Name']:
+                    if dic['Date of Birth']:
+                        if dic['Gender']:
+                            Screen3(None, -1, 'listbox')
+                        else:
+                            #color = self.windowFrameColor if self.textctrl.GetValue() else self.highligt_color
+                            #self.gender.SetHint("Mandatory field")
+                            tip = wx.adv.RichToolTip("Mandatory","Field is empty,Choose Gender\n""\n""Fill the Mandatory field.")
+                            tip.SetIcon(wx.ICON_WARNING)
+                            tip.ShowFor(self.gender)
+                    else:
+                        #self.date2.SetHint("Mandatory field")
+                        tip = wx.adv.RichToolTip("Mandatory","Field is empty,Enter Date of Birth\n""\n""Fill the Mandatory field.")
+                        tip.SetIcon(wx.ICON_WARNING)
+                        tip.ShowFor(self.date2)
+                else:
+                    self.tc4.SetHint("Mandatory field")
+                    tip = wx.adv.RichToolTip("Mandatory","Field is empty,Enter Patient Name\n""\n""Fill the Mandatory field.")
+                    tip.SetIcon(wx.ICON_WARNING)
+                    tip.ShowFor(self.tc4)
+
+            else:
+                #self.tc1.SetHint("Mandatory field")
+                tip = wx.adv.RichToolTip("Mandatory","Field is empty,Enter Referring Hospital\n""\n""Fill the Mandatory field.")
+                tip.SetIcon(wx.ICON_WARNING)
+                tip.ShowFor(self.tc1)
+        else:
+            self.tc.SetHint("Mandatory field")
+            tip = wx.adv.RichToolTip("Mandatory","Field is empty,Enter UHID Number\n""\n""Fill the Mandatory field.")
+            tip.SetIcon(wx.ICON_WARNING)
+            tip.ShowFor(self.tc)
+
 
     def onClose(self, event):
         """"""
@@ -833,7 +1005,7 @@ class GeneratePanel(wx.Frame):
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer()
 
-        self.dpc1 = wx.adv.DatePickerCtrl( panel, wx.ID_ANY, wx.DefaultDateTime, size=(120,-1))
+        self.dpc1 = wx.adv.DatePickerCtrl( panel, wx.ID_ANY, size=(120,-1))
         self.Bind(wx.adv.EVT_DATE_CHANGED, self.OnFromDateChanged, self.dpc1)
         sizer.Add(self.dpc1, (3,9), (2, 4), wx.RIGHT|wx.BOTTOM, 40)
         # In some cases the widget used above will be a native date
@@ -842,8 +1014,11 @@ class GeneratePanel(wx.Frame):
         self.Bind(wx.adv.EVT_DATE_CHANGED, self.OnToDateChanged, self.dpc2)
         sizer.Add(self.dpc2, (3,16), (2, 4), wx.LEFT|wx.BOTTOM, 40)
         now = wx.DateTime.Now()
+        print(now)
         print(wx.DateTime.FormatISODate(now))
         print(wx.DateTime.Format(now))
+        self.dpc1.SetValue(wx.DateTime.Now().SetDay(1))
+
         
         
         self.searchExpectedResults = wx.SearchCtrl(panel,
@@ -897,12 +1072,12 @@ class GeneratePanel(wx.Frame):
     def OnFromDateChanged(self, evt):
         selected_date = evt.GetDate()
         self.dpc2.SetRange(dt1= selected_date, dt2= wx.DefaultDateTime)
-        self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= self.dpc2.GetValue())
+        #self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= self.dpc2.GetValue())
         print (selected_date.Format("%d-%m-%Y"))
 
     def OnToDateChanged(self, evt):
         selected_date = evt.GetDate()
-        self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= selected_date)
+        #self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= selected_date)
         self.dpc2.SetRange(dt1= self.dpc1.GetValue(), dt2= wx.DefaultDateTime)
         print (selected_date.Format("%d-%m-%Y"))
 
