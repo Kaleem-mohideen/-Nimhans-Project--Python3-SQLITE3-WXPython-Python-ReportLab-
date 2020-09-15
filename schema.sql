@@ -51,6 +51,7 @@ CREATE TABLE antiBodyOptions(
 	optionText		TEXT NOT NULL,
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
 	UNIQUE(optionId, antiBodyId, assayId),
+	UNIQUE(assayId, antiBodyId, optionText),
 	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodies(antiBodyId, assayId));
 
 CREATE TABLE hospitalMaster(
