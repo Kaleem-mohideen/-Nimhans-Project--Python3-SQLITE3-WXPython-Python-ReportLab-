@@ -57,6 +57,11 @@ CREATE TABLE hospitalMaster(
 	hospitalName		TEXT PRIMARY KEY,
 	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)));
 
+
+CREATE TABLE departmentMaster(
+	departmentName		TEXT PRIMARY KEY,
+	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)));
+
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,
 	requestTime		DATETIME NOT NULL DEFAULT(datetime('now')),
@@ -65,11 +70,12 @@ CREATE TABLE patientRequest(
 	mrd 			TEXT,
 	collectionPoint		TEXT,
 	hospitalName		TEXT,
-	referingDepartment	TEXT,
+	departmentName 		TEXT,
 	collectionDate		DATE,
 	labReferenceNumber	TEXT,
 	reportDate		DATE,
 	labName			TEXT,
+	FOREIGN KEY(departmentName) REFERENCES departmentMaster(departmentName),
 	FOREIGN KEY(hospitalName) REFERENCES hospitalMaster(hospitalName),
 	FOREIGN KEY(patientId) REFERENCES patientMaster(patientId));
 
