@@ -95,6 +95,34 @@ def insertUpdateQuery(_queryString, _values):
             cur.close()
             con.close()
 
+def registerPatient():
+    '''
+    '''
+    return -1
+
+def registerAssays():
+    '''
+    '''
+    return -1
+
+def createPatient(_patientName, _patientDob, _patientGender='M', _patientEmail='', _mobile=''):
+    '''
+    '''
+    if _patientGender not in ['M', 'F']:
+        raise TypeError('_patientGender has to be either M or F, received {0} instead'.format(_patientGender))
+    if not isinstance(_patientDob, date):
+        raise TypeError('_dob has to be of type datetime.date, recived {0} instead'.format(type(_patientDob)))
+    _insertQuery = '''INSERT INTO patientMaster(patientName, patientDob, patientGender, patientEmail, mobile) 
+    VALUES (?,?,?,?,?)'''
+    _insertTuple = (_patientName, _patientDob, _patientGender, _patientEmail, _mobile)
+    _results = insertUpdateQuery(_insertQuery, _insertTuple)
+    if _results[0]:
+        return _results[1]
+    if type(_results[1]) == lite.IntegrityError: #and 'UNIQUE' in _results[1].message:
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
 
 def getAssayList():
     _rows = selectQuery('SELECT * FROM assayMaster WHERE enabled = 1 ORDER BY assayName')
@@ -302,24 +330,20 @@ def getAntiBodies(_assayId=None):
 
 
 if __name__ == '__main__':
-    print('works')
-    addAntiBody(1, 'buffalo')
-    disableAntiBody(1,11)
-    addAntiBody(1, 'buffalo')
-    print('dont with this.')
-    _id = 0
     try:
-        _id =addOption(1,11,'option#1')
-        print(_id)
+        createPatient('_patientName1', '2010-2-21', 'M', '_patientEmail', '_mobile')
     except Exception as ex:
+        print(1)
         print(ex)
     try:
-        disableOption(1,10,_id)
+        createPatient('_patientName2', date.today(), 'F', '_patientEmail', '_mobile')
+        print('success')
     except Exception as ex:
+        print(2)
         print(ex)
+
     try:
-        disableOption(1,11,_id)
-        _id =addOption(1,11,'option#1')
-        print(_id)
+        createPatient('_patientName3', date.today(), '3', '_patientEmail', '_mobile')
     except Exception as ex:
+        print(3)
         print(ex)
