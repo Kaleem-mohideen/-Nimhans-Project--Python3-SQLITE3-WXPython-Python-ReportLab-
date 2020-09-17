@@ -123,3 +123,9 @@ CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.
 			ON body.assayId = options.assayId AND body.antiBodyId = options.antiBodyId;
 
 
+
+CREATE VIEW viewLabs AS SELECT * FROM labMaster WHERE enabled = 1;
+
+CREATE VIEW viewHospitals AS SELECT * FROM hospitalMaster WHERE enabled = 1;
+
+CREATE VIEW viewDepartments AS SELECT * FROM departmentMaster WHERE enabled = 1;
