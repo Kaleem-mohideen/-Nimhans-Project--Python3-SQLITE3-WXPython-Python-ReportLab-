@@ -208,15 +208,15 @@ def getLabs():
 
 
 
-def addDepartment(_deparmentName):
+def addDepartment(_departmentName):
     '''
     '''
     _insertQuery = 'INSERT INTO departmentMaster VALUES (?)'
-    _results = insertUpdateQuery(_insertQuery, (_deparmentName,))
+    _results = insertUpdateQuery(_insertQuery, (_departmentName,))
     if _results[0]:
         return True
     if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
-        _updateQuery = 'UPDATE deparmentMaster SET enabled = 1 WHERE deparmentName = ?'
+        _updateQuery = 'UPDATE departmentMaster SET enabled = 1 WHERE departmentName = ?'
         _updateResults = insertUpdateQuery(_updateQuery, (_departmentName,))
         return True
     elif isinstance(_results[1], Exception):
@@ -228,7 +228,7 @@ def addDepartment(_deparmentName):
 def disableDeparment(_departmentName):
     '''
     '''
-    _updateQuery = 'UPDATE deparmentMaster(departmentName) SET enabled = 0  WHERE departmentName = ?'
+    _updateQuery = 'UPDATE departmentMaster SET enabled = 0  WHERE departmentName = ?'
     _results = insertUpdateQuery(_updateQuery, (_departmentName,))
     if _results[0]:
         return True
@@ -243,7 +243,7 @@ def getDepartments():
     '''
     _results = selectQuery('SELECT * FROM viewDepartments')
     if _results[0]:
-        return [e['deparmentName'] for e in _results[1]]
+        return [e['departmentName'] for e in _results[1]]
     if isinstance(_results[1], Exception):
         raise _results[1]
     else:

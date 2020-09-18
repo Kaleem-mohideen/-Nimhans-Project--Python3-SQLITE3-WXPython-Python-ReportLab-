@@ -121,6 +121,9 @@ class MasterMenu(wx.Menu):
         LabMasterItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&Lab Master', kind=wx.ITEM_NORMAL)
         self.Append(LabMasterItem)
         self.Bind(wx.EVT_MENU, handler=self.onLabMaster, source=LabMasterItem)
+        DepartmentMasterItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&Department Master', kind=wx.ITEM_NORMAL)
+        self.Append(DepartmentMasterItem)
+        self.Bind(wx.EVT_MENU, handler=self.onDepartmentMaster, source=DepartmentMasterItem)
 
     def onTestMaster(self, event):
         app = wx.App(redirect=False)
@@ -143,6 +146,12 @@ class MasterMenu(wx.Menu):
         frame.Show()
         app.MainLoop()
 
+    def onDepartmentMaster(self, event):
+        app = wx.App(redirect=False)
+        frame = DepartmentMasterPanel(None, 'Department Master')
+        frame.SetSize((800, 580))
+        frame.Show()
+        app.MainLoop()
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
 class TestMasterPanel(wx.Frame):
@@ -309,7 +318,7 @@ class MyDialog(wx.Dialog, TestMasterPanel):
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         elif testInput is not None:
-            msgBox = wx.MessageBox('The Test had already exists, Try Adding New Test', 'Existing Error', wx.OK| wx.ICON_WARNING)
+            msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Test'.format(testInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             # print(msgBox)
             # print(wx.OK)
             if msgBox == wx.OK:
@@ -555,8 +564,8 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
             self.addtext.SetForegroundColour(wx.BLACK)
 
     def onAdd(self, evt):
-        testInput = None
-        if self.addtext.GetValue(): testInput =self.addtext.GetValue()
+        antibdyInput = None
+        if self.addtext.GetValue(): antibdyInput =self.addtext.GetValue()
         if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
             font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
             self.addtext.SetFont(font)
@@ -565,19 +574,19 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
             font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
-        if testInput is not None and testInput not in self.parent.Antibdy_items:
-            addedAntibdyId = db.addAntiBody(self.parent.assayId, testInput)
+        if antibdyInput is not None and antibdyInput not in self.parent.Antibdy_items:
+            addedAntibdyId = db.addAntiBody(self.parent.assayId, antibdyInput)
             if addedAntibdyId != -1 and type(addedAntibdyId) == int:
-                self.parent.antibdy_itemsid[testInput] = addedAntibdyId
-                self.parent.Antibdy_items.append(testInput)
+                self.parent.antibdy_itemsid[antibdyInput] = addedAntibdyId
+                self.parent.Antibdy_items.append(antibdyInput)
                 self.parent.AntibdyList.Set(self.parent.Antibdy_items)
                 self.parent.discardBtn.Enable()
                 self.Close()
             else:
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
-        elif testInput is not None:
-            msgBox = wx.MessageBox('The Antibody had already exists, Try Adding New Antibody', 'Existing Error', wx.OK| wx.ICON_WARNING)
+        elif antibdyInput is not None:
+            msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Antibody'.format(antibdyInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             #msg = msgBox.ShowModal()
             # print(msgBox)
             # print(wx.OK)
@@ -627,8 +636,8 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
             self.addtext1.SetForegroundColour(wx.BLACK)
 
     def onAdd1(self, evt):
-        testInput = None
-        if self.addtext1.GetValue(): testInput =self.addtext1.GetValue()
+        optionInput = None
+        if self.addtext1.GetValue(): optionInput =self.addtext1.GetValue()
         if self.addtext1.GetValue() and self.addtext1.GetForegroundColour() == '#848484':
             font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
             self.addtext1.SetFont(font)
@@ -637,19 +646,19 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
             font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
             self.addtext1.SetFont(font)
             self.addtext1.SetForegroundColour('#848484') 
-        if testInput is not None and testInput not in self.parent.choices:
-            addedChoiceId = db.addOption(self.parent.assayId, self.parent.antiId, testInput)
+        if optionInput is not None and optionInput not in self.parent.choices:
+            addedChoiceId = db.addOption(self.parent.assayId, self.parent.antiId, optionInput)
             if addedChoiceId and type(addedChoiceId) == int:
-                self.parent.choicesid[testInput] = addedChoiceId
-                self.parent.choices.append(testInput)
+                self.parent.choicesid[optionInput] = addedChoiceId
+                self.parent.choices.append(optionInput)
                 self.parent.listResult.Set(self.parent.choices)
                 self.parent.discardBtnResult.Enable()
                 self.Close()
             else:
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
-        elif testInput is not None:
-            msgBox = wx.MessageBox('The Option had already exists, Try Adding New Option', 'Existing Error', wx.OK| wx.ICON_WARNING)
+        elif optionInput is not None:
+            msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Option'.format(optionInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             #msg = msgBox.ShowModal()
             # print(msgBox)
             # print(wx.OK)
@@ -673,15 +682,9 @@ class HospitalMasterPanel(wx.Frame):
     def InitUI(self):
         self.panel = wx.Panel(self)
         sizer = wx.GridBagSizer(0,0)
-        # self.hsp_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
-        # if len(self.hsp_itemsid)==1 and list(self.hsp_itemsid.keys())[0] == None and list(self.hsp_itemsid.values())[0] == None:
-        #     self.hsp_items = []
-        #     self.hsp_itemsid = {}
-        # else:
         self.hsp_items = db.getHospitals()
         print(self.hsp_items)
         self.hspList = wx.ListBox(self.panel, choices=self.hsp_items, size=(270, 250), style=wx.LB_MULTIPLE)
-        #self.hspList.SetSelection(0)
         sizer.Add(self.hspList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
         self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.hspList)
 
@@ -716,10 +719,8 @@ class HospitalMasterPanel(wx.Frame):
             dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Hospital?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
-                #print(self.selectedString)
                 print(self.selectedString)
                 if db.disableHospital(self.selectedString):
-                    #del self.hsp_itemsid[self.selectedString] 
                     self.hsp_items.remove(self.selectedString)
                     if not self.hsp_items:
                         self.discardBtn.Disable()
@@ -770,7 +771,6 @@ class MyDialog3(wx.Dialog, HospitalMasterPanel):
 
 
         self.ShowModal()
-        #wx.CallAfter(self.panel_sizer.Layout)
 
     def onFirstClick(self, evt):
         if self.addtext.GetForegroundColour() == '#848484':
@@ -794,7 +794,6 @@ class MyDialog3(wx.Dialog, HospitalMasterPanel):
         if hspInput is not None and hspInput not in self.parent.hsp_items:
             addedHsp = db.addHospital(hspInput)
             if addedHsp:
-                #self.parent.hsp_itemsid[hspInput] = addedAssayId
                 self.parent.hsp_items.append(hspInput)
                 self.parent.hspList.Set(self.parent.hsp_items)
                 self.parent.discardBtn.Enable()
@@ -803,9 +802,7 @@ class MyDialog3(wx.Dialog, HospitalMasterPanel):
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         elif hspInput is not None:
-            msgBox = wx.MessageBox('The Hospital had already exists, Try Adding New Hospital', 'Existing Error', wx.OK| wx.ICON_WARNING)
-            # print(msgBox)
-            # print(wx.OK)
+            msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Hospital'.format(hspInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
                 font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
@@ -825,13 +822,8 @@ class LabMasterPanel(wx.Frame):
     def InitUI(self):
         self.panel = wx.Panel(self)
         sizer = wx.GridBagSizer(0,0)
-        self.lab_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
-        if len(self.lab_itemsid)==1 and list(self.lab_itemsid.keys())[0] == None and list(self.lab_itemsid.values())[0] == None:
-            self.lab_items = []
-            self.lab_itemsid = {}
-        else:
-            self.lab_items = [i for i in self.lab_itemsid]
-        print(self.lab_itemsid)
+        self.lab_items = db.getLabs()
+        print(self.lab_items)
         self.labList = wx.ListBox(self.panel, choices=self.lab_items, size=(270, 250), style=wx.LB_MULTIPLE)
         #self.labList.SetSelection(0)
         sizer.Add(self.labList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
@@ -868,17 +860,15 @@ class LabMasterPanel(wx.Frame):
             dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Lab?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
-                #print(self.selectedString)
-                print(self.lab_itemsid[self.selectedString])
-                if db.disableAssay(self.lab_itemsid[self.selectedString]):
-                    del self.lab_itemsid[self.selectedString] 
+                print(self.selectedString)
+                if db.disableLab(self.selectedString):
                     self.lab_items.remove(self.selectedString)
                     if not self.lab_items:
                         self.discardBtn.Disable()
                     self.labList.Deselect(self.index)
                     self.index = None
                     self.labList.Set(self.lab_items)
-                    print(self.lab_itemsid)
+                    print(self.lab_items)
                 else:
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
@@ -890,7 +880,7 @@ class LabMasterPanel(wx.Frame):
             self.labList.Deselect(self.index)
             self.index = None
         dlg = MyDialog4(self)
-        print(self.lab_itemsid)
+        print(self.lab_items)
         dlg.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class MyDialog4(wx.Dialog, LabMasterPanel):
@@ -943,9 +933,8 @@ class MyDialog4(wx.Dialog, LabMasterPanel):
 
 
         if labInput is not None and labInput not in self.parent.lab_items:
-            addedAssayId = db.addAssay(labInput)
-            if addedAssayId != -1:
-                self.parent.lab_itemsid[labInput] = addedAssayId
+            addedLab = db.addLab(labInput)
+            if addedLab:
                 self.parent.lab_items.append(labInput)
                 self.parent.labList.Set(self.parent.lab_items)
                 self.parent.discardBtn.Enable()
@@ -954,15 +943,154 @@ class MyDialog4(wx.Dialog, LabMasterPanel):
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         elif labInput is not None:
-            msgBox = wx.MessageBox('The Lab had already exists, Try Adding New Lab', 'Existing Error', wx.OK| wx.ICON_WARNING)
-            # print(msgBox)
-            # print(wx.OK)
+            msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Lab'.format(labInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
                 font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the Lab name")  # This text is grey, and disappears when you type
+#---------------------------------------------------------------------------------------------------------------------------------------------
+class DepartmentMasterPanel(wx.Frame):
+    def __init__(self, parent, title):
+        super(DepartmentMasterPanel, self).__init__(parent, title = title)
+        self.parentFrame = parent
+        self.InitUI()
+        self.Centre() 
+        self.Show()     
+        self.index = None
+
+    def InitUI(self):
+        self.panel = wx.Panel(self)
+        sizer = wx.GridBagSizer(0,0)
+        self.dpt_items = db.getDepartments()
+        print(self.dpt_items)
+        self.dptList = wx.ListBox(self.panel, choices=self.dpt_items, size=(270, 250), style=wx.LB_MULTIPLE)
+        #self.dptList.SetSelection(0)
+        sizer.Add(self.dptList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.dptList)
+
+        self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
+        addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+
+
+        sizer.Add(self.discardBtn, pos = (1,3), flag = wx.RIGHT, border = 50)
+        sizer.Add(addBtn, pos = (8,0), flag = wx.LEFT, border = 50)
+
+        self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
+        addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+
+        if not self.dpt_items:
+            self.discardBtn.Disable()
+        else:
+            self.discardBtn.Enable()
+
+        sizer.AddGrowableCol(0)
+        self.panel.SetSizerAndFit(sizer)
+        self.Centre()
+        self.Layout() 
+
+    def onListboxSelection(self, evt):
+        #pass
+        self.index = evt.GetSelection()
+        
+
+    def onDiscard(self, evt):
+        if self.index != None:
+            self.selectedString = str(self.dptList.GetString(self.index))
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Department?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dia = dialog.ShowModal() 
+            if dia == wx.ID_YES:
+                print(self.selectedString)
+                if db.disableDeparment(self.selectedString):
+                    self.dpt_items.remove(self.selectedString)
+                    if not self.dpt_items:
+                        self.discardBtn.Disable()
+                    self.dptList.Deselect(self.index)
+                    self.index = None
+                    self.dptList.Set(self.dpt_items)
+                    print(self.dpt_items)
+                else:
+                    wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
+        else:
+            wx.MessageBox('None of them Choosen, Try Choosing Department that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+
+    def onAdd(self, evt):
+        if self.index != None:
+            self.dptList.Deselect(self.index)
+            self.index = None
+        dlg = MyDialog5(self)
+        print(self.dpt_items)
+        dlg.Destroy()
+#---------------------------------------------------------------------------------------------------------------------------------------------
+class MyDialog5(wx.Dialog, DepartmentMasterPanel):
+
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
+        self.parent = parent
+        self.addPanel = wx.Panel(self)
+        self.text = wx.StaticText(self.addPanel, -1, "Enter the Department that you want to Add:", pos=(10, 12))
+        self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
+        self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        self.addtext.SetFont(font)
+        self.addtext.SetForegroundColour('#848484') 
+        self.addtext.SetHint("Enter the Department name")  # This text is grey, and disappears when you type
+        self.addPanel.SetFocus()
+
+        self.panel_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel_sizer.Add(self.text, 0, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addtext, 1, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addBtn, 2, wx.ALL, 5)
+        self.addPanel.SetSizer(self.panel_sizer)
+
+        self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+        self.addtext.Bind(wx.EVT_TEXT_ENTER,self.onAdd)
+        self.addtext.Bind(wx.EVT_TEXT,self.onFirstClick)  
+
+
+
+        self.ShowModal()
+        #wx.CallAfter(self.panel_sizer.Layout)
+
+    def onFirstClick(self, evt):
+        if self.addtext.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour(wx.BLACK)
+
+    def onAdd(self, evt):
+        dptInput = None
+        if self.addtext.GetValue(): dptInput =self.addtext.GetValue()
+        if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour(wx.BLACK)
+        else:
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour('#848484') 
+
+
+        if dptInput is not None and dptInput not in self.parent.dpt_items:
+            addedDpt = db.addDepartment(dptInput)
+            if addedDpt:
+                self.parent.dpt_items.append(dptInput)
+                self.parent.dptList.Set(self.parent.dpt_items)
+                self.parent.discardBtn.Enable()
+                self.Close()
+            else:
+                wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
+        elif dptInput is not None:
+            msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Department'.format(dptInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
+            if msgBox == wx.OK:
+                self.addtext.SetValue('')
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                self.addtext.SetFont(font)
+                self.addtext.SetForegroundColour('#848484')
+                self.addtext.SetHint("Enter the Department name")  # This text is grey, and disappears when you type
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class CharValidator(wx.Validator):
     ''' Validates data as it is entered into the text controls. '''
