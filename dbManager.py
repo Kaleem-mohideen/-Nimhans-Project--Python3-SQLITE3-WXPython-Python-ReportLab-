@@ -98,15 +98,79 @@ def insertUpdateQuery(_queryString, _values=None):
             cur.close()
             con.close()
 
-def registerPatient():
+def registerPatient(_uhid, _patientName, _patientDob, _patientGender = 'M', _hosptialName, 
+                    _patientEmail = '', _mobile = '', _mrd = '', _collectionPoint = '', _collectionDate = None
+                    _labReferenceNumber= '', _labName = ''):
     '''
     '''
-    return -1
+    _patientId = createPatient(_patientName, _patientDob, _patientGender, _patientEmail, _mobile)
+    if _collectionDate:
+        if not isinstance(_collectionDate, date):
+            raise TypeError('_collectionDate has to be of type date received {0} instead'.type(_collectionDate))
+    #CHECK labName
+    if _labName:
+        _checkQuery = 'SELECT * FROM viewLabs WHERE labName = ?'
+        _status = selectQuery(_checkQuery, (_labName,))
+        if _status[0]:
+            if len(_status[1]) != 1:
+                raise Exception('invalid labName: {0}'.format(_labName))
+        else:
+            if isinstance(_status[1], Exception):
+                raise _status[1]
+            else: 
+                raise Exception(_status[1])
+    #CHECK hospitalName
+    if _hosptialName:
+        _checkQuery = 'SELECT * FROM viewHospitals WHERE hospitalName = ?'
+        _status = selectQuery(_checkQuery, (_hospitalName,))
+        if _status[0]:
+            if len(_status[1]) != 1:
+                raise Exception('invalid Hosptial Name: {0}'.format(_hospitalName))
+        else:
+            if isinstance(_status[1], Exception):
+                raise _status[1]
+            else: 
+                raise Exception(_status[1])
+    #CHECK departmentName
+    if _departmentName:
+        _checkQuery = 'SELECT * FROM viewDepartments WHERE departmentName = ?'
+        _status = selectQuery(_checkQuery, (_departmentName,))
+        if _status[0]:
+            if len(_status[1]) != 1:
+                raise Exception('invalid Department Name: {0}'.format(department_Name))
+        else:
+            if isinstance(_status[1], Exception):
+                raise _status[1]
+            else: 
+                raise Exception(_status[1])
+ 
+    _insertQuery = '''INSERT INTO patientRequest (patientId, uhid, mrd, collectionPoint, hospitalName, 
+    departmentName, collectionDate, labRefernceNumber) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
+    _insertTuple = (_patientId, _uhid, _mrd, _collectionPoint, _hospitalName, _departmentName, _collectionDate, _labReferenceNumber)
+    _status = insertUpdateQuery(_insertQuery, _insertTuple)
+    if _status[0]:
+        return _status[1]
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        else: 
+            raise Exception(_status[1])
 
-def registerAssays():
+def registerAssays(_requestId, _assayList):
     '''
     '''
-    return -1
+    _insertList = [(_requestId, _assayId) for _assayId in _assayList]
+    _insertQuery = 'INSERT INTO patientRequestList (requestId, assayId) VALUES (?, ?)'
+    _status = insertUpdateMany(_insertQuery, _insertList)
+    if _status[0]:
+        return True
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        else:
+            raise Exceptions(_status[1])
+
 
 def createPatient(_patientName, _patientDob, _patientGender='M', _patientEmail='', _mobile=''):
     '''
