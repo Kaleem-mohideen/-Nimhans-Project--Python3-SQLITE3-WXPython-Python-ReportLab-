@@ -67,7 +67,7 @@ def insertUpdateMany(_queryString, _values):
             cur.close()
             con.close()
 
-def insertUpdateQuery(_queryString, _values):
+def insertUpdateQuery(_queryString, _values=None):
     """[summary]
 
     Arguments:
@@ -83,7 +83,10 @@ def insertUpdateQuery(_queryString, _values):
     if cur!= None and con != None:
         try:
             cur.execute('BEGIN')
-            cur.execute (_queryString, _values)
+            if _values == None:
+                cur.execute(_queryString)
+            else:
+                cur.execute (_queryString, _values)
             lastrowid = cur.lastrowid
             cur.execute ('COMMIT')
             return [True,lastrowid]
@@ -122,6 +125,127 @@ def createPatient(_patientName, _patientDob, _patientGender='M', _patientEmail='
         raise _results[1]
     else:
         raise Exception(_results[1])
+
+def addHospital(_hospitalName):
+    '''
+    '''
+    _insertQuery = 'INSERT INTO hospitalMaster(hospitalName) VALUES (?)'
+    _results = insertUpdateQuery(_insertQuery, (_hospitalName,))
+    if _results[0]:
+        return True
+    if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
+        _updateQuery = 'UPDATE hospitalMaster SET enabled = 1 WHERE hospitalName = ?'
+        _updateResults = insertUpdateQuery(_updateQuery, (_hospitalName,))
+    elif isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
+def disableHospital(_hospitalName):
+    '''
+    '''
+    _updateQuery = 'UPDATE hospitalMaster(hospitalName) SET enabled = 0  WHERE hospitalName = ?'
+    _results = insertUpdateQuery(_updateQuery, (_hospitalName,))
+    if _results[0]:
+        return True
+    if  isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
+
+def getHospitals():
+    '''
+    '''
+    _results = selectQuery('SELECT * FROM viewHospitals')
+    if _results[0]:
+        return [e['hospitalName'] for e in _results[1]]
+    if isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_result[1])
+
+
+def addLab(_labName):
+    '''
+    '''
+    _insertQuery = 'INSERT INTO labMaster(labName) VALUES (?)'
+    _results = insertUpdateQuery(_insertQuery, (_labName,))
+    if _results[0]:
+        return True
+    if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
+        _updateQuery = 'UPDATE labMaster SET enabled = 1 WHERE labName = ?'
+        _updateResults = insertUpdateQuery(_updateQuery, (_labName,))
+    elif isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
+def disableLab(_labName):
+    '''
+    '''
+    _updateQuery = 'UPDATE labMaster(labName) SET enabled = 0  WHERE labName = ?'
+    _results = insertUpdateQuery(_updateQuery, (_labName,))
+    if _results[0]:
+        return True
+    if  isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
+def getLabs():
+    '''
+    '''
+    _results = selectQuery('SELECT * FROM viewLabs')
+    if _results[0]:
+        return [e['labName'] for e in _results[1]]
+    if isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_result[1])
+
+
+
+def addDepartment(_deparmentName):
+    '''
+    '''
+    _insertQuery = 'INSERT INTO departmentMaster(departmentName) VALUES (?)'
+    _results = insertUpdateQuery(_insertQuery, (_deparmentName,))
+    if _results[0]:
+        return True
+    if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
+        _updateQuery = 'UPDATE deparmentMaster SET enabled = 1 WHERE deparmentName = ?'
+        _updateResults = insertUpdateQuery(_updateQuery, (_departmentName,))
+    elif isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
+
+def disableDeparment(_departmentName):
+    '''
+    '''
+    _updateQuery = 'UPDATE deparmentMaster(departmentName) SET enabled = 0  WHERE departmentName = ?'
+    _results = insertUpdateQuery(_updateQuery, (_departmentName,))
+    if _results[0]:
+        return True
+    if  isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_results[1])
+
+
+def getDepartments():
+    '''
+    '''
+    _results = selectQuery('SELECT * FROM viewDepartments')
+    if _results[0]:
+        return [e['deparmentName'] for e in _results[1]]
+    if isinstance(_results[1], Exception):
+        raise _results[1]
+    else:
+        raise Exception(_result[1])
+
 
 
 def getAssayList():
@@ -331,19 +455,18 @@ def getAntiBodies(_assayId=None):
 
 if __name__ == '__main__':
     try:
-        createPatient('_patientName1', '2010-2-21', 'M', '_patientEmail', '_mobile')
+        addHospital('Vivek')
     except Exception as ex:
         print(1)
         print(ex)
+    input('hello')
     try:
-        createPatient('_patientName2', date.today(), 'F', '_patientEmail', '_mobile')
-        print('success')
+        insertUpdateQuery('UPDATE hospitalMaster SET enabled = 0 WHERE hospitalName = "Vivek"')
     except Exception as ex:
         print(2)
         print(ex)
-
+    input('hello')
     try:
-        createPatient('_patientName3', date.today(), '3', '_patientEmail', '_mobile')
+        addHospital('Vivek')
     except Exception as ex:
-        print(3)
-        print(ex)
+        print(1)
