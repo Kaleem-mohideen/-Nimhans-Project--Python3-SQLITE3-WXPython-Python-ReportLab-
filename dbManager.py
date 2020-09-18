@@ -136,6 +136,7 @@ def addHospital(_hospitalName):
     if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
         _updateQuery = 'UPDATE hospitalMaster SET enabled = 1 WHERE hospitalName = ?'
         _updateResults = insertUpdateQuery(_updateQuery, (_hospitalName,))
+        return True
     elif isinstance(_results[1], Exception):
         raise _results[1]
     else:
@@ -144,7 +145,7 @@ def addHospital(_hospitalName):
 def disableHospital(_hospitalName):
     '''
     '''
-    _updateQuery = 'UPDATE hospitalMaster(hospitalName) SET enabled = 0  WHERE hospitalName = ?'
+    _updateQuery = 'UPDATE hospitalMaster SET enabled = 0  WHERE hospitalName = ?'
     _results = insertUpdateQuery(_updateQuery, (_hospitalName,))
     if _results[0]:
         return True
@@ -176,6 +177,7 @@ def addLab(_labName):
     if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
         _updateQuery = 'UPDATE labMaster SET enabled = 1 WHERE labName = ?'
         _updateResults = insertUpdateQuery(_updateQuery, (_labName,))
+        return True
     elif isinstance(_results[1], Exception):
         raise _results[1]
     else:
@@ -184,7 +186,7 @@ def addLab(_labName):
 def disableLab(_labName):
     '''
     '''
-    _updateQuery = 'UPDATE labMaster(labName) SET enabled = 0  WHERE labName = ?'
+    _updateQuery = 'UPDATE labMaster SET enabled = 0  WHERE labName = ?'
     _results = insertUpdateQuery(_updateQuery, (_labName,))
     if _results[0]:
         return True
@@ -209,13 +211,14 @@ def getLabs():
 def addDepartment(_deparmentName):
     '''
     '''
-    _insertQuery = 'INSERT INTO departmentMaster(departmentName) VALUES (?)'
+    _insertQuery = 'INSERT INTO departmentMaster VALUES (?)'
     _results = insertUpdateQuery(_insertQuery, (_deparmentName,))
     if _results[0]:
         return True
     if isinstance(_results[1], lite.IntegrityError): #and 'UNIQUE' in _results[1].message:
         _updateQuery = 'UPDATE deparmentMaster SET enabled = 1 WHERE deparmentName = ?'
         _updateResults = insertUpdateQuery(_updateQuery, (_departmentName,))
+        return True
     elif isinstance(_results[1], Exception):
         raise _results[1]
     else:
