@@ -86,7 +86,7 @@ def insertUpdateQuery(_queryString, _values=None):
             if _values == None:
                 cur.execute(_queryString)
             else:
-                cur.execute (_queryString, _values)
+                cur.execute(_queryString, _values)
             lastrowid = cur.lastrowid
             cur.execute ('COMMIT')
             return [True,lastrowid]

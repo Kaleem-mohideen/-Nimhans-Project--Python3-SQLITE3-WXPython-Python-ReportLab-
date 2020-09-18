@@ -114,7 +114,13 @@ class MasterMenu(wx.Menu):
     def OnInit(self):
         testMasterItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&Test Master', kind=wx.ITEM_NORMAL)
         self.Append(testMasterItem)
-        self.Bind(wx.EVT_MENU, handler=self.onTestMaster, source=testMasterItem) 
+        self.Bind(wx.EVT_MENU, handler=self.onTestMaster, source=testMasterItem)
+        HospitalMasterItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&Hospital Master', kind=wx.ITEM_NORMAL)
+        self.Append(HospitalMasterItem)
+        self.Bind(wx.EVT_MENU, handler=self.onHospitalMaster, source=HospitalMasterItem)
+        LabMasterItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&Lab Master', kind=wx.ITEM_NORMAL)
+        self.Append(LabMasterItem)
+        self.Bind(wx.EVT_MENU, handler=self.onLabMaster, source=LabMasterItem)
 
     def onTestMaster(self, event):
         app = wx.App(redirect=False)
@@ -123,6 +129,19 @@ class MasterMenu(wx.Menu):
         frame.Show()
         app.MainLoop()
         #pass
+    def onHospitalMaster(self, event):
+        app = wx.App(redirect=False)
+        frame = HospitalMasterPanel(None, 'Hospital Master')
+        frame.SetSize((800, 580))
+        frame.Show()
+        app.MainLoop()
+
+    def onLabMaster(self, event):
+        app = wx.App(redirect=False)
+        frame = LabMasterPanel(None, 'Lab Master')
+        frame.SetSize((800, 580))
+        frame.Show()
+        app.MainLoop()
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -132,7 +151,7 @@ class TestMasterPanel(wx.Frame):
         self.parentFrame = parent
         self.InitUI()
         self.Centre() 
-        self.Show()      
+        self.Show()     
         self.index = None
 
     def InitUI(self):
@@ -173,6 +192,8 @@ class TestMasterPanel(wx.Frame):
 
         sizer.AddGrowableCol(0)
         self.panel.SetSizerAndFit(sizer)
+        self.Centre()
+        self.Layout() 
 
     def onListboxSelection(self, evt):
         #pass
@@ -218,7 +239,7 @@ class TestMasterPanel(wx.Frame):
             Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master', selectedString, self.test_itemsid)
             self.testsList.Deselect(self.index)
             self.index = None
-            Antibdy_Frame.SetSize((800, 580))
+            Antibdy_Frame.SetSize((1000, 580))
             Antibdy_Frame.Show()
             app.MainLoop()
 
@@ -389,7 +410,7 @@ class AntibodyMasterPanel(wx.Frame):
             self.sizer.Add(self.antibdytitletResult, pos = (0,5), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
             self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 40)
             self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 50)
-            self.sizer.Add(self.discardBtnResult, pos = (2,5), flag = wx.LEFT, border = 200)
+            self.sizer.Add(self.discardBtnResult, pos = (2,7), flag = wx.RIGHT, border = 50)
             self.sizer.AddGrowableCol(5)
             self.sizer.AddGrowableCol(4)
 
@@ -408,6 +429,8 @@ class AntibodyMasterPanel(wx.Frame):
         self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onMsg1)
         self.panel.SetSizerAndFit(self.sizer)
+        self.Centre()
+        self.Layout()
         #self.panel.SetSize(wx.Size(1000,1400))
 
     def onMsg1(self, evt):
@@ -637,6 +660,309 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
                 self.addtext1.SetForegroundColour('#848484')
                 self.addtext1.SetHint("Enter the Option name")  # This text is grey, and disappears when you type
 
+#---------------------------------------------------------------------------------------------------------------------------------------------
+class HospitalMasterPanel(wx.Frame):
+    def __init__(self, parent, title):
+        super(HospitalMasterPanel, self).__init__(parent, title = title)
+        self.parentFrame = parent
+        self.InitUI()
+        self.Centre() 
+        self.Show()     
+        self.index = None
+
+    def InitUI(self):
+        self.panel = wx.Panel(self)
+        sizer = wx.GridBagSizer(0,0)
+        # self.hsp_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
+        # if len(self.hsp_itemsid)==1 and list(self.hsp_itemsid.keys())[0] == None and list(self.hsp_itemsid.values())[0] == None:
+        #     self.hsp_items = []
+        #     self.hsp_itemsid = {}
+        # else:
+        self.hsp_items = db.getHospitals()
+        print(self.hsp_items)
+        self.hspList = wx.ListBox(self.panel, choices=self.hsp_items, size=(270, 250), style=wx.LB_MULTIPLE)
+        #self.hspList.SetSelection(0)
+        sizer.Add(self.hspList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.hspList)
+
+        self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
+        addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+
+
+        sizer.Add(self.discardBtn, pos = (1,3), flag = wx.RIGHT, border = 50)
+        sizer.Add(addBtn, pos = (8,0), flag = wx.LEFT, border = 50)
+
+        self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
+        addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+
+        if not self.hsp_items:
+            self.discardBtn.Disable()
+        else:
+            self.discardBtn.Enable()
+
+        sizer.AddGrowableCol(0)
+        self.panel.SetSizerAndFit(sizer)
+        self.Centre()
+        self.Layout() 
+
+    def onListboxSelection(self, evt):
+        #pass
+        self.index = evt.GetSelection()
+        
+
+    def onDiscard(self, evt):
+        if self.index != None:
+            self.selectedString = str(self.hspList.GetString(self.index))
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Hospital?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dia = dialog.ShowModal() 
+            if dia == wx.ID_YES:
+                #print(self.selectedString)
+                print(self.selectedString)
+                if db.disableHospital(self.selectedString):
+                    #del self.hsp_itemsid[self.selectedString] 
+                    self.hsp_items.remove(self.selectedString)
+                    if not self.hsp_items:
+                        self.discardBtn.Disable()
+                    self.hspList.Deselect(self.index)
+                    self.index = None
+                    self.hspList.Set(self.hsp_items)
+                    print(self.hsp_items)
+                else:
+                    wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
+        else:
+            wx.MessageBox('None of them Choosen, Try Choosing Hospital that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+
+    def onAdd(self, evt):
+        if self.index != None:
+            self.hspList.Deselect(self.index)
+            self.index = None
+        dlg = MyDialog3(self)
+        print(self.hsp_items)
+        dlg.Destroy()
+#---------------------------------------------------------------------------------------------------------------------------------------------
+
+class MyDialog3(wx.Dialog, HospitalMasterPanel):
+
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
+        self.parent = parent
+        self.addPanel = wx.Panel(self)
+        self.text = wx.StaticText(self.addPanel, -1, "Enter the Hospital that you want to Add:", pos=(10, 12))
+        self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
+        self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        self.addtext.SetFont(font)
+        self.addtext.SetForegroundColour('#848484') 
+        self.addtext.SetHint("Enter the Hospital name")  # This text is grey, and disappears when you type
+        self.addPanel.SetFocus()
+
+        self.panel_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel_sizer.Add(self.text, 0, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addtext, 1, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addBtn, 2, wx.ALL, 5)
+        self.addPanel.SetSizer(self.panel_sizer)
+
+        self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+        self.addtext.Bind(wx.EVT_TEXT_ENTER,self.onAdd)
+        self.addtext.Bind(wx.EVT_TEXT,self.onFirstClick)  
+
+
+
+        self.ShowModal()
+        #wx.CallAfter(self.panel_sizer.Layout)
+
+    def onFirstClick(self, evt):
+        if self.addtext.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour(wx.BLACK)
+
+    def onAdd(self, evt):
+        hspInput = None
+        if self.addtext.GetValue(): hspInput =self.addtext.GetValue()
+        if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour(wx.BLACK)
+        else:
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour('#848484') 
+
+
+        if hspInput is not None and hspInput not in self.parent.hsp_items:
+            addedHsp = db.addHospital(hspInput)
+            if addedHsp:
+                #self.parent.hsp_itemsid[hspInput] = addedAssayId
+                self.parent.hsp_items.append(hspInput)
+                self.parent.hspList.Set(self.parent.hsp_items)
+                self.parent.discardBtn.Enable()
+                self.Close()
+            else:
+                wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
+        elif hspInput is not None:
+            msgBox = wx.MessageBox('The Hospital had already exists, Try Adding New Hospital', 'Existing Error', wx.OK| wx.ICON_WARNING)
+            # print(msgBox)
+            # print(wx.OK)
+            if msgBox == wx.OK:
+                self.addtext.SetValue('')
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                self.addtext.SetFont(font)
+                self.addtext.SetForegroundColour('#848484')
+                self.addtext.SetHint("Enter the Hospital name")  # This text is grey, and disappears when you type
+#---------------------------------------------------------------------------------------------------------------------------------------------
+class LabMasterPanel(wx.Frame):
+    def __init__(self, parent, title):
+        super(LabMasterPanel, self).__init__(parent, title = title)
+        self.parentFrame = parent
+        self.InitUI()
+        self.Centre() 
+        self.Show()     
+        self.index = None
+
+    def InitUI(self):
+        self.panel = wx.Panel(self)
+        sizer = wx.GridBagSizer(0,0)
+        self.lab_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
+        if len(self.lab_itemsid)==1 and list(self.lab_itemsid.keys())[0] == None and list(self.lab_itemsid.values())[0] == None:
+            self.lab_items = []
+            self.lab_itemsid = {}
+        else:
+            self.lab_items = [i for i in self.lab_itemsid]
+        print(self.lab_itemsid)
+        self.labList = wx.ListBox(self.panel, choices=self.lab_items, size=(270, 250), style=wx.LB_MULTIPLE)
+        #self.labList.SetSelection(0)
+        sizer.Add(self.labList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.labList)
+
+        self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
+        addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+
+
+        sizer.Add(self.discardBtn, pos = (1,3), flag = wx.RIGHT, border = 50)
+        sizer.Add(addBtn, pos = (8,0), flag = wx.LEFT, border = 50)
+
+        self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
+        addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+
+        if not self.lab_items:
+            self.discardBtn.Disable()
+        else:
+            self.discardBtn.Enable()
+
+        sizer.AddGrowableCol(0)
+        self.panel.SetSizerAndFit(sizer)
+        self.Centre()
+        self.Layout() 
+
+    def onListboxSelection(self, evt):
+        #pass
+        self.index = evt.GetSelection()
+        
+
+    def onDiscard(self, evt):
+        if self.index != None:
+            self.selectedString = str(self.labList.GetString(self.index))
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Lab?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dia = dialog.ShowModal() 
+            if dia == wx.ID_YES:
+                #print(self.selectedString)
+                print(self.lab_itemsid[self.selectedString])
+                if db.disableAssay(self.lab_itemsid[self.selectedString]):
+                    del self.lab_itemsid[self.selectedString] 
+                    self.lab_items.remove(self.selectedString)
+                    if not self.lab_items:
+                        self.discardBtn.Disable()
+                    self.labList.Deselect(self.index)
+                    self.index = None
+                    self.labList.Set(self.lab_items)
+                    print(self.lab_itemsid)
+                else:
+                    wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
+        else:
+            wx.MessageBox('None of them Choosen, Try Choosing Lab that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+
+    def onAdd(self, evt):
+        if self.index != None:
+            self.labList.Deselect(self.index)
+            self.index = None
+        dlg = MyDialog4(self)
+        print(self.lab_itemsid)
+        dlg.Destroy()
+#---------------------------------------------------------------------------------------------------------------------------------------------
+class MyDialog4(wx.Dialog, LabMasterPanel):
+
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
+        self.parent = parent
+        self.addPanel = wx.Panel(self)
+        self.text = wx.StaticText(self.addPanel, -1, "Enter the Lab that you want to Add:", pos=(10, 12))
+        self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
+        self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        self.addtext.SetFont(font)
+        self.addtext.SetForegroundColour('#848484') 
+        self.addtext.SetHint("Enter the Lab name")  # This text is grey, and disappears when you type
+        self.addPanel.SetFocus()
+
+        self.panel_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel_sizer.Add(self.text, 0, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addtext, 1, wx.ALL|wx.EXPAND, 5)
+        self.panel_sizer.Add(self.addBtn, 2, wx.ALL, 5)
+        self.addPanel.SetSizer(self.panel_sizer)
+
+        self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
+        self.addtext.Bind(wx.EVT_TEXT_ENTER,self.onAdd)
+        self.addtext.Bind(wx.EVT_TEXT,self.onFirstClick)  
+
+
+
+        self.ShowModal()
+        #wx.CallAfter(self.panel_sizer.Layout)
+
+    def onFirstClick(self, evt):
+        if self.addtext.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour(wx.BLACK)
+
+    def onAdd(self, evt):
+        labInput = None
+        if self.addtext.GetValue(): labInput =self.addtext.GetValue()
+        if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour(wx.BLACK)
+        else:
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            self.addtext.SetFont(font)
+            self.addtext.SetForegroundColour('#848484') 
+
+
+        if labInput is not None and labInput not in self.parent.lab_items:
+            addedAssayId = db.addAssay(labInput)
+            if addedAssayId != -1:
+                self.parent.lab_itemsid[labInput] = addedAssayId
+                self.parent.lab_items.append(labInput)
+                self.parent.labList.Set(self.parent.lab_items)
+                self.parent.discardBtn.Enable()
+                self.Close()
+            else:
+                wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+
+        elif labInput is not None:
+            msgBox = wx.MessageBox('The Lab had already exists, Try Adding New Lab', 'Existing Error', wx.OK| wx.ICON_WARNING)
+            # print(msgBox)
+            # print(wx.OK)
+            if msgBox == wx.OK:
+                self.addtext.SetValue('')
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                self.addtext.SetFont(font)
+                self.addtext.SetForegroundColour('#848484')
+                self.addtext.SetHint("Enter the Lab name")  # This text is grey, and disappears when you type
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class CharValidator(wx.Validator):
     ''' Validates data as it is entered into the text controls. '''
