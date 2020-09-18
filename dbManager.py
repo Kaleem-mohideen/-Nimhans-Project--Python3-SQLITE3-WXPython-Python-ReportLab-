@@ -275,7 +275,7 @@ def getLabs():
 def addDepartment(_departmentName):
     '''
     '''
-    _insertQuery = 'INSERT INTO departmentMaster VALUES (?)'
+    _insertQuery = 'INSERT INTO departmentMaster(departmentName) VALUES (?)'
     _results = insertUpdateQuery(_insertQuery, (_departmentName,))
     if _results[0]:
         return True
