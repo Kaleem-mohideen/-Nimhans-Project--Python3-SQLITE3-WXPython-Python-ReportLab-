@@ -1327,7 +1327,7 @@ class PatientDetails(wx.Frame):
         dic['Sample Collection Date'] = wx.DateTime.FormatISODate(self.date1.GetValue()) if self.date1.GetValue().IsValid() else ''
         dic['Date of Birth'] = wx.DateTime.FormatISODate(self.date2.GetValue()) if self.date2.GetValue().IsValid() else ''
         dic['Lab Reference No'] = self.tc7.GetValue()
-        dic['Gender'] = 'Female' if self.gender.GetSelection() else 'Male'
+        dic['Gender'] = 'F' if self.gender.GetSelection() else 'M'
         #dic['Report Generated Date'] = self.tc9.GetValue()
         dic['Lab Name'] = self.tc8.GetValue()
         dic['Ward Name/Collection Centre'] = self.tc9.GetValue()
