@@ -98,9 +98,8 @@ def insertUpdateQuery(_queryString, _values=None):
             cur.close()
             con.close()
 
-def registerPatient(_uhid, _patientName, _patientDob, _hospitalName, _patientGender = 'M', _mrd = '', _collectionPoint = '', _collectionDate = None,
-                    _labReferenceNumber= '', _departmentName = '', _labName = '', 
-                    _patientEmail = '', _mobile = ''):
+def registerPatient(_uhid, _patientName, _patientDob, _hospitalName, _patientGender = 'M', _mrd = None, _collectionPoint = None, 
+        _collectionDate = None, _labReferenceNumber= None, _departmentName = None, _labName = None, _patientEmail = None, _mobile = None):
     '''
     '''
     _patientId = createPatient(_patientName, _patientDob, _patientGender, _patientEmail, _mobile)

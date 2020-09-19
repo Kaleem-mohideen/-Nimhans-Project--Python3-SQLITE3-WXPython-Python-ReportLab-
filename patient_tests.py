@@ -1321,18 +1321,18 @@ class PatientDetails(wx.Frame):
 
     def onRegisterPatient(self, evt):
         dic = {}
-        dic['UHID'] = self.tc.GetValue()
-        dic['Referring Hospital'] = self.tc1.GetStringSelection() if self.tc1.GetStringSelection() else ''
-        dic['MRD No'] = self.tc2.GetValue()
-        dic['Referring Dept'] = self.tc3.GetStringSelection() if self.tc3.GetStringSelection() else ''
-        dic['Patient Name'] = self.tc4.GetValue()
-        dic['Sample Collection Date'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date1.GetValue()).split('-')))) if self.date1.GetValue().IsValid() else ''
-        dic['Date of Birth'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date2.GetValue()).split('-')))) if self.date2.GetValue().IsValid() else ''
-        dic['Lab Reference No'] = self.tc7.GetValue()
+        dic['UHID'] = self.tc.GetValue() if self.tc.GetValue() else None
+        dic['Referring Hospital'] = self.tc1.GetStringSelection() if self.tc1.GetStringSelection() else None
+        dic['MRD No'] = self.tc2.GetValue() if self.tc2.GetValue()  else None
+        dic['Referring Dept'] = self.tc3.GetStringSelection() if self.tc3.GetStringSelection() else None
+        dic['Patient Name'] = self.tc4.GetValue() if self.tc4.GetValue() else None
+        dic['Sample Collection Date'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date1.GetValue()).split('-')))) if self.date1.GetValue().IsValid() else None
+        dic['Date of Birth'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date2.GetValue()).split('-')))) if self.date2.GetValue().IsValid() else None
+        dic['Lab Reference No'] = self.tc7.GetValue() if self.tc7.GetValue() else None
         dic['Gender'] = 'F' if self.gender.GetSelection() else 'M'
         #dic['Report Generated Date'] = self.tc9.GetValue()
-        dic['Lab Name'] = self.tc8.GetValue()
-        dic['Ward Name/Collection Centre'] = self.tc9.GetValue()
+        dic['Lab Name'] = self.tc8.GetValue() if self.tc8.GetValue() else None
+        dic['Ward Name/Collection Centre'] = self.tc9.GetValue() if self.tc9.GetValue() else None
         print(dic)
         if dic['UHID']:
             if dic['Referring Hospital']:
