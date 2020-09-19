@@ -2,7 +2,7 @@ import os
 import wx  
 import wx.lib.agw.thumbnailctrl as TC
 from PIL import Image
-import datetime
+import datetime as dt
 import wx.adv
 import wx.lib.scrolledpanel as scrolled
 import dbManager as db
@@ -1002,7 +1002,7 @@ class DepartmentMasterPanel(wx.Frame):
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 print(self.selectedString)
-                if db.disableDeparment(self.selectedString):
+                if db.disableDepartment(self.selectedString):
                     self.dpt_items.remove(self.selectedString)
                     if not self.dpt_items:
                         self.discardBtn.Disable()
@@ -1222,7 +1222,8 @@ class PatientDetails(wx.Frame):
         self.Assign(text1, "Referring Hospital:")
         sizer.Add(text1, pos = (0, 2), flag = wx.ALL, border = 5)
 
-        self.tc1 = wx.Choice(self.panel, choices=['H1', 'H2', 'H3'])
+        self.hsp_items = db.getHospitals()
+        self.tc1 = wx.Choice(self.panel, choices= self.hsp_items)
         #self._droplist.Bind(wx.EVT_CHOICE, self.choice_click) 
         sizer.Add(self.tc1, pos = (0,3),flag = wx.EXPAND|wx.ALL, border = 5)
          
@@ -1235,7 +1236,8 @@ class PatientDetails(wx.Frame):
         text3 = wx.StaticText(self.panel,label = " Referring Dept:") 
         sizer.Add(text3, pos = (1, 2), flag = wx.ALL, border = 5)
 
-        self.tc3 = wx.Choice(self.panel, choices=['D1', 'D2', 'D3'])
+        self.dpt_items = db.getDepartments()
+        self.tc3 = wx.Choice(self.panel, choices= self.dpt_items)
         sizer.Add(self.tc3, pos = (1,3),flag = wx.EXPAND|wx.ALL, border = 5)
          
         #text4 = wx.StaticText(self.panel,label = "Patient Name:")
@@ -1312,20 +1314,20 @@ class PatientDetails(wx.Frame):
         sizer.Add(saveBtn, pos = (8, 3), flag = wx.RIGHT|wx.BOTTOM, border = 10)
 
         cancelBtn.Bind(wx.EVT_BUTTON, self.onClose)
-        saveBtn.Bind(wx.EVT_BUTTON, self.OnScreen3)
+        saveBtn.Bind(wx.EVT_BUTTON, self.onRegisterPatient)
 
         #sizer.AddGrowableRow()
         self.panel.SetSizerAndFit(sizer)
 
-    def OnScreen3(self, evt):
+    def onRegisterPatient(self, evt):
         dic = {}
         dic['UHID'] = self.tc.GetValue()
         dic['Referring Hospital'] = self.tc1.GetStringSelection() if self.tc1.GetStringSelection() else ''
         dic['MRD No'] = self.tc2.GetValue()
         dic['Referring Dept'] = self.tc3.GetStringSelection() if self.tc3.GetStringSelection() else ''
         dic['Patient Name'] = self.tc4.GetValue()
-        dic['Sample Collection Date'] = wx.DateTime.FormatISODate(self.date1.GetValue()) if self.date1.GetValue().IsValid() else ''
-        dic['Date of Birth'] = wx.DateTime.FormatISODate(self.date2.GetValue()) if self.date2.GetValue().IsValid() else ''
+        dic['Sample Collection Date'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date1.GetValue()).split('-')))) if self.date1.GetValue().IsValid() else ''
+        dic['Date of Birth'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date2.GetValue()).split('-')))) if self.date2.GetValue().IsValid() else ''
         dic['Lab Reference No'] = self.tc7.GetValue()
         dic['Gender'] = 'F' if self.gender.GetSelection() else 'M'
         #dic['Report Generated Date'] = self.tc9.GetValue()
@@ -1337,7 +1339,8 @@ class PatientDetails(wx.Frame):
                 if dic['Patient Name']:
                     if dic['Date of Birth']:
                         if dic['Gender']:
-                            Screen3(None, -1, 'listbox')
+                            _requestId = db.registerPatient(dic['UHID'], dic['Patient Name'], dic['Date of Birth'], dic['Referring Hospital'], dic['Gender'], dic['MRD No'], dic['Ward Name/Collection Centre'], dic['Sample Collection Date'], dic['Lab Reference No'], dic['Referring Dept'], dic['Lab Name'])
+                            TestRegisterScreen(None, -1, 'Register Tests', _requestId)
                         else:
                             #color = self.windowFrameColor if self.textctrl.GetValue() else self.highligt_color
                             #self.gender.SetHint("Mandatory field")
@@ -1374,34 +1377,39 @@ class PatientDetails(wx.Frame):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-class Screen3(wx.Frame):
-    def __init__(self, parent, id, title):
+class TestRegisterScreen(wx.Frame):
+    def __init__(self, parent, id, title, _requestId):
         #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
-        super(Screen3, self).__init__(parent, id, title, wx.DefaultPosition, (650, 450))
-        self.second_zones = []
-        zone_list = ['CET', 'GMT', 'MSK', 'EST', 'PST', 'EDT']
+        super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (650, 450))
+        self.testsUpdateList_items = []
+        self.test_itemsChosenid = []
+        self.test_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
+        if len(self.test_itemsid)==1 and list(self.test_itemsid.keys())[0] == None and list(self.test_itemsid.values())[0] == None:
+            self.test_items = []
+            self.test_itemsid = {}
+        else:
+            self.test_items = [i for i in self.test_itemsid]
+        print(self.test_itemsid)
 
 
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer(0,0)
         
         text = wx.StaticText(panel, label = "Tests")
-        self.time_zones = wx.ListBox(panel, -1, size=(170, 130), choices=zone_list, style=wx.LB_SINGLE)
-        #self.time_zones.SetSelection(0)
+        self.testsListbox = wx.ListBox(panel, -1, size=(170, 130), choices=self.test_items, style=wx.LB_SINGLE)
+        #self.testsListbox.SetSelection(0)
         text2 = wx.StaticText(panel, label = "Choosen Tests")
-        self.time_zones2 = wx.ListBox(panel, -1, size=(170, 130), choices=[], style=wx.LB_SINGLE)
+        self.testsChosenListbox = wx.ListBox(panel, -1, size=(170, 130), choices=[], style=wx.LB_SINGLE)
 
-
-
-        #self.Bind(wx.EVT_LISTBOX, self.OnSelectFirst, self.time_zones)
-        self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectFirst, self.time_zones)
-        self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectSecond, self.time_zones2)
-        #self.Bind(wx.EVT_LISTBOX, self.OnSelectSecond, self.time_zones2)
+        #self.Bind(wx.EVT_LISTBOX, self.OnSelectFirst, self.testsListbox)
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectFirst, self.testsListbox)
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectSecond, self.testsChosenListbox)
+        #self.Bind(wx.EVT_LISTBOX, self.OnSelectSecond, self.testsChosenListbox)
 
         sizer.Add(text, pos = (1, 0), flag = wx.LEFT|wx.TOP, border = 100)
         sizer.Add(text2, pos = (1, 3), flag = wx.LEFT|wx.RIGHT|wx.TOP, border = 100)
-        sizer.Add(self.time_zones, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
-        sizer.Add(self.time_zones2, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
+        sizer.Add(self.testsListbox, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
+        sizer.Add(self.testsChosenListbox, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
 
         saveBtn = wx.Button(panel, wx.ID_CLOSE, label = "Save", size=(90, 28)) 
         cancelBtn = wx.Button(panel, label = "Cancel", size=(90, 28)) 
@@ -1410,6 +1418,7 @@ class Screen3(wx.Frame):
         sizer.Add(saveBtn, pos = (4, 3), flag = wx.RIGHT|wx.LEFT|wx.BOTTOM, border = 5)
 
         cancelBtn.Bind(wx.EVT_BUTTON, self.onClose)
+        saveBtn.Bind(wx.EVT_BUTTON, self.onTestRegister)
 
         sizer.AddGrowableCol(1)
         sizer.AddGrowableCol(3)
@@ -1422,25 +1431,36 @@ class Screen3(wx.Frame):
     def onClose(self, event):
         """"""
         self.Close()
+    def onTestRegister(self, event):
+        """"""
+        if db.registerAssays(_requestId, self.test_itemsChosenid):
+            wx.MessageBox('Registered Tests are {0}'.format(self.testsUpdateList_items), 'Successfully Registered', wx.OK)
+        else:
+            wx.MessageBox('Test not Registered', 'Error', wx.OK | wx.CANCEL | wx.ICON_WARNING)
 
     def OnSelectFirst(self, event):
         index = event.GetSelection()
-        time_zone = str(self.time_zones.GetString(index))
-        if time_zone not in self.second_zones:
-            self.second_zones.append(time_zone)
-            self.time_zones2.Set(self.second_zones)
+        selected_String = str(self.testsListbox.GetString(index))
+        if selected_String not in self.testsUpdateList_items:
+            self.testsUpdateList_items.append(selected_String)
+            self.test_itemsChosenid.append(self.test_itemsid[selected_String])
+            self.testsChosenListbox.Set(self.testsUpdateList_items)
+            print(self.testsUpdateList_items)
         else:
             print('Already selected')
             wx.MessageBox('Choosen Already, Try selecting other', 'Selected Already', wx.OK | wx.CANCEL | wx.ICON_WARNING)
-            #self.time_zones.SetString(index, 'Already Choosen')
+            #self.testsListbox.SetString(index, 'Already Choosen')
 
 
     def OnSelectSecond(self, event):
         index = event.GetSelection()
         #print(index)
-        time_zone = str(self.time_zones2.GetString(index))
-        self.second_zones.remove(time_zone)
-        self.time_zones2.Set(self.second_zones) 
+        selected_String1 = str(self.testsChosenListbox.GetString(index))
+        self.testsUpdateList_items.remove(selected_String1)
+        self.test_itemsChosenid.remove(self.test_itemsid[selected_String1])
+        self.testsChosenListbox.Set(self.testsUpdateList_items)
+        print(self.testsUpdateList_items)
+
 
 
 

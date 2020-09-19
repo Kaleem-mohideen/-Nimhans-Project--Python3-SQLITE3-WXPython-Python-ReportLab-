@@ -98,9 +98,9 @@ def insertUpdateQuery(_queryString, _values=None):
             cur.close()
             con.close()
 
-def registerPatient(_uhid, _patientName, _patientDob, _patientGender = 'M', _hosptialName, 
-                    _patientEmail = '', _mobile = '', _mrd = '', _collectionPoint = '', _collectionDate = None
-                    _labReferenceNumber= '', _labName = ''):
+def registerPatient(_uhid, _patientName, _patientDob, _hospitalName, _patientGender = 'M', _mrd = '', _collectionPoint = '', _collectionDate = None,
+                    _labReferenceNumber= '', _departmentName = '', _labName = '', 
+                    _patientEmail = '', _mobile = ''):
     '''
     '''
     _patientId = createPatient(_patientName, _patientDob, _patientGender, _patientEmail, _mobile)
@@ -120,12 +120,12 @@ def registerPatient(_uhid, _patientName, _patientDob, _patientGender = 'M', _hos
             else: 
                 raise Exception(_status[1])
     #CHECK hospitalName
-    if _hosptialName:
+    if _hospitalName:
         _checkQuery = 'SELECT * FROM viewHospitals WHERE hospitalName = ?'
         _status = selectQuery(_checkQuery, (_hospitalName,))
         if _status[0]:
             if len(_status[1]) != 1:
-                raise Exception('invalid Hosptial Name: {0}'.format(_hospitalName))
+                raise Exception('invalid Hospital Name: {0}'.format(_hospitalName))
         else:
             if isinstance(_status[1], Exception):
                 raise _status[1]
@@ -145,9 +145,9 @@ def registerPatient(_uhid, _patientName, _patientDob, _patientGender = 'M', _hos
                 raise Exception(_status[1])
  
     _insertQuery = '''INSERT INTO patientRequest (patientId, uhid, mrd, collectionPoint, hospitalName, 
-    departmentName, collectionDate, labRefernceNumber) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
-    _insertTuple = (_patientId, _uhid, _mrd, _collectionPoint, _hospitalName, _departmentName, _collectionDate, _labReferenceNumber)
+    departmentName, collectionDate, labReferenceNumber, labName) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'''
+    _insertTuple = (_patientId, _uhid, _mrd, _collectionPoint, _hospitalName, _departmentName, _collectionDate, _labReferenceNumber, _labName)
     _status = insertUpdateQuery(_insertQuery, _insertTuple)
     if _status[0]:
         return _status[1]
@@ -177,7 +177,7 @@ def createPatient(_patientName, _patientDob, _patientGender='M', _patientEmail='
     if _patientGender not in ['M', 'F']:
         raise TypeError('_patientGender has to be either M or F, received {0} instead'.format(_patientGender))
     if not isinstance(_patientDob, date):
-        raise TypeError('_dob has to be of type datetime.date, recived {0} instead'.format(type(_patientDob)))
+        raise TypeError('_dob has to be of type datetime.date, received {0} instead'.format(type(_patientDob)))
     _insertQuery = '''INSERT INTO patientMaster(patientName, patientDob, patientGender, patientEmail, mobile) 
     VALUES (?,?,?,?,?)'''
     _insertTuple = (_patientName, _patientDob, _patientGender, _patientEmail, _mobile)
@@ -288,7 +288,7 @@ def addDepartment(_departmentName):
         raise Exception(_results[1])
 
 
-def disableDeparment(_departmentName):
+def disableDepartment(_departmentName):
     '''
     '''
     _updateQuery = 'UPDATE departmentMaster SET enabled = 0  WHERE departmentName = ?'
