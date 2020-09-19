@@ -55,3 +55,7 @@ INSERT INTO hospitalMaster(hospitalName) VALUES
 
 INSERT INTO departmentMaster(departmentName) VALUES
 	('Biochemistry'), ('Ward');
+
+
+INSERT INTO labMaster(labName) VALUES
+	('Microlab'), ('Anand Diagnostics');
