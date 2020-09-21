@@ -136,7 +136,8 @@ CREATE VIEW viewPendingReports AS
 	SELECT r.requestId, r.assayId , r.optionId FROM patientReport r;
 
 CREATE VIEW viewPendingPatients AS 
-	SELECT p.patientId, p.patientName, p.patientGender, r.requestId, r.requestTime FROM
+	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
+		r.requestId AS requestId, r.requestTime AS requestTime FROM
 	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
 	r.requestId IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
 
