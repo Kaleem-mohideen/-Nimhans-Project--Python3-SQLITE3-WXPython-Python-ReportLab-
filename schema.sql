@@ -129,3 +129,14 @@ CREATE VIEW viewLabs AS SELECT * FROM labMaster WHERE enabled = 1;
 CREATE VIEW viewHospitals AS SELECT * FROM hospitalMaster WHERE enabled = 1;
 
 CREATE VIEW viewDepartments AS SELECT * FROM departmentMaster WHERE enabled = 1;
+
+CREATE VIEW viewPendingReports AS  
+	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId  FROM 
+	patientRequestList p LEFT JOIN viewEnabledAntiBodies a ON p.assayId = a.assayId EXCEPT 
+	SELECT r.requestId, r.assayId , r.optionId FROM patientReport r;
+
+CREATE VIEW viewPendingPatients AS 
+	SELECT p.patientId, p.patientName, p.patientGender, r.requestId, r.requestTime FROM
+	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
+	r.requestId IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
+
