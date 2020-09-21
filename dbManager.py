@@ -427,7 +427,7 @@ def disableOption(_assayId, _antiBodyId, _optionId):
             else:
                 return -1
     else:
-        if isInstance(_results[1], Exception):
+        if isinstance(_results[1], Exception):
             raise _results[1]
         raise Exception(_results[1])
 
@@ -469,7 +469,7 @@ def addOption(_assayId, _antiBodyId, _option):
         else:
             raise Exception('No such combination of assayId:{0} and antiBodyId:{1}'.format(_assayId, _antiBodyId))
     else:
-        if isInstance(_results[1], Exception):
+        if isinstance(_results[1], Exception):
             raise _results[1]
         raise Exception(_results[1])
 
@@ -518,20 +518,48 @@ def getAntiBodies(_assayId=None):
     
 
 
+
+def getPendingReports(_fromDate = None, _toDate = None):
+    '''
+    '''
+    if _fromDate:
+        if isinstance(_fromDate, date):
+            if _fromDate < date.today():
+                raise ValueError('_fromDate: {0} cannot be greater than current date'.format(_fromDate))
+        else:
+            raise TypeError('_fromDate should be of type datetime.date, recived {0} instead'.format(type(_fromDate)))
+    else:
+        _fromDate = date.today().replace(day=1)
+    print(_fromDate)
+    if _toDate:
+        if isinstance(_toDate, date):
+            if _toDate < _fromDate:
+                raise ValueError('_toDate: {0} cannot be lesser than _fromDate : {1}'.format(_toDate, _fromDate))
+            if _toDate < date.today():
+                raise ValueError('_toDate: {0} cannot be greater than current date'.format(_toDate))
+        else:
+            raise TypeError('_fromDate should be of type datetime.date, recived {0} instead'.format(type(_fromDate)))
+    else:
+        _toDate = date.today()
+    print(_fromDate, _toDate)
+    _fromDateTime = datetime.combine(_fromDate, datetime.min.time())
+    _toDateTime = datetime.combine(_toDate, datetime.max.time())
+    _query = 'SELECT * FROM viewPendingPatients WHERE requestTime BETWEEN ? AND ?'
+    _selectTuple = (_fromDateTime, _toDateTime)
+    _status  = selectQuery(_query, _selectTuple)
+    if _status[0]:
+        return [{'patientId': _p['patientId'], 'requestId': _p['requestId'], 
+            'gender' : _p['patientGender'], 'requestTime' : _p['requestTime']} 
+            for _p in _status[1]]
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
+
+    
+
+
 if __name__ == '__main__':
-    try:
-        addHospital('Vivek')
-    except Exception as ex:
-        print(1)
-        print(ex)
-    input('hello')
-    try:
-        insertUpdateQuery('UPDATE hospitalMaster SET enabled = 0 WHERE hospitalName = "Vivek"')
-    except Exception as ex:
-        print(2)
-        print(ex)
-    input('hello')
-    try:
-        addHospital('Vivek')
-    except Exception as ex:
-        print(1)
+    _a = getPendingReports()
+    for e in _a:
+        print(e, '\n\n\n')
