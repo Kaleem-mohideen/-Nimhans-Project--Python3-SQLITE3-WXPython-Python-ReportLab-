@@ -1213,7 +1213,7 @@ class PatientDetails(wx.Frame):
         self.Assign(text, "UHID:")
         sizer.Add(text, pos = (0, 0), flag = wx.ALL, border = 5)
         
-        self.tc = wx.TextCtrl(self.panel, validator=CharValidator('only-digit')) 
+        self.tc = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc, pos = (0, 1), flag = wx.ALL|wx.EXPAND, border = 5)
         self.tc.SetToolTip("Enter UHID No.")
 
@@ -1230,7 +1230,7 @@ class PatientDetails(wx.Frame):
         text2 = wx.StaticText(self.panel, label = " MRD No:") 
         sizer.Add(text2, pos = (1, 0), flag = wx.ALL, border = 5)
             
-        self.tc2 = wx.TextCtrl(self.panel, validator=CharValidator('only-digit')) 
+        self.tc2 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc2, pos = (1,1), flag = wx.ALL|wx.EXPAND, border = 5) 
 
         text3 = wx.StaticText(self.panel,label = " Referring Dept:") 
@@ -1273,7 +1273,7 @@ class PatientDetails(wx.Frame):
         text7 = wx.StaticText(self.panel,label = " Lab Reference No:") 
         sizer.Add(text7, pos = (3, 2), flag = wx.ALL, border = 5)
 
-        self.tc7 = wx.TextCtrl(self.panel, validator=CharValidator('only-digit')) 
+        self.tc7 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc7, pos = (3,3), flag = wx.EXPAND|wx.ALL, border = 5)
 
         #text8 = wx.StaticText(self.panel,label = "Gender:")
@@ -1285,16 +1285,11 @@ class PatientDetails(wx.Frame):
         self.gender = wx.RadioBox(self.panel, -1, "", wx.DefaultPosition, wx.DefaultSize, sampleList, 2, wx.RA_SPECIFY_COLS) 
         sizer.Add(self.gender, pos = (4,1), flag = wx.ALL, border = 5) 
 
-        # text9 = wx.StaticText(self.panel,label = "Report Generated Date:") 
-        # sizer.Add(text9, pos = (4, 2), flag = wx.ALL, border = 5)
-
-        # self.tc9 = wx.TextCtrl(self.panel) 
-        # sizer.Add(self.tc9, pos = (4,3),flag = wx.ALL|wx.EXPAND, border = 5)
-
         text9 = wx.StaticText(self.panel,label = " Lab Name:") 
         sizer.Add(text9, pos = (4, 2), flag = wx.ALL, border = 5)
 
-        self.tc8 = wx.TextCtrl(self.panel) 
+        self.lab_items = db.getLabs()
+        self.tc8 = wx.Choice(self.panel, choices= self.lab_items)
         sizer.Add(self.tc8, pos = (4,3),flag = wx.EXPAND|wx.ALL, border = 5) 
 
         text10 = wx.StaticText(self.panel,label = " Ward Name/Collection Centre:") 
@@ -1302,6 +1297,18 @@ class PatientDetails(wx.Frame):
             
         self.tc9 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc9, pos = (5,1), flag = wx.ALL|wx.EXPAND, border = 5) 
+
+        text11 = wx.StaticText(self.panel,label = "Email:") 
+        sizer.Add(text11, pos = (5, 2), flag = wx.ALL, border = 5)
+
+        self.tc10 = wx.TextCtrl(self.panel) 
+        sizer.Add(self.tc10, pos = (5,3),flag = wx.ALL|wx.EXPAND, border = 5)
+
+        text12 = wx.StaticText(self.panel,label = "Phone No:") 
+        sizer.Add(text12, pos = (6, 0), flag = wx.ALL, border = 5)
+
+        self.tc11 = wx.TextCtrl(self.panel) 
+        sizer.Add(self.tc11, pos = (6,1),flag = wx.ALL|wx.EXPAND, border = 5)
 
         sizer.AddGrowableCol(1)
         sizer.AddGrowableCol(3)
@@ -1331,8 +1338,10 @@ class PatientDetails(wx.Frame):
         dic['Lab Reference No'] = self.tc7.GetValue() if self.tc7.GetValue() else None
         dic['Gender'] = 'F' if self.gender.GetSelection() else 'M'
         #dic['Report Generated Date'] = self.tc9.GetValue()
-        dic['Lab Name'] = self.tc8.GetValue() if self.tc8.GetValue() else None
+        dic['Lab Name'] = self.tc8.GetStringSelection() if self.tc8.GetStringSelection() else None
         dic['Ward Name/Collection Centre'] = self.tc9.GetValue() if self.tc9.GetValue() else None
+        dic['Email'] = self.tc10.GetValue() if self.tc10.GetValue() else None
+        dic['phone'] = self.tc11.GetValue() if self.tc11.GetValue() else None
         print(dic)
         if dic['UHID']:
             if dic['Referring Hospital']:
@@ -1380,6 +1389,7 @@ class PatientDetails(wx.Frame):
 class TestRegisterScreen(wx.Frame):
     def __init__(self, parent, id, title, _requestId):
         #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
+        self.requestId = _requestId
         super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (650, 450))
         self.testsUpdateList_items = []
         self.test_itemsChosenid = []
@@ -1433,8 +1443,10 @@ class TestRegisterScreen(wx.Frame):
         self.Close()
     def onTestRegister(self, event):
         """"""
-        if db.registerAssays(_requestId, self.test_itemsChosenid):
-            wx.MessageBox('Registered Tests are {0}'.format(self.testsUpdateList_items), 'Successfully Registered', wx.OK)
+        if db.registerAssays(self.requestId, self.test_itemsChosenid):
+            dialog = wx.MessageBox('Registered Tests are {0}'.format(self.testsUpdateList_items), 'Successfully Registered', wx.OK)
+            if dialog == wx.OK:
+                self.Close()
         else:
             wx.MessageBox('Test not Registered', 'Error', wx.OK | wx.CANCEL | wx.ICON_WARNING)
 
