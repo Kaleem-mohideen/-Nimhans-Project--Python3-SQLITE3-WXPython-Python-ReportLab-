@@ -84,20 +84,21 @@ class ReportsMenu(wx.Menu):
         app.MainLoop()
 
     def onView(self, event):
-        dialog = wx.FileDialog(self.parentFrame, message="Save your data", 
-                            defaultFile="Untitled.txt", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        pass
+        # dialog = wx.FileDialog(self.parentFrame, message="Save your data", 
+        #                     defaultFile="Untitled.txt", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
 
-        if dialog.ShowModal() == wx.ID_CANCEL:
-            return None
+        # if dialog.ShowModal() == wx.ID_CANCEL:
+        #     return None
         
-        path = dialog.GetPath()
-        data = self.parentFrame.text.GetValue()
-        print(data)
-        data = data.split('\n')
-        print(data)
-        with open(path, "w+") as myfile:
-            for line in data:
-                myfile.write(line+"\n")
+        # path = dialog.GetPath()
+        # data = self.parentFrame.text.GetValue()
+        # print(data)
+        # data = data.split('\n')
+        # print(data)
+        # with open(path, "w+") as myfile:
+        #     for line in data:
+        #         myfile.write(line+"\n")
 
 
     def onQuit(self, event):
@@ -1223,7 +1224,9 @@ class PatientDetails(wx.Frame):
         sizer.Add(text1, pos = (0, 2), flag = wx.ALL, border = 5)
 
         self.hsp_items = db.getHospitals()
+        self.hsp_items.insert(0, "-- Select --")
         self.tc1 = wx.Choice(self.panel, choices= self.hsp_items)
+        self.tc1.SetSelection(0)
         #self._droplist.Bind(wx.EVT_CHOICE, self.choice_click) 
         sizer.Add(self.tc1, pos = (0,3),flag = wx.EXPAND|wx.ALL, border = 5)
          
@@ -1237,7 +1240,9 @@ class PatientDetails(wx.Frame):
         sizer.Add(text3, pos = (1, 2), flag = wx.ALL, border = 5)
 
         self.dpt_items = db.getDepartments()
+        self.dpt_items.insert(0, "-- Select --")
         self.tc3 = wx.Choice(self.panel, choices= self.dpt_items)
+        self.tc3.SetSelection(0)
         sizer.Add(self.tc3, pos = (1,3),flag = wx.EXPAND|wx.ALL, border = 5)
          
         #text4 = wx.StaticText(self.panel,label = "Patient Name:")
@@ -1289,7 +1294,9 @@ class PatientDetails(wx.Frame):
         sizer.Add(text9, pos = (4, 2), flag = wx.ALL, border = 5)
 
         self.lab_items = db.getLabs()
+        self.lab_items.insert(0, "-- Select --")
         self.tc8 = wx.Choice(self.panel, choices= self.lab_items)
+        self.tc8.SetSelection(0)
         sizer.Add(self.tc8, pos = (4,3),flag = wx.EXPAND|wx.ALL, border = 5) 
 
         text10 = wx.StaticText(self.panel,label = " Ward Name/Collection Centre:") 
@@ -1329,16 +1336,16 @@ class PatientDetails(wx.Frame):
     def onRegisterPatient(self, evt):
         dic = {}
         dic['UHID'] = self.tc.GetValue() if self.tc.GetValue() else None
-        dic['Referring Hospital'] = self.tc1.GetStringSelection() if self.tc1.GetStringSelection() else None
+        dic['Referring Hospital'] = self.tc1.GetStringSelection() if self.tc1.GetSelection() else None
         dic['MRD No'] = self.tc2.GetValue() if self.tc2.GetValue()  else None
-        dic['Referring Dept'] = self.tc3.GetStringSelection() if self.tc3.GetStringSelection() else None
+        dic['Referring Dept'] = self.tc3.GetStringSelection() if self.tc3.GetSelection() else None
         dic['Patient Name'] = self.tc4.GetValue() if self.tc4.GetValue() else None
         dic['Sample Collection Date'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date1.GetValue()).split('-')))) if self.date1.GetValue().IsValid() else None
         dic['Date of Birth'] = dt.date(*(map(int, wx.DateTime.FormatISODate(self.date2.GetValue()).split('-')))) if self.date2.GetValue().IsValid() else None
         dic['Lab Reference No'] = self.tc7.GetValue() if self.tc7.GetValue() else None
         dic['Gender'] = 'F' if self.gender.GetSelection() else 'M'
         #dic['Report Generated Date'] = self.tc9.GetValue()
-        dic['Lab Name'] = self.tc8.GetStringSelection() if self.tc8.GetStringSelection() else None
+        dic['Lab Name'] = self.tc8.GetStringSelection() if self.tc8.GetSelection() else None
         dic['Ward Name/Collection Centre'] = self.tc9.GetValue() if self.tc9.GetValue() else None
         dic['Email'] = self.tc10.GetValue() if self.tc10.GetValue() else None
         dic['phone'] = self.tc11.GetValue() if self.tc11.GetValue() else None
@@ -1443,12 +1450,15 @@ class TestRegisterScreen(wx.Frame):
         self.Close()
     def onTestRegister(self, event):
         """"""
-        if db.registerAssays(self.requestId, self.test_itemsChosenid):
+        if self.test_itemsChosenid and db.registerAssays(self.requestId, self.test_itemsChosenid):
             dialog = wx.MessageBox('Registered Tests are {0}'.format(self.testsUpdateList_items), 'Successfully Registered', wx.OK)
             if dialog == wx.OK:
                 self.Close()
         else:
-            wx.MessageBox('Test not Registered', 'Error', wx.OK | wx.CANCEL | wx.ICON_WARNING)
+            if self.test_itemsChosenid:
+                wx.MessageBox('Test not Registered', 'Error', wx.OK | wx.ICON_WARNING)
+            else:
+                wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def OnSelectFirst(self, event):
         index = event.GetSelection()
@@ -1496,14 +1506,18 @@ class GeneratePanel(wx.Frame):
         sizer.Add(self.dpc1, (3,9), (2, 4), wx.RIGHT|wx.BOTTOM, 40)
         # In some cases the widget used above will be a native date
         # picker, so show the generic one too.
+        #print(dt.date.today())
+        # .Format("%d-%m-%Y")
         self.dpc2 = wx.adv.GenericDatePickerCtrl(panel, wx.ID_ANY, wx.DefaultDateTime, size=(120,-1), style = wx.TAB_TRAVERSAL| wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE )
+        # self.dpc1.Format("%d-%m-%Y")
         self.Bind(wx.adv.EVT_DATE_CHANGED, self.OnToDateChanged, self.dpc2)
         sizer.Add(self.dpc2, (3,16), (2, 4), wx.LEFT|wx.BOTTOM, 40)
-        now = wx.DateTime.Now()
-        print(now)
-        print(wx.DateTime.FormatISODate(now))
-        print(wx.DateTime.Format(now))
+        # now = wx.DateTime.Now()
+        # print(now)
+        # print(wx.DateTime.FormatISODate(now))
+        # print(wx.DateTime.Format(now))
         self.dpc1.SetValue(wx.DateTime.Now().SetDay(1))
+        # self.dpc2.SetRange(dt1= wx.DefaultDateTime, dt2= wx.DateTime.Now())
 
         
         
@@ -1544,7 +1558,10 @@ class GeneratePanel(wx.Frame):
         #self.SetupScrolling()
 
     def onfilter(self, evt):
-        pass
+        frmDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc1.GetValue()).split('-')))) if self.dpc1.GetValue().IsValid() else None
+        toDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc2.GetValue()).split('-')))) if self.dpc2.GetValue().IsValid() else None
+        print(db.getPendingReports(frmDate, toDate))
+        
 
     def OnScreen(self, event):
         ResultDetails(None, -1, 'Result Details')
@@ -1557,14 +1574,14 @@ class GeneratePanel(wx.Frame):
 
     def OnFromDateChanged(self, evt):
         selected_date = evt.GetDate()
-        self.dpc2.SetRange(dt1= selected_date, dt2= wx.DefaultDateTime)
-        #self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= self.dpc2.GetValue())
+        self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= wx.DateTime.Now())
+        self.dpc2.SetRange(dt1= selected_date, dt2= wx.DateTime.Now())
         print (selected_date.Format("%d-%m-%Y"))
 
     def OnToDateChanged(self, evt):
         selected_date = evt.GetDate()
         #self.dpc1.SetRange(dt1= wx.DefaultDateTime, dt2= selected_date)
-        self.dpc2.SetRange(dt1= self.dpc1.GetValue(), dt2= wx.DefaultDateTime)
+        self.dpc2.SetRange(dt1= self.dpc1.GetValue(), dt2= wx.DateTime.Now())
         print (selected_date.Format("%d-%m-%Y"))
 
     def onMatches(self):
@@ -1609,7 +1626,9 @@ class TestPanel(scrolled.ScrolledPanel):
         k = 7
         for i in range(10):
             antibody = wx.StaticText(self, wx.ID_ANY, 'Antibody')
-            self.inputTwo = wx.Choice(self, choices=['+ve', '-ve', 'C'])
+            choices=['+ve', '-ve', 'C']
+            choices.insert(0, "-- Select --")            
+            self.inputTwo = wx.Choice(self, choices)
             self.inputTwo.SetSelection(0)
             comment = wx.StaticText(self, wx.ID_ANY, 'Comment')
             sizer1.Add(antibody, pos = (k,9), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
