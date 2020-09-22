@@ -548,7 +548,7 @@ def getPendingReports(_fromDate = None, _toDate = None):
     _selectTuple = (_fromDateTime, _toDateTime)
     _status  = selectQuery(_query, _selectTuple)
     if _status[0]:
-        return [{'patientId': _p['patientId'], 'requestId': _p['requestId'], 
+        return [{'patientId': _p['patientId'], 'patientName': _p['patientName'], 'requestId': _p['requestId'], 
             'gender' : _p['patientGender'], 'requestTime' : _p['requestTime']} 
             for _p in _status[1]]
     else:
