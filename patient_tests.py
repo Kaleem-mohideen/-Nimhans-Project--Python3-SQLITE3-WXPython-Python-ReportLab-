@@ -8,6 +8,7 @@ import wx.lib.scrolledpanel as scrolled
 import dbManager as db
 import string
 import wx.richtext as rt
+from collections import OrderedDict
 
 filename="regis.jpeg"
 class MyApp(wx.App):
@@ -1495,7 +1496,10 @@ class TestRegisterScreen(wx.Frame):
 class GeneratePanel(wx.Frame):
     def __init__(self, parent, title):
         super(GeneratePanel, self).__init__(parent, title = title, size = (700, 500)) 
-
+        self.index = 0
+        self.selectedIndex = None
+        self.myRowDict = {}
+        self.searchNameDict = {}
         # sizer = wx.BoxSizer(wx.HORIZONTAL)
         # self.SetSizer(sizer)
         panel = wx.Panel(self, -1)
@@ -1532,22 +1536,28 @@ class GeneratePanel(wx.Frame):
         sizer.Add(filterBtn, pos = (5, 11), flag = wx.LEFT|wx.BOTTOM, border = 50)
         filterBtn.Bind(wx.EVT_BUTTON, self.onfilter)
 
-        search_items = sorted(['test', 'entry'])
-        self.textareaExpectedResults = wx.ListBox(panel, choices=search_items, size=(270, 250))
+        # search_items = sorted(['test', 'entry'])
+        self.textareaExpectedResults = wx.ListCtrl(panel, -1, style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES) 
+        self.textareaExpectedResults.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected)
+        self.textareaExpectedResults.InsertColumn(0, 'Patient Name', width = 300) 
+        self.textareaExpectedResults.InsertColumn(1, 'Gender', wx.LIST_FORMAT_RIGHT, 100) 
+        self.textareaExpectedResults.InsertColumn(2, 'Date', wx.LIST_FORMAT_RIGHT, 300) 
+        
+        # wx.ListBox(panel, choices=search_items, size=(270, 250))
         sizer.Add(self.textareaExpectedResults, (6, 8), (2, 14), wx.EXPAND|wx.RIGHT, 40)
 
         sizer.AddGrowableCol(9)
         sizer.AddGrowableCol(16)
         sizer.AddGrowableCol(8)
          
-        generateBtn = wx.Button(panel, label = "Generate", size=(90, 28)) 
+        self.generateBtn = wx.Button(panel, label = "Generate", size=(90, 28)) 
         cancelBtn = wx.Button(panel, wx.ID_CLOSE, label = "Cancel", size=(90, 28)) 
 
         sizer.Add(cancelBtn, pos = (10, 11), flag = wx.RIGHT|wx.BOTTOM, border = 50) 
-        sizer.Add(generateBtn, pos = (10, 17), flag = wx.RIGHT|wx.LEFT|wx.BOTTOM, border = 5)
+        sizer.Add(self.generateBtn, pos = (10, 17), flag = wx.RIGHT|wx.LEFT|wx.BOTTOM, border = 5)
 
         cancelBtn.Bind(wx.EVT_BUTTON, self.onClose)
-        generateBtn.Bind(wx.EVT_BUTTON, self.OnScreen)
+        self.generateBtn.Bind(wx.EVT_BUTTON, self.OnScreen)
 
         sizer.AddGrowableRow(6)
         panel.SetSizerAndFit(sizer)
@@ -1560,11 +1570,32 @@ class GeneratePanel(wx.Frame):
     def onfilter(self, evt):
         frmDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc1.GetValue()).split('-')))) if self.dpc1.GetValue().IsValid() else None
         toDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc2.GetValue()).split('-')))) if self.dpc2.GetValue().IsValid() else None
-        print(db.getPendingReports(frmDate, toDate))
-        
+        dateFilteredReports = db.getPendingReports(frmDate, toDate)
+        self.textareaExpectedResults.DeleteAllItems()
+        for i in dateFilteredReports:
+            self.index = self.textareaExpectedResults.InsertItem(self.index, i["patientName"]) 
+            self.textareaExpectedResults.SetStringItem(self.index, 1, i["gender"]) 
+            self.textareaExpectedResults.SetStringItem(self.index, 2, i["requestTime"])
+            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["requestTime"]]
+            self.index+=1
+        print(self.myRowDict)
+        count = self.textareaExpectedResults.GetItemCount()
+        for row in range(count):
+            item = self.textareaExpectedResults.GetItem(row, col=0)
+            self.searchNameDict[item.GetText()] = row 
+
+
+    def onItemSelected(self, event):
+        self.selectedIndex = event.GetSelection()
 
     def OnScreen(self, event):
-        ResultDetails(None, -1, 'Result Details')
+        if self.selectedIndex != None:
+            print(self.myRowDict[self.selectedIndex])
+            ResultDetails(None, -1, 'Result Details')
+            self.textareaExpectedResults.Select(self.selectedIndex, on=0)
+            self.selectedIndex = None
+        else:
+            wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
 
     def onClose(self, event):
@@ -1585,16 +1616,30 @@ class GeneratePanel(wx.Frame):
         print (selected_date.Format("%d-%m-%Y"))
 
     def onMatches(self):
-        getValue = self.searchExpectedResults.GetValue() # get the entered string in TextCtrl with GetValue method
-        print (getValue)
-        search_items = sorted(['test', 'entry']) # Create a list of all searchable items in a list
-        self.textareaExpectedResults.Clear()
-        for item in search_items:
-            if getValue in item:
-                print (item)
-                self.textareaExpectedResults.Append(item) # Clear the ListBox and append the matching strings in search_items to the ListBox
+        print(self.searchNameDict)
+        self.searchNameDictSorted = OrderedDict(sorted(self.searchNameDict.items(), key=lambda t: t[0]))
+        print(self.searchNameDictSorted)
+        nameSearch = self.searchExpectedResults.GetValue() # get the entered string in TextCtrl with GetValue method
+        print (nameSearch)
+        self.textareaExpectedResults.DeleteAllItems()
+        for Name in self.searchNameDictSorted:
+            print(Name)
+            if nameSearch in Name:
+                print(self.searchNameDictSorted[Name])
+                index = self.searchNameDictSorted[Name]
+                print(self.myRowDict[index])
+                #self.textareaExpectedResults.InsertItem(self.textareaExpectedResults.GetItemCount(), "The END")
+                self.textareaExpectedResults.Append(self.myRowDict[index])
+        # for Name, Row in self.searchNameDictSorted.items():
+        #     if nameSearch 
+        # search_items = sorted(['test', 'entry'] for ) # Create a list of all searchable items in a list
+        # self.textareaExpectedResults.DeleteAllItems()
+        # for item in search_items:
+        #     if nameSearch in item:
+        #         print (item)
+                #self.textareaExpectedResults.Append(self.myRowDict[index]) # Clear the ListBox and append the matching strings in search_items to the ListBox
 
-    def on_char(self, event):
+    def on_char(self, event): 
         event.Skip()
         wx.CallAfter(self.onMatches)
 
@@ -1627,8 +1672,8 @@ class TestPanel(scrolled.ScrolledPanel):
         for i in range(10):
             antibody = wx.StaticText(self, wx.ID_ANY, 'Antibody')
             choices=['+ve', '-ve', 'C']
-            choices.insert(0, "-- Select --")            
-            self.inputTwo = wx.Choice(self, choices)
+            choices.insert(0, '-- Select --')            
+            self.inputTwo = wx.Choice(self, choices = choices)
             self.inputTwo.SetSelection(0)
             comment = wx.StaticText(self, wx.ID_ANY, 'Comment')
             sizer1.Add(antibody, pos = (k,9), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
