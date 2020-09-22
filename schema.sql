@@ -69,7 +69,7 @@ CREATE TABLE labMaster(
 
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,
-	requestTime		DATETIME NOT NULL DEFAULT(datetime('now')),
+	requestTime		DATETIME NOT NULL DEFAULT(datetime('now', 'localtime')),
 	patientId 		INTEGER,
 	uhid   			TEXT,
 	mrd 			TEXT,
@@ -101,7 +101,7 @@ CREATE TABLE patientReport(
 	assayId		INTEGER NOT NULL,
 	antiBodyId	INTEGER NOT NULL,
 	optionId	INTEGER NOT NULL,
-	updateTime	DATETIME NOT NULL DEFAULT(datetime('now')),
+	updateTime	DATETIME NOT NULL DEFAULT(datetime('now', 'localtime')),
 	FOREIGN KEY(optionId, antiBodyId, assayId) REFERENCES antiBodyOptions(optionId, antiBodyId, assayId),
 	FOREIGN KEY(requestId, assayId) REFERENCES patientRequestLis(requestId, assayId),
 	FOREIGN KEY(requestId) REFERENCES patientRequest(requestId),
