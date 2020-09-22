@@ -557,9 +557,49 @@ def getPendingReports(_fromDate = None, _toDate = None):
         raise Exception(_status[1])
 
     
+def getPendingRequest(_requestId):
+    '''
+    '''
+    _query = 'SELECT * FROM viewPendingReportDetails WHERE requestId = ? ORDER BY assayId, antiBodyId,optionId' #ORDER MATTERS
+    _status = selectQuery(_query, (_requestId, ))
+    if _status[0]:
+        if len(_status[1]) == 0:
+            return []
+        _ret = []
+        _assayId = _status[1][0]['assayId']
+        _antiBodyId = _status[1][0]['antiBodyId']
+        _assay = {
+                    'assayId' : _assayId, 'assayName' : _status[1][0]['assayName'],
+                    'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _status[1][0]['antiBody'],
+                        'options': {_status[1][0]['optionId'] : _status[1][0]['optionText']}}]
+                    }
+        for _row in _status[1][1:]:
+            if _assayId ==  _row['assayId']:
+                if _antiBodyId == _row['antiBodyId']:
+                    _assay['antiBodies'][-1]['options'][_row['optionId']] = _row['optionText']
+                else:
+                    _assay['antiBodies'].append({'antiBodyId': _row['antiBodyId'], 'antiBody': _row['antiBody'],
+                        'options': {_row['optionId'] : _row['optionText']}})
+                    _antiBody = _row['antiBodyId']
+            else:
+                _ret.append(_assay)
+                _assayId = _row['assayId']
+                _antiBodyId = _row['antiBodyId']
+                _assay = {
+                            'assayId' : _assayId, 'assayName' : _row['assayName'],
+                            'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _row['antiBody'],
+                                'options': {_row['optionId'] : _row['optionText']}}]
+                            }
+        _ret.append(_assay)
+        return _ret
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
+
 
 
 if __name__ == '__main__':
-    _a = getPendingReports()
-    for e in _a:
-        print(e, '\n\n\n')
+    _pending = getPendingRequest(1)
+    for e in _pending:
+        print(e,'\n\n\n\n')
