@@ -39,7 +39,6 @@ def selectQuery(_queryString, _values=None):
             con.close()
 
 
-
 def insertUpdateMany(_queryString, _values):
     """[summary]
 
@@ -557,9 +556,89 @@ def getPendingReports(_fromDate = None, _toDate = None):
         raise Exception(_status[1])
 
     
+def getPendingRequest(_requestId):
+    '''
+    '''
+    _query = 'SELECT * FROM viewPendingReportDetails WHERE requestId = ? ORDER BY assayId, antiBodyId,optionId' #ORDER MATTERS
+    _status = selectQuery(_query, (_requestId, ))
+    if _status[0]:
+        if len(_status[1]) == 0:
+            return []
+        _ret = []
+        _assayId = _status[1][0]['assayId']
+        _antiBodyId = _status[1][0]['antiBodyId']
+        _assay = {
+                    'assayId' : _assayId, 'assayName' : _status[1][0]['assayName'],
+                    'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _status[1][0]['antiBody'],
+                        'options': {_status[1][0]['optionId'] : _status[1][0]['optionText']}}]
+                    }
+        for _row in _status[1][1:]:
+            if _assayId ==  _row['assayId']:
+                if _antiBodyId == _row['antiBodyId']:
+                    _assay['antiBodies'][-1]['options'][_row['optionId']] = _row['optionText']
+                else:
+                    _assay['antiBodies'].append({'antiBodyId': _row['antiBodyId'], 'antiBody': _row['antiBody'],
+                        'options': {_row['optionId'] : _row['optionText']}})
+                    _antiBodyId = _row['antiBodyId']
+            else:
+                _ret.append(_assay)
+                _assayId = _row['assayId']
+                _antiBodyId = _row['antiBodyId']
+                _assay = {
+                            'assayId' : _assayId, 'assayName' : _row['assayName'],
+                            'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _row['antiBody'],
+                                'options': {_row['optionId'] : _row['optionText']}}]
+                            }
+        _ret.append(_assay)
+        return _ret
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
+
+def updatePendingReport(_requestId, _assayId, _antiBodyDict):
+    '''
+    '''
+    _pending = getPendingRequest(_requestId)
+    _assays = []
+    if _pending == []:
+        raise ValueError('Invalid requestId : {0}, no pending details for this requestId'.format(_requestId))
+    for _p in _pending:
+        if _p['assayId'] == _assayId:
+            _assays= _p['antiBodies']
+            break
+    else:
+        raise ValueError('Invalid assayId : {0}, no such assayId is pending for requestId : {1}'.format(_assayId, _requestId))
+    _missing = [e['antiBodyId'] for e in _assays if e['antiBodyId'] not in _antiBodyDict]
+    _excess = [e for e in _antiBodyDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
+    if _missing:
+        raise ValueError('Data for Antibodies {0} missing for assay {1}'.format(_missing.join(', '), _assayId)) 
+    if _excess:
+        raise ValueError('No such Antibodies {0} missing for assay {1}'.format(_excess.join(', '), _assayId)) 
+    _reportQuery = 'INSERT INTO patientReport(requestId, assayId, antiBodyId, optionId) VALUES (?,?,?,?)'
+    _insertList = []
+    for _antiBodyId in _antiBodyDict:
+        _insertList.append((_requestId, _assayId, _antiBodyId, _antiBodyDict[_antiBodyId]))
+    _status = insertUpdateMany(_reportQuery, _insertList)
+    if _status[0]:
+        return True
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
 
 
 if __name__ == '__main__':
-    _a = getPendingReports()
-    for e in _a:
-        print(e, '\n\n\n')
+    _pending = getPendingRequest(1)
+    for e in _pending:
+        print(e,'\n\n\n\n')
+    try:
+        updatePendingReport(1, 1, {1:2, 2:5, 3:7, 4:12})
+    except Exception as ex:
+        print('what the?1')
+        print(ex)
+    try:
+        updatePendingReport(1, 2, {5:13, 6:17, 7:21})
+    except Exception as ex:
+        print('what the?2')
+        print(ex)
