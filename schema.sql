@@ -137,7 +137,13 @@ CREATE VIEW viewPendingReports AS
 
 CREATE VIEW viewPendingPatients AS 
 	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
-		r.requestId AS requestId, r.requestTime AS requestTime FROM
+	r.requestId AS requestId, r.requestTime AS requestTime FROM
 	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
 	r.requestId IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
 
+
+CREATE VIEW viewPendingReportDetails AS 
+	SELECT vpr.requestId, vabo.assayId, vabo.assayName, vabo.assayDescription, 
+	vabo.antiBodyId, vabo.antiBody, vabo.optionId, vabo.optionText FROM 
+	viewPendingReports vpr LEFT JOIN viewAntiBodyOptions vabo ON 
+	vpr.assayId = vabo.assayId AND vpr.antiBodyId = vabo.antiBodyId;
