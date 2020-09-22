@@ -103,7 +103,7 @@ CREATE TABLE patientReport(
 	optionId	INTEGER NOT NULL,
 	updateTime	DATETIME NOT NULL DEFAULT(datetime('now', 'localtime')),
 	FOREIGN KEY(optionId, antiBodyId, assayId) REFERENCES antiBodyOptions(optionId, antiBodyId, assayId),
-	FOREIGN KEY(requestId, assayId) REFERENCES patientRequestLis(requestId, assayId),
+	FOREIGN KEY(requestId, assayId) REFERENCES patientRequestList(requestId, assayId),
 	FOREIGN KEY(requestId) REFERENCES patientRequest(requestId),
 	FOREIGN KEY(assayId) REFERENCES assayMaster(assayId));
 
