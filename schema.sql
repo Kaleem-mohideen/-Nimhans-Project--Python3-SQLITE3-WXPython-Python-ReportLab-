@@ -133,7 +133,7 @@ CREATE VIEW viewDepartments AS SELECT * FROM departmentMaster WHERE enabled = 1;
 CREATE VIEW viewPendingReports AS  
 	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId  FROM 
 	patientRequestList p LEFT JOIN viewAntiBodies a ON p.assayId = a.assayId EXCEPT 
-	SELECT r.requestId, r.assayId , r.optionId FROM patientReport r;
+	SELECT r.requestId, r.assayId , r.antiBodyId FROM patientReport r;
 
 CREATE VIEW viewPendingPatients AS 
 	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
