@@ -573,7 +573,7 @@ def getPendingReports(_fromDate = None, _toDate = None):
         if isinstance(_toDate, date):
             if _toDate < _fromDate:
                 raise ValueError('_toDate: {0} cannot be lesser than _fromDate : {1}'.format(_toDate, _fromDate))
-            if _toDate < date.today():
+            if _toDate > date.today():
                 raise ValueError('_toDate: {0} cannot be greater than current date'.format(_toDate))
         else:
             raise TypeError('_fromDate should be of type datetime.date, recived {0} instead'.format(type(_fromDate)))
