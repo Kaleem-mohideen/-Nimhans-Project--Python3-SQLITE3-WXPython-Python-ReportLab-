@@ -108,18 +108,18 @@ CREATE TABLE patientReport(
 	FOREIGN KEY(assayId) REFERENCES assayMaster(assayId));
 
 
-CREATE VIEW viewEnabledAssays AS SELECT * FROM assayMaster WHERE enabled = 1;
+CREATE VIEW viewAssays AS SELECT * FROM assayMaster WHERE enabled = 1;
 
-CREATE VIEW viewEnabledAntiBodies AS SELECT * FROM antiBodies WHERE enabled = 1;
+CREATE VIEW viewAntiBodies AS SELECT * FROM antiBodies WHERE enabled = 1;
 
-CREATE VIEW viewEnabledOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
+CREATE VIEW viewOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
 
 CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.assayDescription, 
 					body.antiBodyId, body.antiBody,
 					options.optionId, options.optionText 
-			FROM viewEnabledAssays assay LEFT JOIN viewEnabledAntiBodies body 
+			FROM viewAssays assay LEFT JOIN viewAntiBodies body 
 			ON assay.assayId = body.assayId
-			LEFT JOIN viewEnabledOptions options 
+			LEFT JOIN viewOptions options 
 			ON body.assayId = options.assayId AND body.antiBodyId = options.antiBodyId;
 
 
