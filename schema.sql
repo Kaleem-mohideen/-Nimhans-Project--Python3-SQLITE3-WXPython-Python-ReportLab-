@@ -132,7 +132,7 @@ CREATE VIEW viewDepartments AS SELECT * FROM departmentMaster WHERE enabled = 1;
 
 CREATE VIEW viewPendingReports AS  
 	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId  FROM 
-	patientRequestList p LEFT JOIN viewEnabledAntiBodies a ON p.assayId = a.assayId EXCEPT 
+	patientRequestList p LEFT JOIN viewAntiBodies a ON p.assayId = a.assayId EXCEPT 
 	SELECT r.requestId, r.assayId , r.optionId FROM patientReport r;
 
 CREATE VIEW viewPendingPatients AS 
@@ -140,6 +140,12 @@ CREATE VIEW viewPendingPatients AS
 	r.requestId AS requestId, r.requestTime AS requestTime FROM
 	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
 	r.requestId IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
+
+CREATE VIEW viewCompletedPatients AS 
+	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
+	r.requestId AS requestId, r.requestTime AS requestTime FROM
+	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
+	r.requestId NOT IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
 
 
 CREATE VIEW viewPendingReportDetails AS 
