@@ -59,3 +59,27 @@ INSERT INTO departmentMaster(departmentName) VALUES
 
 INSERT INTO labMaster(labName) VALUES
 	('Microlab'), ('Anand Diagnostics');
+
+
+INSERT INTO patientMaster(mobile, patientName, patientGender, patientDob) VALUES
+	('9384674004', 'Vivek', 'M', '1980-04-17'),
+	('8072383129', 'Kaleem', 'M', '1999-05-16'),
+	('9999999999', 'Ashwin', 'M', '1987-02-08');
+
+
+INSERT INTO patientRequest(patientId, uhid, mrd, hospitalName, collectionDate) 
+			VALUES(1,'123', '456', 'Apollo', '2020-09-24');
+INSERT INTO patientRequest(patientId, uhid, mrd, labName, collectionDate, labReferenceNumber) 
+			VALUES(2,'234','567', 'Microlab', '2020-09-20', '54321');
+INSERT INTO patientRequest(patientId, uhid, mrd, labName, collectionDate, labReferenceNumber) 
+			VALUES(3,'345', '678', 'Anand Diagnostics', '2020-09-21', '65432');
+
+
+INSERT INTO patientRequestList(requestId, assayId) VALUES (1,1),(1,2);
+
+INSERT INTO patientRequestList(requestId, assayId) VALUES (2,2),(2,3);
+
+
+INSERT INTO patientRequestList(requestId, assayId) VALUES (3,1),(3,3);
+
+
