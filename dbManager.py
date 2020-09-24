@@ -648,8 +648,8 @@ def updatePendingReport(_requestId, _assayId, _antiBodyDict):
             break
     else:
         raise ValueError('Invalid assayId : {0}, no such assayId is pending for requestId : {1}'.format(_assayId, _requestId))
-    _missing = [e['antiBodyId'] for e in _assays if e['antiBodyId'] not in _antiBodyDict]
-    _excess = [e for e in _antiBodyDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
+    _missing = [str(e['antiBodyId']) for e in _assays if e['antiBodyId'] not in _antiBodyDict]
+    _excess = [str(e) for e in _antiBodyDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
     if _missing:
         raise ValueError('Data for Antibodies {0} missing for assay {1}'.format(', '.join(_missing), _assayId)) 
     if _excess:
