@@ -3,6 +3,7 @@ import sqlite3 as lite
 from datetime import datetime
 from datetime import date
 import os
+from utils import getAge
 
 
 
@@ -549,7 +550,8 @@ def getReports(_fromDate = None, _toDate = None, _pending=True):
     _status  = selectQuery(_query, _selectTuple)
     if _status[0]:
         return [{'patientId': _p['patientId'], 'patientName': _p['patientName'], 'requestId': _p['requestId'], 
-            'gender' : _p['patientGender'], 'requestTime' : _p['requestTime']} 
+            'gender' : _p['patientGender'], 'age' : getAge(_p['patientDob']), 'email'  : _p['patientEmail'],
+            'requestTime' : _p['requestTime']} 
             for _p in _status[1]]
     else:
         if isinstance(_status[1], Exception):

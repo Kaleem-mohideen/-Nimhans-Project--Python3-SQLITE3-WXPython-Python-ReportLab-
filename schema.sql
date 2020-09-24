@@ -139,12 +139,14 @@ CREATE VIEW viewPendingReports AS
 
 CREATE VIEW viewPendingPatients AS 
 	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
+	p.patientDob as patientDob, p.patientEmail as patientEmail,
 	r.requestId AS requestId, r.requestTime AS requestTime FROM
 	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
 	r.requestId IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
 
 CREATE VIEW viewCompletedPatients AS 
 	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
+	p.patientDob as patientDob, p.patientEmail as patientEmail,
 	r.requestId AS requestId, r.requestTime AS requestTime FROM
 	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
 	r.requestId NOT IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);

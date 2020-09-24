@@ -27,6 +27,16 @@ def getFileName(_patientName, _mhr, _date=None):
     _extension = '0' + str(len(_pdfs)) if len(_pdfs) < 10 else str(len(_pdfs))
     return os.path.join(_directory,_fileName + _extension + '.pdf')
 
+def getAge(_dob):
+    if isinstance(_dob,datetime.date):
+        pass
+    else:
+        raise TypeError('_dob is supposed be of type datetime.date received {0} instead'.format(type(_date)))
+    _today = datetime.date.today()
+    _diff = _today.year - _dob.year - ((_today.month, _today.day) < (_dob.month, _dob.day))
+    return '{0} years'.format(_diff)
+
+
 
 if __name__ == '__main__':
     print('works')
