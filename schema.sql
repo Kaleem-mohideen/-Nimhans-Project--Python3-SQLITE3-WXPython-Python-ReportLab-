@@ -6,12 +6,14 @@ PRAGMA foreign_keys=1;
 CREATE TABLE  reportFormats(
 	reportId 	INTEGER PRIMARY KEY,
 	reportFormat	TEXT NOT NULL/*JSON*/);
+
+
 CREATE TABLE patientMaster(
 	patientId 		INTEGER PRIMARY KEY,
 	mobile 			TEXT,
 	patientName		TEXT,
 	patientDob		DATE,
-	patientGender		TEXT CHECK(patientGender in ('M','F'))NOT NULL,
+	patientGender		TEXT CHECK(patientGender in ('M','F'))NOT NULL DEFAULT 'M',
 	patientEmail		TEXT);
 
 CREATE TABLE assayMaster(
