@@ -1756,29 +1756,46 @@ class TestPanel(scrolled.ScrolledPanel):
             self.controlSizer.Clear(True)
             k = 7
             antibdyIdDict = {}
+            optionIdDict = {}
+            self.antiBodyDict = {}
             for i in self.parent.pendingRequest:
                 if i['assayName'] == self.selectedString:
                     self.assayId = i['assayId']
                     antibodiesOptions = i['antiBodies']
                     print(antibodiesOptions)
             self.sizer2 = wx.GridBagSizer()
+            ids = 0
             for dic in antibodiesOptions:
-                antibody = wx.StaticText(self, wx.ID_ANY, dic['antiBody'])
+                def OnChoiceSelect(event, button_label=dic):
+                    if event.GetSelection():
+                        id1 = event.GetEventObject().GetId()
+                        antibdyId = antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
+                        optId = optionIdDict[antibdyId][event.GetString()]
+                        self.antiBodyDict[antibdyId] = optId
+                    # else:
+                    #     antibdyId = None
+                    #     optId = None
+                    
+
+                antibody = wx.StaticText(self, ids, dic['antiBody'])
                 antibdyIdDict[dic['antiBody']] = dic['antiBodyId']
-                optionIdDict = {option: Id for Id, option in dic['options'].items()}
+                optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
                 choices=[i for i in dic['options'].values()]
                 choices.insert(0, '-- Select --')            
-                self.inputTwo = wx.Choice(self, choices = choices)
+                self.inputTwo = wx.Choice(self,id =ids, choices = choices)
                 self.inputTwo.SetSelection(0)
-                comment = wx.StaticText(self, wx.ID_ANY, 'Comment')
+                comment = wx.StaticText(self, ids, 'Comment')
                 self.sizer2.Add(antibody, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
                 self.sizer2.Add(self.inputTwo, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
                 self.sizer2.Add(comment, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
+                self.inputTwo.Bind(wx.EVT_CHOICE, OnChoiceSelect)
+
                 k+=1
+                ids+=1
 
             saveBtn = wx.Button(self, label = "Save", size=(90, 28))
             self.sizer2.Add(saveBtn, pos = (k+1, 13), flag = wx.LEFT|wx.BOTTOM, border = 250)
-            saveBtn.Bind(wx.EVT_BUTTON, self.onUpdate)
+            saveBtn.Bind(wx.EVT_BUTTON, self.onUpdateReport)
             self.controlSizer.Add(self.sizer2, 0, wx.ALL, 5)
             #self.SetSizer(self.controlSizer)
             self.SetSizer(self.mainSizer)
@@ -1786,7 +1803,17 @@ class TestPanel(scrolled.ScrolledPanel):
             #self.Centre()
             self.Layout()
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Choosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
+    def onUpdateReport(self, event):
+        print(self.antiBodyDict)
+        if db.updatePendingReport(self.parent.RqstId, self.assayId, self.antiBodyDict):
+            self.tests.Deselect(self.index)
+            self.index = None
+            for i in db.getPendingRequest(self.parent.RqstId):
+                print(i['assayName'])
+            print()
+        else:
+            wx.MessageBox('Test Report not updated', 'Error', wx.OK | wx.ICON_WARNING)
 
 
 if __name__ == '__main__':
