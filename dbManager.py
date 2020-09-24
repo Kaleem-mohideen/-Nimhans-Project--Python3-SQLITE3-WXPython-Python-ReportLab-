@@ -651,9 +651,9 @@ def updatePendingReport(_requestId, _assayId, _antiBodyDict):
     _missing = [e['antiBodyId'] for e in _assays if e['antiBodyId'] not in _antiBodyDict]
     _excess = [e for e in _antiBodyDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
     if _missing:
-        raise ValueError('Data for Antibodies {0} missing for assay {1}'.format(_missing.join(', '), _assayId)) 
+        raise ValueError('Data for Antibodies {0} missing for assay {1}'.format(', '.join(_missing), _assayId)) 
     if _excess:
-        raise ValueError('No such Antibodies {0} missing for assay {1}'.format(_excess.join(', '), _assayId)) 
+        raise ValueError('No such Antibodies {0} missing for assay {1}'.format(', '.join(_excess), _assayId)) 
     _reportQuery = 'INSERT INTO patientReport(requestId, assayId, antiBodyId, optionId) VALUES (?,?,?,?)'
     _insertList = []
     for _antiBodyId in _antiBodyDict:
