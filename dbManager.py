@@ -517,6 +517,45 @@ def getAntiBodies(_assayId=None):
     
 
 
+def getReports(_fromDate = None, _toDate = None, _pending=True):
+    '''
+    '''
+    if _fromDate:
+        if isinstance(_fromDate, date):
+            if _fromDate > date.today():
+                raise ValueError('_fromDate: {0} cannot be greater than current date'.format(_fromDate))
+        else:
+            raise TypeError('_fromDate should be of type datetime.date, recived {0} instead'.format(type(_fromDate)))
+    else:
+        _fromDate = date.today().replace(day=1)
+    print(_fromDate)
+    if _toDate:
+        if isinstance(_toDate, date):
+            if _toDate < _fromDate:
+                raise ValueError('_toDate: {0} cannot be lesser than _fromDate : {1}'.format(_toDate, _fromDate))
+            if _toDate < date.today():
+                raise ValueError('_toDate: {0} cannot be greater than current date'.format(_toDate))
+        else:
+            raise TypeError('_fromDate should be of type datetime.date, recived {0} instead'.format(type(_fromDate)))
+    else:
+        _toDate = date.today()
+    print(_fromDate, _toDate)
+    _fromDateTime = datetime.combine(_fromDate, datetime.min.time())#STARTING FROM 00:00:00
+    _toDateTime = datetime.combine(_toDate, datetime.max.time())#ENDING AT 23:59:59
+    _query = 'SELECT * FROM viewCompletedPatients WHERE requestTime BETWEEN ? AND ?'
+    if _pending:
+        _query = 'SELECT * FROM viewPendingPatients WHERE requestTime BETWEEN ? AND ?'
+    _selectTuple = (_fromDateTime, _toDateTime)
+    _status  = selectQuery(_query, _selectTuple)
+    if _status[0]:
+        return [{'patientId': _p['patientId'], 'patientName': _p['patientName'], 'requestId': _p['requestId'], 
+            'gender' : _p['patientGender'], 'requestTime' : _p['requestTime']} 
+            for _p in _status[1]]
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
+
 
 def getPendingReports(_fromDate = None, _toDate = None):
     '''
@@ -629,6 +668,9 @@ def updatePendingReport(_requestId, _assayId, _antiBodyDict):
 
 
 if __name__ == '__main__':
+    _rep1 = getReports()
+    print(_rep1,'\n\n\n\n')
+    input('')
     _pending = getPendingRequest(1)
     for e in _pending:
         print(e,'\n\n\n\n')
@@ -642,3 +684,6 @@ if __name__ == '__main__':
     except Exception as ex:
         print('what the?2')
         print(ex)
+    input('\n\n\n')
+    _rep2 = getReports(_pending = False)
+    print(_rep2)

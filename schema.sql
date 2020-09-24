@@ -108,18 +108,18 @@ CREATE TABLE patientReport(
 	FOREIGN KEY(assayId) REFERENCES assayMaster(assayId));
 
 
-CREATE VIEW viewEnabledAssays AS SELECT * FROM assayMaster WHERE enabled = 1;
+CREATE VIEW viewAssays AS SELECT * FROM assayMaster WHERE enabled = 1;
 
-CREATE VIEW viewEnabledAntiBodies AS SELECT * FROM antiBodies WHERE enabled = 1;
+CREATE VIEW viewAntiBodies AS SELECT * FROM antiBodies WHERE enabled = 1;
 
-CREATE VIEW viewEnabledOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
+CREATE VIEW viewOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
 
 CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.assayDescription, 
 					body.antiBodyId, body.antiBody,
 					options.optionId, options.optionText 
-			FROM viewEnabledAssays assay LEFT JOIN viewEnabledAntiBodies body 
+			FROM viewAssays assay LEFT JOIN viewAntiBodies body 
 			ON assay.assayId = body.assayId
-			LEFT JOIN viewEnabledOptions options 
+			LEFT JOIN viewOptions options 
 			ON body.assayId = options.assayId AND body.antiBodyId = options.antiBodyId;
 
 
@@ -132,14 +132,20 @@ CREATE VIEW viewDepartments AS SELECT * FROM departmentMaster WHERE enabled = 1;
 
 CREATE VIEW viewPendingReports AS  
 	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId  FROM 
-	patientRequestList p LEFT JOIN viewEnabledAntiBodies a ON p.assayId = a.assayId EXCEPT 
-	SELECT r.requestId, r.assayId , r.optionId FROM patientReport r;
+	patientRequestList p LEFT JOIN viewAntiBodies a ON p.assayId = a.assayId EXCEPT 
+	SELECT r.requestId, r.assayId , r.antiBodyId FROM patientReport r;
 
 CREATE VIEW viewPendingPatients AS 
 	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
 	r.requestId AS requestId, r.requestTime AS requestTime FROM
 	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
 	r.requestId IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
+
+CREATE VIEW viewCompletedPatients AS 
+	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 
+	r.requestId AS requestId, r.requestTime AS requestTime FROM
+	patientMaster p INNER JOIN patientRequest r ON p.patientId = r.patientId WHERE 
+	r.requestId NOT IN (SELECT requestId FROM viewPendingReports GROUP BY requestId);
 
 
 CREATE VIEW viewPendingReportDetails AS 
