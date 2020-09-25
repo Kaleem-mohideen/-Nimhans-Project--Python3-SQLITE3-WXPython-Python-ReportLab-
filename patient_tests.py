@@ -80,14 +80,14 @@ class ReportsMenu(wx.Menu):
     def onGenerate(self, event):
         app = wx.App(redirect=False)
         frame = GeneratePanel(None, 'PENDING REPORTS')
-        frame.SetSize((800, 580))
+        frame.SetSize((1000, 880))
         frame.Show()
         app.MainLoop()
 
     def onView(self, event):
         app = wx.App(redirect=False)
         frame = ViewPanel(None, 'VIEW REPORTS')
-        frame.SetSize((800, 580))
+        frame.SetSize((1000, 880))
         frame.Show()
         app.MainLoop()     
 
@@ -1320,7 +1320,6 @@ class PatientDetails(wx.Frame):
         cancelBtn.Bind(wx.EVT_BUTTON, self.onClose)
         saveBtn.Bind(wx.EVT_BUTTON, self.onRegisterPatient)
 
-        #sizer.AddGrowableRow()
         self.panel.SetSizerAndFit(sizer)
 
     def onRegisterPatient(self, evt):
@@ -1345,8 +1344,8 @@ class PatientDetails(wx.Frame):
                 if dic['Patient Name']:
                     if dic['Date of Birth']:
                         if dic['Gender']:
-                            _requestId = db.registerPatient(dic['UHID'], dic['Patient Name'], dic['Date of Birth'], dic['Referring Hospital'], dic['Gender'], dic['MRD No'], dic['Ward Name/Collection Centre'], dic['Sample Collection Date'], dic['Lab Reference No'], dic['Referring Dept'], dic['Lab Name'])
-                            TestRegisterScreen(None, -1, 'Register Tests', _requestId)
+                            _requestId = db.registerPatient(dic['UHID'], dic['Patient Name'], dic['Date of Birth'], dic['Referring Hospital'], dic['Gender'], dic['MRD No'], dic['Ward Name/Collection Centre'], dic['Sample Collection Date'], dic['Lab Reference No'], dic['Referring Dept'], dic['Lab Name'], dic['Email'], dic['phone'])
+                            TestRegisterScreen(None, -1, 'Register Tests', _requestId, dic['Patient Name'])
                         else:
                             #color = self.windowFrameColor if self.textctrl.GetValue() else self.highligt_color
                             #self.gender.SetHint("Mandatory field")
@@ -1384,7 +1383,7 @@ class PatientDetails(wx.Frame):
 
 
 class TestRegisterScreen(wx.Frame):
-    def __init__(self, parent, id, title, _requestId):
+    def __init__(self, parent, id, title, _requestId, patientName):
         #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
         self.requestId = _requestId
         super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (650, 450))
@@ -1408,13 +1407,25 @@ class TestRegisterScreen(wx.Frame):
         text2 = wx.StaticText(panel, label = "Choosen Tests")
         self.testsChosenListbox = wx.ListBox(panel, -1, size=(170, 130), choices=[], style=wx.LB_SINGLE)
 
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        # font1 = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
+        # font1.SetPointSize(12)
+
+        name = wx.StaticText(self, label= "Name  : {0}".format(patientName))
+        name.SetFont(font)
+        # age = wx.StaticText(self, label= "Age     : {0}".format(self.parent.age))
+        # age.SetFont(font1)
+        # gender = wx.StaticText(self, label= "Gender: {0}".format(self.parent.gender))
+        # gender.SetFont(font1)  
+
         #self.Bind(wx.EVT_LISTBOX, self.OnSelectFirst, self.testsListbox)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectFirst, self.testsListbox)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectSecond, self.testsChosenListbox)
         #self.Bind(wx.EVT_LISTBOX, self.OnSelectSecond, self.testsChosenListbox)
 
-        sizer.Add(text, pos = (1, 0), flag = wx.LEFT|wx.TOP, border = 100)
-        sizer.Add(text2, pos = (1, 3), flag = wx.LEFT|wx.RIGHT|wx.TOP, border = 100)
+        sizer.Add(name, pos = (0, 1), flag = wx.CENTER|wx.TOP|wx.BOTTOM, border = 20)
+        sizer.Add(text, pos = (1, 0), flag = wx.LEFT, border = 100)
+        sizer.Add(text2, pos = (1, 3), flag = wx.LEFT|wx.RIGHT, border = 100)
         sizer.Add(self.testsListbox, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
         sizer.Add(self.testsChosenListbox, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
 
@@ -1482,12 +1493,13 @@ class TestRegisterScreen(wx.Frame):
 
 class GeneratePanel(wx.Frame):
     def __init__(self, parent, title):
-        super(GeneratePanel, self).__init__(parent, title = title, size = (700, 500)) 
+        super(GeneratePanel, self).__init__(parent, title = title, size = (700, 1000)) 
         self.index = 0
         self.selectedIndex = None
         self.myRowDict = {}
         self.searchNameDict = {}
         self.myRequestIdDict = {}
+        self.details = {}
 
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer()
@@ -1518,8 +1530,10 @@ class GeneratePanel(wx.Frame):
         self.textareaExpectedResults = wx.ListCtrl(panel, -1, style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES) 
         self.textareaExpectedResults.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected)
         self.textareaExpectedResults.InsertColumn(0, 'Patient Name', width = 300) 
-        self.textareaExpectedResults.InsertColumn(1, 'Gender', wx.LIST_FORMAT_RIGHT, 100) 
-        self.textareaExpectedResults.InsertColumn(2, 'Date', wx.LIST_FORMAT_RIGHT, 300)
+        self.textareaExpectedResults.InsertColumn(1, 'Gender', wx.LIST_FORMAT_RIGHT, 70) 
+        self.textareaExpectedResults.InsertColumn(2, 'Age', wx.LIST_FORMAT_RIGHT, 100) 
+        self.textareaExpectedResults.InsertColumn(3, 'Email', wx.LIST_FORMAT_RIGHT, 100)
+        self.textareaExpectedResults.InsertColumn(4, 'Date', wx.LIST_FORMAT_RIGHT, 200)
 
         frmDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc1.GetValue()).split('-')))) if self.dpc1.GetValue().IsValid() else None
         toDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc2.GetValue()).split('-')))) if self.dpc2.GetValue().IsValid() else None
@@ -1528,9 +1542,15 @@ class GeneratePanel(wx.Frame):
         for i in Reports:
             self.index = self.textareaExpectedResults.InsertItem(self.index, i["patientName"]) 
             self.textareaExpectedResults.SetItem(self.index, 1, i["gender"]) 
-            self.textareaExpectedResults.SetItem(self.index, 2, i["requestTime"])
-            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["requestTime"]]
+            self.textareaExpectedResults.SetItem(self.index, 2, i["age"])
+            self.textareaExpectedResults.SetItem(self.index, 3, i["email"] if i["email"] else '')            
+            self.textareaExpectedResults.SetItem(self.index, 4, i["requestTime"])
+            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["age"], i["email"], i["requestTime"]]
             self.myRequestIdDict[self.index] = i["requestId"]
+            self.details[i["requestId"]] = {"Email":i["email"] if i["email"] else ''}
+            self.details[i["requestId"]]["Name"] = i["patientName"]
+            self.details[i["requestId"]]["Gender"] = i["gender"]
+            self.details[i["requestId"]]["Age"] = i["age"]
             self.index+=1
         print(self.myRowDict)
         self.myRequestIdDict1 = self.myRequestIdDict.copy()
@@ -1574,16 +1594,23 @@ class GeneratePanel(wx.Frame):
         self.myRowDict = {}
         self.searchNameDict = {}
         self.myRequestIdDict = {}
+        self.details = {}
         frmDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc1.GetValue()).split('-')))) if self.dpc1.GetValue().IsValid() else None
         toDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc2.GetValue()).split('-')))) if self.dpc2.GetValue().IsValid() else None
         dateFilteredReports = db.getReports(frmDate, toDate)
         self.textareaExpectedResults.DeleteAllItems()
         for i in dateFilteredReports:
             self.index = self.textareaExpectedResults.InsertItem(self.index, i["patientName"]) 
-            self.textareaExpectedResults.SetStringItem(self.index, 1, i["gender"]) 
-            self.textareaExpectedResults.SetStringItem(self.index, 2, i["requestTime"])
-            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["requestTime"]]
+            self.textareaExpectedResults.SetItem(self.index, 1, i["gender"])
+            self.textareaExpectedResults.SetItem(self.index, 2, i["age"])
+            self.textareaExpectedResults.SetItem(self.index, 3, i["email"] if i["email"] else '')            
+            self.textareaExpectedResults.SetItem(self.index, 4, i["requestTime"])
+            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["age"], i["email"], i["requestTime"]]
             self.myRequestIdDict[self.index] = i["requestId"]
+            self.details[i["requestId"]] = {"Email":i["email"] if i["email"] else ''}
+            self.details[i["requestId"]]["Name"] = i["patientName"]
+            self.details[i["requestId"]]["Gender"] = i["gender"]
+            self.details[i["requestId"]]["Age"] = i["age"]
             self.index+=1
         print(self.myRowDict)
         self.myRequestIdDict1 = self.myRequestIdDict.copy()
@@ -1667,6 +1694,11 @@ class ResultDetails(wx.Frame):
         super(ResultDetails, self).__init__(parent, id, title, wx.DefaultPosition, (1100, 900))
         #self.parent = parent
         self.RqstId = RqstId
+        self.email = parent.details[RqstId]["Email"]
+        self.name = parent.details[RqstId]["Name"]
+        self.gender = parent.details[RqstId]['Gender']
+        self.age = parent.details[RqstId]['Age']
+
         if parent.selectedIndex != None:
             parent.textareaExpectedResults.Select(parent.selectedIndex, on=0)
             parent.selectedIndex = None
@@ -1691,11 +1723,26 @@ class TestPanel(scrolled.ScrolledPanel):
 
         self.tests = wx.ListBox(self, -1, size=(370, 130), choices=self.parent.pendingTestAssays, style=wx.LB_MULTIPLE)
         self.Bind(wx.EVT_LISTBOX, self.Onlistbox, self.tests)
+        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        font1 = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
+        font1.SetPointSize(12)
+
+        name = wx.StaticText(self, label= self.parent.name)
+        name.SetFont(font)
+        age = wx.StaticText(self, label= "Age     : {0}".format(self.parent.age))
+        age.SetFont(font1)
+        gender = wx.StaticText(self, label= "Gender: {0}".format(self.parent.gender))
+        gender.SetFont(font1)        
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
+        self.hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.controlSizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
         #self.widgetSizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer1 = wx.GridBagSizer()
         self.sizer1.Add(self.tests, pos = (2, 13), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
+        self.sizer.Add(name, 0, flag = wx.RIGHT|wx.TOP, border = 50)
+        self.sizer.Add(age, 0, flag = wx.RIGHT, border = 50)
+        self.sizer.Add(gender, 0, flag = wx.RIGHT, border = 50)
         updateBtn = wx.Button(self, label = "Update", size=(90, 28))
         self.sizer1.Add(updateBtn, pos = (6, 12), flag = wx.LEFT|wx.BOTTOM, border = 50)
         updateBtn.Bind(wx.EVT_BUTTON, self.onUpdate)
@@ -1707,7 +1754,9 @@ class TestPanel(scrolled.ScrolledPanel):
         self.sizer1.AddGrowableCol(13)
 
         #self.SetupScrolling()
-        self.mainSizer.Add(self.sizer1, 0, wx.CENTER)
+        self.hbox.Add(self.sizer, 0, wx.LEFT)
+        self.hbox.Add(self.sizer1, 0, wx.RIGHT)
+        self.mainSizer.Add(self.hbox, 0, wx.CENTER)
         self.mainSizer.Add(self.controlSizer, 0, wx.CENTER)
 
         self.SetSizerAndFit(self.mainSizer)
@@ -1773,6 +1822,7 @@ class TestPanel(scrolled.ScrolledPanel):
             self.parent.pendingTestAssays.remove(self.selectedString)
             if not self.parent.pendingTestAssays:
                 self.saveBtn.Disable()
+                OpenReport(self, "Open Report", self.parent.email, self.parent.name)
             self.tests.Deselect(self.index)
             self.index = None
             self.tests.Clear()
@@ -1792,6 +1842,7 @@ class ViewPanel(wx.Frame):
         self.myRowDict = {}
         self.searchNameDict = {}
         self.myRequestIdDict = {}
+        self.details = {}
 
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer()
@@ -1822,8 +1873,10 @@ class ViewPanel(wx.Frame):
         self.textareaExpectedResults = wx.ListCtrl(panel, -1, style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES) 
         self.textareaExpectedResults.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected)
         self.textareaExpectedResults.InsertColumn(0, 'Patient Name', width = 300) 
-        self.textareaExpectedResults.InsertColumn(1, 'Gender', wx.LIST_FORMAT_RIGHT, 100) 
-        self.textareaExpectedResults.InsertColumn(2, 'Date', wx.LIST_FORMAT_RIGHT, 300)
+        self.textareaExpectedResults.InsertColumn(1, 'Gender', wx.LIST_FORMAT_RIGHT, 70) 
+        self.textareaExpectedResults.InsertColumn(2, 'Age', wx.LIST_FORMAT_RIGHT, 100) 
+        self.textareaExpectedResults.InsertColumn(3, 'Email', wx.LIST_FORMAT_RIGHT, 100)
+        self.textareaExpectedResults.InsertColumn(4, 'Date', wx.LIST_FORMAT_RIGHT, 200)
 
         frmDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc1.GetValue()).split('-')))) if self.dpc1.GetValue().IsValid() else None
         toDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc2.GetValue()).split('-')))) if self.dpc2.GetValue().IsValid() else None
@@ -1832,9 +1885,13 @@ class ViewPanel(wx.Frame):
         for i in Reports:
             self.index = self.textareaExpectedResults.InsertItem(self.index, i["patientName"]) 
             self.textareaExpectedResults.SetItem(self.index, 1, i["gender"]) 
-            self.textareaExpectedResults.SetItem(self.index, 2, i["requestTime"])
-            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["requestTime"]]
+            self.textareaExpectedResults.SetItem(self.index, 2, i["age"])
+            self.textareaExpectedResults.SetItem(self.index, 3, i["email"] if i["email"] else '')            
+            self.textareaExpectedResults.SetItem(self.index, 4, i["requestTime"])
+            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["age"], i["email"], i["requestTime"]]
             self.myRequestIdDict[self.index] = i["requestId"]
+            self.details[i["requestId"]] = {"Email":i["email"] if i["email"] else ''}
+            self.details[i["requestId"]]["Name"] = i["patientName"]            
             self.index+=1
         print(self.myRowDict)
         self.myRequestIdDict1 = self.myRequestIdDict.copy()
@@ -1856,7 +1913,7 @@ class ViewPanel(wx.Frame):
         sizer.Add(self.openBtn, pos = (10, 17), flag = wx.RIGHT|wx.LEFT|wx.BOTTOM, border = 5)
 
         cancelBtn.Bind(wx.EVT_BUTTON, self.onClose)
-        self.openBtn.Bind(wx.EVT_BUTTON, self.OnScreen)
+        self.openBtn.Bind(wx.EVT_BUTTON, self.onOpen)
 
         if self.textareaExpectedResults.IsEmpty():
             self.openBtn.Disable()
@@ -1878,16 +1935,21 @@ class ViewPanel(wx.Frame):
         self.myRowDict = {}
         self.searchNameDict = {}
         self.myRequestIdDict = {}
+        self.details = {}
         frmDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc1.GetValue()).split('-')))) if self.dpc1.GetValue().IsValid() else None
         toDate = dt.date(*(map(int, wx.DateTime.FormatISODate(self.dpc2.GetValue()).split('-')))) if self.dpc2.GetValue().IsValid() else None
         dateFilteredReports = db.getReports(_fromDate=frmDate, _toDate=toDate, _pending=False)
         self.textareaExpectedResults.DeleteAllItems()
         for i in dateFilteredReports:
             self.index = self.textareaExpectedResults.InsertItem(self.index, i["patientName"]) 
-            self.textareaExpectedResults.SetStringItem(self.index, 1, i["gender"]) 
-            self.textareaExpectedResults.SetStringItem(self.index, 2, i["requestTime"])
-            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["requestTime"]]
+            self.textareaExpectedResults.SetItem(self.index, 1, i["gender"])
+            self.textareaExpectedResults.SetItem(self.index, 2, i["age"])
+            self.textareaExpectedResults.SetItem(self.index, 3, i["email"] if i["email"] else '')            
+            self.textareaExpectedResults.SetItem(self.index, 4, i["requestTime"])
+            self.myRowDict[self.index] = [i["patientName"], i["gender"], i["age"], i["email"], i["requestTime"]]
             self.myRequestIdDict[self.index] = i["requestId"]
+            self.details[i["requestId"]] = {"Email":i["email"] if i["email"] else ''}
+            self.details[i["requestId"]]["Name"] = i["patientName"]
             self.index+=1
         print(self.myRowDict)
         self.myRequestIdDict1 = self.myRequestIdDict.copy()
@@ -1903,12 +1965,12 @@ class ViewPanel(wx.Frame):
     def onItemSelected(self, event):
         self.selectedIndex = event.GetIndex()
 
-    def OnScreen(self, event):
+    def onOpen(self, event):
         if self.selectedIndex != None:
             print(self.selectedIndex)
             rqstId = self.myRequestIdDict[self.selectedIndex]
             print(rqstId)
-            #ResultDetails(self, -1, 'Result Details', rqstId)
+            OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"])
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
@@ -1965,80 +2027,67 @@ class ViewPanel(wx.Frame):
         wx.CallAfter(self.onMatches)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-class OpenReportPanel(wx.Frame):
-    def __init__(self, parent, title):
-        super(OpenReportPanel, self).__init__(parent, title = title)
+class OpenReport(wx.Frame):
+    def __init__(self, parent, title, email, name):
+        super(OpenReport, self).__init__(parent, title = title, size = (1000, 500))
         self.parentFrame = parent
+        self.email = email
+        self.name = name
         self.InitUI()
         self.Centre() 
         self.Show()     
 
     def InitUI(self):
         self.panel = wx.Panel(self)
-        sizer = wx.GridBagSizer(0,0)
-        text = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+
+        if self.email:
+            text = wx.TextCtrl(self.panel,-1, self.email, size=(300, -1))
+
+        else:
+            text = wx.TextCtrl(self.panel,-1, size=(300, -1))
+
+        st1 = wx.StaticText(self.panel, label='Name:')
+        st1.SetFont(font)
+        hbox1.Add(st1, flag=wx.RIGHT, border=8)
+        name = wx.StaticText(self.panel, label= self.name)
+        name.SetFont(font)
+        hbox1.Add(name, proportion=0)
+        vbox.Add(hbox1, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, border=10)
+        vbox.Add((-1, 50))
+
+        st2 = wx.StaticText(self.panel, label='Email:')
+        st2.SetFont(font)
+        vbox.Add(st2, flag=wx.LEFT | wx.TOP, border=10)
+        vbox.Add((-1, 10))
+
+        vbox.Add(text, flag=wx.LEFT|wx.RIGHT,border=10)
+        vbox.Add((-1, 25))
+
+        hbox5 = wx.BoxSizer(wx.HORIZONTAL)
+        self.openBtn = wx.Button(self.panel, label='Open', size=(90, 30))
+        hbox5.Add(self.openBtn)
+        sendBtn = wx.Button(self.panel, label='Send', size=(90, 30))
+        hbox5.Add(sendBtn, flag=wx.LEFT, border=5)
+        vbox.Add(hbox5, flag=wx.ALIGN_CENTER|wx.RIGHT|wx.BOTTOM, border=10)
+
+        self.openBtn.Bind(wx.EVT_BUTTON, self.onView)
+        sendBtn.Bind(wx.EVT_BUTTON, self.onSend)
+        # text.Bind(wx.EVT_KEY_UP, self.ontext)
+
+        self.panel.SetSizer(vbox)
+        self.Layout()
 
 
-#         self.dpt_items = db.getDepartments()
-#         print(self.dpt_items)
-#         self.dptList = wx.ListBox(self.panel, choices=self.dpt_items, size=(270, 250), style=wx.LB_MULTIPLE)
-#         #self.dptList.SetSelection(0)
-#         sizer.Add(self.dptList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
-#         self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.dptList)
-
-#         self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
-#         addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+    def onView(self, evt):
+        pass
 
 
-#         sizer.Add(self.discardBtn, pos = (1,3), flag = wx.RIGHT, border = 50)
-#         sizer.Add(addBtn, pos = (8,0), flag = wx.LEFT, border = 50)
+    def onSend(self, evt):
+        pass
 
-#         self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
-#         addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
-
-#         if not self.dpt_items:
-#             self.discardBtn.Disable()
-#         else:
-#             self.discardBtn.Enable()
-
-#         sizer.AddGrowableCol(0)
-#         self.panel.SetSizerAndFit(sizer)
-#         self.Centre()
-#         self.Layout() 
-
-#     def onListboxSelection(self, evt):
-#         #pass
-#         self.index = evt.GetSelection()
-        
-
-#     def onDiscard(self, evt):
-#         if self.index != None:
-#             self.selectedString = str(self.dptList.GetString(self.index))
-#             dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Department?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-#             dia = dialog.ShowModal() 
-#             if dia == wx.ID_YES:
-#                 print(self.selectedString)
-#                 if db.disableDepartment(self.selectedString):
-#                     self.dpt_items.remove(self.selectedString)
-#                     if not self.dpt_items:
-#                         self.discardBtn.Disable()
-#                     self.dptList.Deselect(self.index)
-#                     self.index = None
-#                     self.dptList.Set(self.dpt_items)
-#                     print(self.dpt_items)
-#                 else:
-#                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
-
-#         else:
-#             wx.MessageBox('None of them Choosen, Try Choosing Department that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
-
-#     def onAdd(self, evt):
-#         if self.index != None:
-#             self.dptList.Deselect(self.index)
-#             self.index = None
-#         dlg = MyDialog5(self)
-#         print(self.dpt_items)
-#         dlg.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     app = MyApp()
