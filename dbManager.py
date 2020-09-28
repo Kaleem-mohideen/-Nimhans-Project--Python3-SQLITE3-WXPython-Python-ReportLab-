@@ -369,6 +369,24 @@ def addAssay(_assayName, _assayDescription=''):
                     return _assayIdResults[1][0]['assayId']
         return -1
 
+def updateAntiBodyComment(_assayId, _antiBodyId, _comment):
+    '''
+    '''
+    if type(_assayId) != int:
+        raise TypeError('assayId needs to be integer got {0}, {1}'.format(type(_assayId), _assayId))
+    if(type(_antiBodyId) != int):
+        raise TypeError('assayName needs to be integer got {0}, {1}'.format(type(_assayName), _assayName))
+    _results = selectQuery('SELECT * FROM antiBodies WHERE assayId = ? AND antiBodyId = ?', (_assayId, _antiBodyId))
+    if _results[0]:
+        if len(_results[1]) == 0:
+            raise ValueError('assayId {0} invalid'.format(_assayId))
+    _query = 'UPDATE antiBodies SET comment= ? WHERE assayId = ? AND antiBodyId = ?'
+    _status = insertUpdateQuery(_query, (_comment, _assayId, _antiBodyId))
+    if _status[0]:
+        return True
+    else:
+        return False
+ 
 def disableAntiBody(_assayId, _antiBodyId):
     '''
     '''
@@ -489,10 +507,11 @@ def getAntiBodies(_assayId=None):
                 _antiBodyName  = _row['antiBody']
                 _optionId = _row['optionId']
                 _option = _row['optionText']
+                _comments = _row['comments']
                 if _antiBodyId in _ret:
                     _ret[_antiBodyId]['Options'][_optionId] = _option
                 else:
-                    _ret[_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}}
+                    _ret[_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}, 'Comment' : _comments}
             return _ret
         else:
             raise Exception(_results[1])
@@ -507,13 +526,14 @@ def getAntiBodies(_assayId=None):
                 _antiBodyName  = _row['antiBody']
                 _optionId = _row['optionId']
                 _option = _row['optionText']
+                _comment =_row['comments']
                 if _assayId in _ret:
                     if _antiBodyId in _ret[_assayId]:
                         _ret[_assayId][_antiBodyId]['Options'][_optionId] = _option
                     else:
-                        _ret[_assayId][_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}}
+                        _ret[_assayId][_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}, 'Comment': _comment}
                 else:
-                    _ret[_assayId] = {_antiBodyId : { 'Name' : _antiBodyName, 'Options': {_optionId : _option}}}
+                    _ret[_assayId] = {_antiBodyId : { 'Name' : _antiBodyName, 'Options': {_optionId : _option}, 'Comment' : _comment}}
             return _ret
     
 
@@ -608,9 +628,11 @@ def getPendingRequest(_requestId):
         _ret = []
         _assayId = _status[1][0]['assayId']
         _antiBodyId = _status[1][0]['antiBodyId']
+        _comment = _status[1][0]['comments']
         _assay = {
                     'assayId' : _assayId, 'assayName' : _status[1][0]['assayName'],
                     'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _status[1][0]['antiBody'],
+                        'comment' : _comment,
                         'options': {_status[1][0]['optionId'] : _status[1][0]['optionText']}}]
                     }
         for _row in _status[1][1:]:
@@ -619,6 +641,7 @@ def getPendingRequest(_requestId):
                     _assay['antiBodies'][-1]['options'][_row['optionId']] = _row['optionText']
                 else:
                     _assay['antiBodies'].append({'antiBodyId': _row['antiBodyId'], 'antiBody': _row['antiBody'],
+                        'comment': _row['comments'],
                         'options': {_row['optionId'] : _row['optionText']}})
                     _antiBodyId = _row['antiBodyId']
             else:
@@ -628,6 +651,7 @@ def getPendingRequest(_requestId):
                 _assay = {
                             'assayId' : _assayId, 'assayName' : _row['assayName'],
                             'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _row['antiBody'],
+                                'comment' : _row['comments'],
                                 'options': {_row['optionId'] : _row['optionText']}}]
                             }
         _ret.append(_assay)
@@ -637,7 +661,7 @@ def getPendingRequest(_requestId):
             raise _status[1]
         raise Exception(_status[1])
 
-def updatePendingReport(_requestId, _assayId, _antiBodyDict):
+def updatePendingReport(_requestId, _assayId, _optionDict, _commentDict):
     '''
     '''
     _pending = getPendingRequest(_requestId)
@@ -650,16 +674,17 @@ def updatePendingReport(_requestId, _assayId, _antiBodyDict):
             break
     else:
         raise ValueError('Invalid assayId : {0}, no such assayId is pending for requestId : {1}'.format(_assayId, _requestId))
-    _missing = [str(e['antiBodyId']) for e in _assays if e['antiBodyId'] not in _antiBodyDict]
-    _excess = [str(e) for e in _antiBodyDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
+    _missing = [str(e['antiBodyId']) for e in _assays if e['antiBodyId'] not in _optionDict]
+    _excess = [str(e) for e in _optionDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
     if _missing:
         raise ValueError('Data for Antibodies {0} missing for assay {1}'.format(', '.join(_missing), _assayId)) 
     if _excess:
         raise ValueError('No such Antibodies {0} missing for assay {1}'.format(', '.join(_excess), _assayId)) 
-    _reportQuery = 'INSERT INTO patientReport(requestId, assayId, antiBodyId, optionId) VALUES (?,?,?,?)'
+    _reportQuery = 'INSERT INTO patientReport(requestId, assayId, antiBodyId, optionId, comments) VALUES (?,?,?,?,?)'
     _insertList = []
     for _antiBodyId in _antiBodyDict:
-        _insertList.append((_requestId, _assayId, _antiBodyId, _antiBodyDict[_antiBodyId]))
+        _comment = _commentDict[_antiBodyId] if _antiBodyId in _commentDict else ''
+        _insertList.append((_requestId, _assayId, _antiBodyId, _optionDict[_antiBodyId], _comment))
     _status = insertUpdateMany(_reportQuery, _insertList)
     if _status[0]:
         return True
