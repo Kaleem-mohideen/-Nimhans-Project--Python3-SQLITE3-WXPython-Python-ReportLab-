@@ -239,7 +239,7 @@ class TestMasterPanel(wx.Frame):
             Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master', selectedString, self.test_itemsid)
             self.testsList.Deselect(self.index)
             self.index = None
-            Antibdy_Frame.SetSize((1000, 580))
+            Antibdy_Frame.SetSize((1500, 580))
             Antibdy_Frame.Show()
             app.MainLoop()
 
@@ -352,7 +352,7 @@ class AntibodyMasterPanel(wx.Frame):
         self.AntibdyList = wx.ListBox(self.panel, choices=self.Antibdy_items, size=(270, 100), style=wx.LB_MULTIPLE)
         print(self.antibdy_itemsid)
         #self.AntibdyList.SetSelection(0)
-        self.sizer.Add(self.AntibdyList, pos = (1,0), flag = wx.BOTTOM|wx.LEFT|wx.EXPAND, border = 40)
+        self.sizer.Add(self.AntibdyList, pos = (1,0), flag = wx.BOTTOM|wx.LEFT|wx.EXPAND, border = 10)
         self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.AntibdyList)
 
         self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
@@ -361,8 +361,8 @@ class AntibodyMasterPanel(wx.Frame):
         self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
         self.discardBtn.Bind(wx.EVT_BUTTON, self.onMsg)
 
-        self.sizer.Add(self.discardBtn, pos = (2,2), flag = wx.RIGHT, border = 50)
-        self.sizer.Add(self.addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 50)
+        self.sizer.Add(self.discardBtn, pos = (5,1), flag = wx.RIGHT, border = 50)
+        self.sizer.Add(self.addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 10)
 
         if not self.Antibdy_items:
             self.discardBtn.Disable()
@@ -401,16 +401,21 @@ class AntibodyMasterPanel(wx.Frame):
             else:
                 self.choices= [choice for choice in self.choicesid if choice]
             self.listResult = wx.ListBox(self.panel, choices= self.choices, size=(270, 100), style=wx.LB_MULTIPLE)
+            self.comment = wx.TextCtrl(self, id=-1, value='', pos=wx.DefaultPosition,size=(270,100), style= wx.TE_MULTILINE | wx.SUNKEN_BORDER)
+            self.comment.SetValue("comment")
             self.addBtnResult = wx.Button(self.panel, label = "Add", size=(90, 28))
             self.discardBtnResult = wx.Button(self.panel, label = "Discard", size=(90, 28))
+            self.saveBtnResult = wx.Button(self.panel, label = "Save", size=(90, 28))
             font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
             self.antibdytitletResult = wx.StaticText(self.panel, label = self.antibdy_selectedText)
             self.antibdytitletResult.SetFont(font)
             #self.listResult.SetSelection(0)
             self.sizer.Add(self.antibdytitletResult, pos = (0,5), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
-            self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 40)
-            self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 50)
-            self.sizer.Add(self.discardBtnResult, pos = (2,7), flag = wx.RIGHT, border = 50)
+            self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
+            self.sizer.Add(self.comment, pos = (1,7), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
+            self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 10)
+            self.sizer.Add(self.discardBtnResult, pos = (5,6), flag = wx.RIGHT, border = 50)
+            self.sizer.Add(self.saveBtnResult, pos = (5,8), flag = wx.RIGHT, border = 50)
             self.sizer.AddGrowableCol(5)
             self.sizer.AddGrowableCol(4)
 
@@ -423,16 +428,22 @@ class AntibodyMasterPanel(wx.Frame):
                 self.choices= [choice for choice in self.choicesid if choice]
             self.antibdytitletResult.SetLabel(self.antibdy_selectedText)
             self.listResult.Set(self.choices)
+            self.comment.Show()
+            self.comment.SetValue("comment1")
+            self.saveBtnResult.Show()
             self.addBtnResult.Enable()
             self.discardBtnResult.Enable()
         self.Bind(wx.EVT_LISTBOX, self.onListbox1Selection, self.listResult)
         self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onMsg1)
+        self.saveBtnResult.Bind(wx.EVT_BUTTON, self.onSaveComment)
         self.panel.SetSizerAndFit(self.sizer)
         self.Centre()
         self.Layout()
         #self.panel.SetSize(wx.Size(1000,1400))
 
+    def onSaveComment():
+        pass
     def onMsg1(self, evt):
         if self.Result_index == None :  
             wx.MessageBox('None of them Choosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
@@ -453,6 +464,8 @@ class AntibodyMasterPanel(wx.Frame):
                         self.discardBtn.Disable()
                     self.AntibdyList.Set(self.Antibdy_items)
                     self.listResult.Clear()
+                    self.comment.Hide()
+                    self.saveBtnResult.Hide()
                     self.antibdytitletResult.SetLabel('')
                     self.addBtnResult.Disable()
                     self.discardBtnResult.Disable()
@@ -469,6 +482,8 @@ class AntibodyMasterPanel(wx.Frame):
             self.Antibdy_index = None
             self.listResult.Clear()
             self.antibdytitletResult.SetLabel('')
+            self.comment.Hide()
+            self.saveBtnResult.Hide()
             self.addBtnResult.Disable()
             self.discardBtnResult.Disable()
         dlg1 = MyDialog1(self)
@@ -1384,9 +1399,59 @@ class PatientDetails(wx.Frame):
 
 class TestRegisterScreen(wx.Frame):
     def __init__(self, parent, id, title, _requestId, patientName):
-        #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
+        # #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
+        # self.requestId = _requestId
+        # super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (650, 450))
+        # self.testsUpdateList_items = []
+        # self.test_itemsChosenid = []
+        # self.test_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
+        # if len(self.test_itemsid)==1 and list(self.test_itemsid.keys())[0] == None and list(self.test_itemsid.values())[0] == None:
+        #     self.test_items = []
+        #     self.test_itemsid = {}
+        # else:
+        #     self.test_items = [i for i in self.test_itemsid]
+        # print(self.test_itemsid)
+
+
+        # panel = wx.Panel(self, -1)
+        # sizer = wx.GridBagSizer(0,0)
+        
+        # text = wx.StaticText(panel, label = "Tests")
+        # self.testsListbox = wx.ListBox(panel, -1, size=(170, 130), choices=self.test_items, style=wx.LB_SINGLE)
+        # #self.testsListbox.SetSelection(0)
+        # text2 = wx.StaticText(panel, label = "Choosen Tests")
+        # self.testsChosenListbox = wx.ListBox(panel, -1, size=(170, 130), choices=[], style=wx.LB_SINGLE)
+
+        # #self.Bind(wx.EVT_LISTBOX, self.OnSelectFirst, self.testsListbox)
+        # self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectFirst, self.testsListbox)
+        # self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectSecond, self.testsChosenListbox)
+        # #self.Bind(wx.EVT_LISTBOX, self.OnSelectSecond, self.testsChosenListbox)
+
+        # sizer.Add(text, pos = (1, 0), flag = wx.LEFT|wx.TOP, border = 100)
+        # sizer.Add(text2, pos = (1, 3), flag = wx.LEFT|wx.RIGHT|wx.TOP, border = 100)
+        # sizer.Add(self.testsListbox, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
+        # sizer.Add(self.testsChosenListbox, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
+
+        # saveBtn = wx.Button(panel, wx.ID_CLOSE, label = "Save", size=(90, 28)) 
+        # cancelBtn = wx.Button(panel, label = "Cancel", size=(90, 28)) 
+            
+        # sizer.Add(cancelBtn, pos = (4, 2), flag = wx.RIGHT, border = 50) 
+        # sizer.Add(saveBtn, pos = (4, 3), flag = wx.RIGHT|wx.LEFT|wx.BOTTOM, border = 5)
+
+        # cancelBtn.Bind(wx.EVT_BUTTON, self.onClose)
+        # saveBtn.Bind(wx.EVT_BUTTON, self.onTestRegister)
+
+        # sizer.AddGrowableCol(1)
+        # sizer.AddGrowableCol(3)
+        # #sizer.AddGrowableRow(0)
+        # sizer.AddGrowableRow(4)
+        # panel.SetSizerAndFit(sizer)
+        # self.Centre() 
+        # self.Show(True)
+
+        #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (950, 550))
         self.requestId = _requestId
-        super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (650, 450))
+        super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (950, 550))
         self.testsUpdateList_items = []
         self.test_itemsChosenid = []
         self.test_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
@@ -1400,18 +1465,20 @@ class TestRegisterScreen(wx.Frame):
 
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer(0,0)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
         
         text = wx.StaticText(panel, label = "Tests")
-        self.testsListbox = wx.ListBox(panel, -1, size=(170, 130), choices=self.test_items, style=wx.LB_SINGLE)
+        self.testsListbox = wx.ListBox(panel, -1, size=(270, 230), choices=self.test_items, style=wx.LB_SINGLE)
         #self.testsListbox.SetSelection(0)
         text2 = wx.StaticText(panel, label = "Choosen Tests")
-        self.testsChosenListbox = wx.ListBox(panel, -1, size=(170, 130), choices=[], style=wx.LB_SINGLE)
+        self.testsChosenListbox = wx.ListBox(panel, -1, size=(270, 230), choices=[], style=wx.LB_SINGLE)
 
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         # font1 = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         # font1.SetPointSize(12)
 
-        name = wx.StaticText(self, label= "Name  : {0}".format(patientName))
+        name = wx.StaticText(self, label= patientName)
         name.SetFont(font)
         # age = wx.StaticText(self, label= "Age     : {0}".format(self.parent.age))
         # age.SetFont(font1)
@@ -1422,12 +1489,12 @@ class TestRegisterScreen(wx.Frame):
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectFirst, self.testsListbox)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectSecond, self.testsChosenListbox)
         #self.Bind(wx.EVT_LISTBOX, self.OnSelectSecond, self.testsChosenListbox)
-
-        sizer.Add(name, pos = (0, 1), flag = wx.CENTER|wx.TOP|wx.BOTTOM, border = 20)
+        vbox.Add(name, flag=wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=10)
+        #sizer.Add(name, pos = (0, 0), flag = wx.CENTER|wx.TOP|wx.BOTTOM, border = 20)
         sizer.Add(text, pos = (1, 0), flag = wx.LEFT, border = 100)
         sizer.Add(text2, pos = (1, 3), flag = wx.LEFT|wx.RIGHT, border = 100)
-        sizer.Add(self.testsListbox, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
-        sizer.Add(self.testsChosenListbox, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 50)
+        sizer.Add(self.testsListbox, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, border = 50)
+        sizer.Add(self.testsChosenListbox, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, border = 50)
 
         saveBtn = wx.Button(panel, wx.ID_CLOSE, label = "Save", size=(90, 28)) 
         cancelBtn = wx.Button(panel, label = "Cancel", size=(90, 28)) 
@@ -1440,11 +1507,16 @@ class TestRegisterScreen(wx.Frame):
 
         sizer.AddGrowableCol(1)
         sizer.AddGrowableCol(3)
+        sizer.AddGrowableCol(0)
         #sizer.AddGrowableRow(0)
         sizer.AddGrowableRow(4)
-        panel.SetSizerAndFit(sizer)
+
+        hbox.Add(sizer, flag= wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=10)
+        vbox.Add(hbox)
+        panel.SetSizerAndFit(vbox)
         self.Centre() 
         self.Show(True)
+        self.Layout()
 
     def onClose(self, event):
         """"""
