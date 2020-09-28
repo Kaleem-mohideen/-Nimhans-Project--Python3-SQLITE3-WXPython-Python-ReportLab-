@@ -35,6 +35,7 @@ CREATE TABLE antiBodies(
 	antiBody		TEXT NOT NULL,
 	assayId			INTEGER NOT NULL,
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
+	comments		TEXT,
 	UNIQUE(antiBodyId, assayId),
 	UNIQUE (antiBody, assayId),
 	UNIQUE(antiBodyId, antiBody, assayId),
