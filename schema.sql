@@ -104,6 +104,7 @@ CREATE TABLE patientReport(
 	assayId		INTEGER NOT NULL,
 	antiBodyId	INTEGER NOT NULL,
 	optionId	INTEGER NOT NULL,
+	comments	TEXT,
 	updateTime	DATETIME NOT NULL DEFAULT(datetime('now', 'localtime')),
 	FOREIGN KEY(optionId, antiBodyId, assayId) REFERENCES antiBodyOptions(optionId, antiBodyId, assayId),
 	FOREIGN KEY(requestId, assayId) REFERENCES patientRequestList(requestId, assayId),
@@ -118,7 +119,7 @@ CREATE VIEW viewAntiBodies AS SELECT * FROM antiBodies WHERE enabled = 1;
 CREATE VIEW viewOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
 
 CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.assayDescription, 
-					body.antiBodyId, body.antiBody,
+					body.antiBodyId, body.antiBody, body.comments,
 					options.optionId, options.optionText 
 			FROM viewAssays assay LEFT JOIN viewAntiBodies body 
 			ON assay.assayId = body.assayId
@@ -134,7 +135,7 @@ CREATE VIEW viewHospitals AS SELECT * FROM hospitalMaster WHERE enabled = 1;
 CREATE VIEW viewDepartments AS SELECT * FROM departmentMaster WHERE enabled = 1;
 
 CREATE VIEW viewPendingReports AS  
-	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId  FROM 
+	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId FROM 
 	patientRequestList p LEFT JOIN viewAntiBodies a ON p.assayId = a.assayId EXCEPT 
 	SELECT r.requestId, r.assayId , r.antiBodyId FROM patientReport r;
 
@@ -155,6 +156,6 @@ CREATE VIEW viewCompletedPatients AS
 
 CREATE VIEW viewPendingReportDetails AS 
 	SELECT vpr.requestId, vabo.assayId, vabo.assayName, vabo.assayDescription, 
-	vabo.antiBodyId, vabo.antiBody, vabo.optionId, vabo.optionText FROM 
+	vabo.antiBodyId, vabo.antiBody, vabo.comments, vabo.optionId, vabo.optionText FROM 
 	viewPendingReports vpr LEFT JOIN viewAntiBodyOptions vabo ON 
 	vpr.assayId = vabo.assayId AND vpr.antiBodyId = vabo.antiBodyId;
