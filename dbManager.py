@@ -380,7 +380,7 @@ def updateAntiBodyComment(_assayId, _antiBodyId, _comment):
     if _results[0]:
         if len(_results[1]) == 0:
             raise ValueError('assayId {0} invalid'.format(_assayId))
-    _query = 'UPDATE antiBodies SET comment= ? WHERE assayId = ? AND antiBodyId = ?'
+    _query = 'UPDATE antiBodies SET comments= ? WHERE assayId = ? AND antiBodyId = ?'
     _status = insertUpdateQuery(_query, (_comment, _assayId, _antiBodyId))
     if _status[0]:
         return True
@@ -674,7 +674,7 @@ def updatePendingReport(_requestId, _assayId, _optionDict, _commentDict):
             break
     else:
         raise ValueError('Invalid assayId : {0}, no such assayId is pending for requestId : {1}'.format(_assayId, _requestId))
-    _missing = [str(e['antiBodyId']) for e in _assays if e['antiBodyId'] not in _optionDict]
+    _missing = [str(e['antiBodyId']) for e in _assays if e['antiBodyId'] not in _optionDict and e['options'] != {None:None}]
     _excess = [str(e) for e in _optionDict.keys() if e not in [f['antiBodyId'] for f in _assays]]
     if _missing:
         raise ValueError('Data for Antibodies {0} missing for assay {1}'.format(', '.join(_missing), _assayId)) 
@@ -682,7 +682,7 @@ def updatePendingReport(_requestId, _assayId, _optionDict, _commentDict):
         raise ValueError('No such Antibodies {0} missing for assay {1}'.format(', '.join(_excess), _assayId)) 
     _reportQuery = 'INSERT INTO patientReport(requestId, assayId, antiBodyId, optionId, comments) VALUES (?,?,?,?,?)'
     _insertList = []
-    for _antiBodyId in _antiBodyDict:
+    for _antiBodyId in _optionDict:
         _comment = _commentDict[_antiBodyId] if _antiBodyId in _commentDict else ''
         _insertList.append((_requestId, _assayId, _antiBodyId, _optionDict[_antiBodyId], _comment))
     _status = insertUpdateMany(_reportQuery, _insertList)
@@ -696,21 +696,6 @@ def updatePendingReport(_requestId, _assayId, _optionDict, _commentDict):
 
 if __name__ == '__main__':
     _rep1 = getReports()
-    print(_rep1,'\n\n\n\n')
-    input('')
     _pending = getPendingRequest(1)
     for e in _pending:
         print(e,'\n\n\n\n')
-    try:
-        updatePendingReport(1, 1, {1:2, 2:5, 3:7, 4:12})
-    except Exception as ex:
-        print('what the?1')
-        print(ex)
-    try:
-        updatePendingReport(1, 2, {5:13, 6:17, 7:21})
-    except Exception as ex:
-        print('what the?2')
-        print(ex)
-    input('\n\n\n')
-    _rep2 = getReports(_pending = False)
-    print(_rep2)
