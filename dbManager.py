@@ -694,8 +694,51 @@ def updatePendingReport(_requestId, _assayId, _optionDict, _commentDict):
         raise Exception(_status[1])
 
 
+def getPatientReport(_requestId):
+    '''
+    '''
+    _query = 'SELECT * FROM viewPatientReport WHERE requestId = ?'
+    _status = selectQuery(_query, (_requestId,))
+    if _status[0]:
+        pass
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
+    _ret = {}
+    for _report in _status[1]:
+        _assayId = _report['assayId']
+        _assayName = _report['assayName']
+        _antiBodyId = _report['antiBodyId']
+        _antiBody = _report['antiBody']
+        _comments = _report['comments'] if _report['comments'] else ''
+        _optionId = _report['optionId']
+        _optionText = _report['optionText']
+        if _assayId in _ret:
+            _ret[_assayId][_antiBodyId] = {_optionId : _optionText, 'comments' : _comments}
+        else:
+            _ret[_assayId] = {_antiBodyId : {_optionId : _optionText, 'comments' : _comments}}
+    return _ret
+
+
+def getRequestHeader(_requestId):
+    '''
+    '''
+    _query = 'SELECT * FROM patientRequest WHERE requestId = ?'
+    _status = selectQuery(_query, (_requestId,))
+    if _status[0]:
+        pass
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        raise Exception(_status[1])
+    _tmp = dict(zip(_status[1][0].keys(), _status[1][0]))
+    _ret = {_key : _tmp[_key] for _key in _tmp if _tmp[_key]}
+    return _ret
+
+
+
 if __name__ == '__main__':
-    _rep1 = getReports()
-    _pending = getPendingRequest(1)
-    for e in _pending:
-        print(e,'\n\n\n\n')
+    print(getRequestHeader(1))
+    print('\n\n\n\n')
+    print(getPatientReport(1))
