@@ -159,3 +159,11 @@ CREATE VIEW viewPendingReportDetails AS
 	vabo.antiBodyId, vabo.antiBody, vabo.comments, vabo.optionId, vabo.optionText FROM 
 	viewPendingReports vpr LEFT JOIN viewAntiBodyOptions vabo ON 
 	vpr.assayId = vabo.assayId AND vpr.antiBodyId = vabo.antiBodyId;
+
+CREATE VIEW viewPatientReport AS 
+	SELECT report.requestId, report.assayId, assay.assayName, report.antiBodyId, 
+	assay.antiBody, assay.comments, report.optionId, assay.optionText 
+	FROM patientReport report INNER JOIN viewAntiBodyOptions assay ON 
+	report.assayId = assay.assayId AND report.antiBodyId = assay.antiBodyId AND report.optionId = assay.optionId
+	ORDER BY report.assayId, report.antiBodyId, report.optionId;
+
