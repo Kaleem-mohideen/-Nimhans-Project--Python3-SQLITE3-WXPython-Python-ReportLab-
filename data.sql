@@ -5,18 +5,19 @@ INSERT INTO assayMaster(assayName, assayDescription) VALUES
 			('ANCA', 'ANCA profile'),
 			('PANCA', 'PANCA profile');
 
-INSERT INTO antiBodies (assayId, antiBody) VALUES 
-			(1, 'ana1'),
-			(1, 'ana2'),
-			(1, 'ana3'),
-			(1, 'ana4'),
-			(2,'anca1'),
-			(2,'anca2'),
-			(2,'anca3'),
-			(3,'Panca1'),
-			(3,'Panca2'),
-			(3,'Panca3');
+ 
+INSERT INTO antiBodies (assayId, antiBody) VALUES (1, 'ana1');
+INSERT INTO antiBodies (assayId, antiBody, comments) VALUES(1, 'ana2', 'ana2 comment\nis just terrific');
+INSERT INTO antiBodies (assayId, antiBody) VALUES(1, 'ana3');
+INSERT INTO antiBodies (assayId, antiBody, comments) VALUES(1, 'ana4', 'ana4 comment\n this is mediocre stuff');
+INSERT INTO antiBodies (assayId, antiBody) VALUES(2,'anca1');
+INSERT INTO antiBodies (assayId, antiBody, comments) VALUES(2,'anca2', 'anca2 comment\n this is my favourite');
+INSERT INTO antiBodies (assayId, antiBody) VALUES(2,'anca3');
+INSERT INTO antiBodies (assayId, antiBody, comments) VALUES(3,'Panca1', 'panca1 comment\n this rocks!!!');
+INSERT INTO antiBodies (assayId, antiBody, comments) VALUES(3,'Panca2', 'panca2 comment\n hell no!!!');
+INSERT INTO antiBodies (assayId, antiBody) VALUES(3,'Panca3');
 
+			
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES
 			(1,1, 'Positive +3'),
 			(1,1, 'Positive'),
@@ -61,10 +62,10 @@ INSERT INTO labMaster(labName) VALUES
 	('Microlab'), ('Anand Diagnostics');
 
 
-INSERT INTO patientMaster(mobile, patientName, patientGender, patientDob) VALUES
-	('9384674004', 'Vivek', 'M', '1980-04-17'),
-	('8072383129', 'Kaleem', 'M', '1999-05-16'),
-	('9999999999', 'Ashwin', 'M', '1987-02-08');
+INSERT INTO patientMaster(mobile, patientName, patientGender, patientDob, patientEmail) VALUES
+	('9384674004', 'Vivek', 'M', '1980-04-17', 'vivek@cpcdiagnostics.in'),
+	('8072383129', 'Kaleem', 'M', '1999-05-16', 'kaleemohideen@gmail.com'),
+	('9999999999', 'Ashwin', 'M', '1987-02-08', 'ashwin@cpcdiagnostics.in');
 
 
 INSERT INTO patientRequest(patientId, uhid, mrd, hospitalName, collectionDate) 
