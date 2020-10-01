@@ -66,7 +66,7 @@ def sendEmail(_mailDict, _creds=None):
     '''
     #IMPORTS HERE TO BE MOVED TO APPROPRIATE FILE
     if _creds == None:
-        with open ('instance/creds.json') as f:
+        with open ('creds.json') as f:
             _creds = json.load(f)
     print (_creds)
     server =  smtplib.SMTP('smtp.gmail.com',587)
