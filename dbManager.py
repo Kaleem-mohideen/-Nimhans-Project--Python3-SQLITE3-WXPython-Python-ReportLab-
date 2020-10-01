@@ -715,9 +715,9 @@ def getPatientReport(_requestId):
         _optionId = _report['optionId']
         _optionText = _report['optionText']
         if _assayId in _ret:
-            _ret[_assayId][_antiBodyId] = {_optionId : _optionText, 'comments' : _comments, 'assayName' : _assayName}
+            _ret[_assayId][_antiBodyId] = {_optionId : _optionText, 'comments' : _comments, 'antiBody' : _antiBody}
         else:
-            _ret[_assayId] = {_antiBodyId : {_optionId : _optionText, 'comments' : _comments, 'assayName' : _assayName}}
+            _ret[_assayId] = {_antiBodyId : {_optionId : _optionText, 'comments' : _comments, 'antiBody' : _antiBody}}
     return _ret
 
 
