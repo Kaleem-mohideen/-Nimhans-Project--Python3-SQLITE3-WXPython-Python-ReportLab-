@@ -19,16 +19,7 @@ class Header:
 		self.pdf.setTitle(documentTitle)
 		self.pdf.line(50, 795, 550,795)
 		self.pdf.setFont("Helvetica-Bold", 10)
-		self.drawMyRuler()
-		# Data as JSON
-		# with open('Format2_sample3.json', 'r') as f:
-		# 	s = f.read()
-		# 	s = s.replace('\t','')
-		# 	s = s.replace("'", '"')
-		# 	s = s.replace('\n','')
-		# 	s = s.replace(',}','}')
-		# 	s = s.replace(',]',']')
-		# 	data1 = json.loads(s)
+		#self.drawMyRuler()
 
 		for item in data1.items():
 			self.align_text(item, flag, y)
@@ -71,37 +62,22 @@ class ResultTable:
 
 	def drawTable(self, y, data):
 		
-		# Data from CSV
 		width, self.height = A4
-		# with open('sample.csv', "r") as csvfile:
-		#     data = list(csv.reader(csvfile))
+
 		print(data)
 		styles = getSampleStyleSheet()
 		colWidths = [
 		    5.7 * cm,  # Column 0
 		    4.7 * cm,  # Column 1
 		    7.7 * cm,  # Column 2
-		    # 1.2 * cm,  # Column 3
-		    # 2.5 * cm,  # Column 4
-		    # 6 * cm,  # Column 5
-		    # 1.1 * cm,  # Column 6
 		]
 		y -= 0 # Trigger here to check
 		for assayId in data:
 			y -= 75 #change space (for header) here
 			flag = 1
-			# print(data[assayId])
 			dataTable = data[assayId]
-			# print(dataTable)
 			for index, row in enumerate(dataTable):
-				# print(index, row)
 				for col, val in enumerate(row):
-					# print(col, val)
-					# if col != 2:
-					# 	#print(data[assayId][index][col])
-					# 	data[assayId][index][col] = val.strip("'[]()")
-					# else:
-
 					dataTable[index][col] = Paragraph(val, styles['Normal'])
 
 				if flag:
@@ -143,7 +119,6 @@ class ResultTable:
 					y-=5
 					w, h = t.wrap(width, self.height)
 					y = self.endCoOrdToDrawTable(y, h)[1]
-					#drawMyRuler(self.pdf)
 				t.drawOn(self.pdf, x, y)
 
 		Footer(self, y)
