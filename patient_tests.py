@@ -6,6 +6,7 @@ import datetime as dt
 import wx.adv
 import wx.lib.scrolledpanel as scrolled
 import dbManager as db
+import pdf1 as pdf
 import string
 import wx.richtext as rt
 from collections import OrderedDict
@@ -1941,6 +1942,9 @@ class TestPanel(scrolled.ScrolledPanel):
             if not self.parent.pendingTestAssays:
                 self.saveBtn.Disable()
                 self.controlSizer.Clear(True)
+                jsonHeader = db.getRequestHeader(self.parent.RqstId)
+                jsonResults = db.getPatientReport(self.parent.RqstId)
+                pdf.Header(jsonHeader, jsonResults)
                 OpenReport(self, "Open Report", self.parent.email, self.parent.name)
             else:
                 self.controlSizer.Clear(True)
@@ -2092,6 +2096,9 @@ class ViewPanel(wx.Frame):
             print(self.selectedIndex)
             rqstId = self.myRequestIdDict[self.selectedIndex]
             print(rqstId)
+            jsonHeader = db.getRequestHeader(rqstId)
+            jsonResults = db.getPatientReport(rqstId)
+            pdf.Header(jsonHeader, jsonResults)
             OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"])
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
