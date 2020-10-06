@@ -70,6 +70,7 @@ CREATE TABLE labMaster(
 	labName			TEXT PRIMARY KEY,
 	enabled			BOOLEAN NOT NULL CHECK(enabled IN(0,1)) DEFAULT 1);
 
+
 CREATE TABLE patientRequest(
 	requestId		INTEGER PRIMARY KEY,
 	requestTime		DATETIME NOT NULL DEFAULT(datetime('now', 'localtime')),
@@ -138,6 +139,11 @@ CREATE VIEW viewPendingReports AS
 	SELECT p.requestId AS requestId, a.assayId AS assayId, a.antiBodyId AS antiBodyId FROM 
 	patientRequestList p LEFT JOIN viewAntiBodies a ON p.assayId = a.assayId EXCEPT 
 	SELECT r.requestId, r.assayId , r.antiBodyId FROM patientReport r;
+
+CREATE VIEW viewPatientRequest AS
+	SELECT r.*, p.patientName, p.mobile, p.patientDob, p.patientGender, p.patientEmail 
+	FROM patientRequest r LEFT JOIN patientMaster p ON r.patientId = p.patientId;
+
 
 CREATE VIEW viewPendingPatients AS 
 	SELECT p.patientId AS patientId, p.patientName AS patientName, p.patientGender AS patientGender, 

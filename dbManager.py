@@ -741,4 +741,4 @@ def getRequestHeader(_requestId):
 if __name__ == '__main__':
     print(getRequestHeader(1))
     print('\n\n\n\n')
-    print(getPatientReport(1))
+    print(getPatientReport(3))
