@@ -724,7 +724,7 @@ def getPatientReport(_requestId):
 def getRequestHeader(_requestId):
     '''
     '''
-    _query = 'SELECT * FROM patientRequest WHERE requestId = ?'
+    _query = 'SELECT * FROM viewPatientRequest WHERE requestId = ?'
     _status = selectQuery(_query, (_requestId,))
     if _status[0]:
         pass
