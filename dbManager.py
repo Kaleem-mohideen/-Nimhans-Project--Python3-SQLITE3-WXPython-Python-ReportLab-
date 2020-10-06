@@ -736,7 +736,19 @@ def getRequestHeader(_requestId):
     _ret = {_key : _tmp[_key] for _key in _tmp if _tmp[_key]}
     return _ret
 
-
+def updateFileName(_requestId, _fileName):
+    '''
+    '''
+    _query = 'UPDATE patientRequest SET reportFile = ? WHERE requestId = ?'
+    _tuple - (_fileName, _requestId)
+    _status = insertUpdateQuery(_query, _tuple)
+    if _status:
+        return True
+    else:
+        if isinstance(_status[1], Exception):
+            raise _status[1]
+        else: 
+            raise Exception(_status[1])
 
 if __name__ == '__main__':
     print(getRequestHeader(1))
