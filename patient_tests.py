@@ -7,9 +7,11 @@ import wx.adv
 import wx.lib.scrolledpanel as scrolled
 import dbManager as db
 import pdf1 as pdf
+import utils as utilsDb
 import string
 import wx.richtext as rt
 from collections import OrderedDict
+import subprocess, os, platform
 
 filename="regis.jpeg"
 class MyApp(wx.App):
@@ -1292,6 +1294,7 @@ class PatientDetails(wx.Frame):
         self.date2.SetValue(wx.DefaultDateTime)
         self.date2.SetToolTip("Select Date of Birth")
         sizer.Add(self.date2, pos = (3,1), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.date2.SetRange(dt1= wx.DefaultDateTime, dt2= wx.DateTime.Now())
         #self.Age.SetMaxLength(3)   
         #sizer.AddGrowableRow(3)
 
@@ -1940,12 +1943,30 @@ class TestPanel(scrolled.ScrolledPanel):
             self.selectedString = str(self.tests.GetString(self.index))
             self.parent.pendingTestAssays.remove(self.selectedString)
             if not self.parent.pendingTestAssays:
+                jsonHead = {}
                 self.saveBtn.Disable()
                 self.controlSizer.Clear(True)
                 jsonHeader = db.getRequestHeader(self.parent.RqstId)
+                print(jsonHeader)
+                jsonHead['UHID'] = jsonHeader['uhid'] if 'uhid' in jsonHeader else ''
+                jsonHead['Referring Hospital'] = jsonHeader['hospitalName'] if 'hospitalName' in jsonHeader else ''
+                jsonHead['MRD No'] = jsonHeader['mrd'] if 'mrd' in jsonHeader else ''
+                jsonHead['Referring Dept'] = jsonHeader['departmentName'] if 'departmentName' in jsonHeader else ''
+                jsonHead['Patient Name'] = jsonHeader['patientName'] if 'patientName' in jsonHeader else ''
+                jsonHead['Sample Collection Date'] = jsonHeader['collectionDate'] if 'collectionDate' in jsonHeader else ''
+                jsonHead['Age'] = utilsDb.getAge(jsonHeader['patientDob']) if 'patientDob' in jsonHeader else ''
+                jsonHead['Lab Reference No'] = jsonHeader['labReferenceNumber'] if 'labReferenceNumber' in jsonHeader else ''
+                jsonHead['Gender'] = jsonHeader['patientGender'] if 'patientGender' in jsonHeader else ''
+                jsonHead['Report Generated Date'] = jsonHeader['reportDate'] if 'reportDate' in jsonHeader else ''
+                jsonHead['Ward Name/Collection Centre'] = jsonHeader['collectionPoint'] if 'collectionPoint' in jsonHeader else ''
+                jsonHead['Lab Name'] = jsonHeader['labName'] if 'labName' in jsonHeader else ''  
+                jsonHead['Email'] = jsonHeader['patientEmail'] if 'patientEmail' in jsonHeader else ''
+                jsonHead['Ph No'] = jsonHeader['mobile'] if 'mobile' in jsonHeader else ''
+                jsonHead['reportFile'] = jsonHeader['reportFile'] if 'reportFile' in jsonHeader else utilsDb.getFileName(jsonHead['Patient Name'], jsonHead['UHID'])
                 jsonResults = db.getPatientReport(self.parent.RqstId)
-                pdf.Header(jsonHeader, jsonResults)
-                OpenReport(self, "Open Report", self.parent.email, self.parent.name)
+                pdfReportFileName =pdf.Header(jsonHead, jsonResults)
+                db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
+                OpenReport(self, "Open Report", self.parent.email, self.parent.name, jsonHead['reportFile'])
             else:
                 self.controlSizer.Clear(True)
                 dialog = wx.MessageBox('Results is Updated for {0} test'.format(self.selectedString), 'Successfully Updated', wx.OK)
@@ -2097,9 +2118,27 @@ class ViewPanel(wx.Frame):
             rqstId = self.myRequestIdDict[self.selectedIndex]
             print(rqstId)
             jsonHeader = db.getRequestHeader(rqstId)
+            print(jsonHeader)
+            jsonHead = {}
             jsonResults = db.getPatientReport(rqstId)
-            pdf.Header(jsonHeader, jsonResults)
-            OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"])
+            jsonHead['UHID'] = jsonHeader['uhid'] if 'uhid' in jsonHeader else ''
+            jsonHead['Referring Hospital'] = jsonHeader['hospitalName'] if 'hospitalName' in jsonHeader else ''
+            jsonHead['MRD No'] = jsonHeader['mrd'] if 'mrd' in jsonHeader else ''
+            jsonHead['Referring Dept'] = jsonHeader['departmentName'] if 'departmentName' in jsonHeader else ''
+            jsonHead['Patient Name'] = jsonHeader['patientName'] if 'patientName' in jsonHeader else ''
+            jsonHead['Sample Collection Date'] = jsonHeader['collectionDate'] if 'collectionDate' in jsonHeader else ''
+            jsonHead['Age'] = utilsDb.getAge(jsonHeader['patientDob']) if 'patientDob' in jsonHeader else ''
+            jsonHead['Lab Reference No'] = jsonHeader['labReferenceNumber'] if 'labReferenceNumber' in jsonHeader else ''
+            jsonHead['Gender'] = jsonHeader['patientGender'] if 'patientGender' in jsonHeader else ''
+            jsonHead['Report Generated Date'] = jsonHeader['reportDate'] if 'reportDate' in jsonHeader else ''
+            jsonHead['Ward Name/Collection Centre'] = jsonHeader['collectionPoint'] if 'collectionPoint' in jsonHeader else ''
+            jsonHead['Lab Name'] = jsonHeader['labName'] if 'labName' in jsonHeader else ''  
+            jsonHead['Email'] = jsonHeader['patientEmail'] if 'patientEmail' in jsonHeader else ''
+            jsonHead['Ph No'] = jsonHeader['mobile'] if 'mobile' in jsonHeader else ''
+            jsonHead['reportFile'] = jsonHeader['reportFile'] if 'reportFile' in jsonHeader else utilsDb.getFileName(jsonHead['Patient Name'], jsonHead['UHID'])
+            pdfReportFileName =pdf.Header(jsonHead, jsonResults)
+            db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
+            OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"], jsonHead['reportFile'])
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
@@ -2157,20 +2196,20 @@ class ViewPanel(wx.Frame):
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class OpenReport(wx.Frame):
-    def __init__(self, parent, title, email, name):
+    def __init__(self, parent, title, email, name, reportname):
         super(OpenReport, self).__init__(parent, title = title, size = (1000, 500))
         self.parentFrame = parent
         self.email = email
         self.name = name
+        self.reportPath = reportname
         self.InitUI()
         self.Centre() 
         self.Show()     
-
     def InitUI(self):
         self.panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        font = wx.Font(15, wx.DEFAULT, wx.NORMAL, wx.BOLD)
 
         if self.email:
             text = wx.TextCtrl(self.panel,-1, self.email, size=(300, -1))
@@ -2211,7 +2250,14 @@ class OpenReport(wx.Frame):
 
 
     def onView(self, evt):
-        pass
+        filepath = self.reportPath
+        if platform.system() == 'Darwin':       # macOS
+            subprocess.call(('open', filepath))
+        elif platform.system() == 'Windows':    # Windows
+            os.startfile(filepath)
+        else:                                   # linux variants
+            subprocess.call(('xdg-open', filepath))
+        
 
 
     def onSend(self, evt):

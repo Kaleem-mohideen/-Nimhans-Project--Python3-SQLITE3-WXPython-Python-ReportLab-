@@ -11,23 +11,24 @@ class Header:
 	#__________Head part____________
 	def __init__(self, data1, data):
 		
-		fileName = "template.pdf"
+		self.fileName = data1['reportFile']
 		documentTitle = "report"
 		flag = False
 		y = 780
-		self.pdf = canvas.Canvas(fileName, pagesize=A4)
+		self.pdf = canvas.Canvas(self.fileName, pagesize=A4)
 		self.pdf.setTitle(documentTitle)
 		self.pdf.line(50, 795, 550,795)
 		self.pdf.setFont("Helvetica-Bold", 10)
 		#self.drawMyRuler()
 
 		for item in data1.items():
-			self.align_text(item, flag, y)
-			if flag:
-				flag = False
-				y-=20
-			else:
-				flag = True
+			if item[0] != 'reportFile':
+				self.align_text(item, flag, y)
+				if flag:
+					flag = False
+					y-=20
+				else:
+					flag = True
 		#self.pdf.drawText(data1)
 		ResultTable(self, y, data)
 
@@ -58,6 +59,7 @@ class ResultTable:
 	#________Table part________
 	def __init__(self, parent, y, data):
 		self.pdf = parent.pdf
+		self.fileName = parent.fileName
 		self.drawTable(y, data)
 
 	def drawTable(self, y, data):

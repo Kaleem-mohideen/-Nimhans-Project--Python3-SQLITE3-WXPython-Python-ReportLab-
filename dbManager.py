@@ -740,7 +740,7 @@ def updateFileName(_requestId, _fileName):
     '''
     '''
     _query = 'UPDATE patientRequest SET reportFile = ? WHERE requestId = ?'
-    _tuple - (_fileName, _requestId)
+    _tuple = (_fileName, _requestId)
     _status = insertUpdateQuery(_query, _tuple)
     if _status:
         return True
