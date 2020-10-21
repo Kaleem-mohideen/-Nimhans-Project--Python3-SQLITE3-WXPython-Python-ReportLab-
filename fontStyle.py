@@ -3,7 +3,8 @@ import wx.richtext
 from wx.richtext import RichTextBuffer
 from io import BytesIO
 from io import StringIO
-import xml.dom.minidom
+from xml.dom import minidom
+import xml.etree.ElementTree as ET
 
 class MyFrame(wx.Frame):
     def __init__(self):
@@ -12,7 +13,7 @@ class MyFrame(wx.Frame):
         self.SetBackgroundColour("white")
         
         self.rt = wx.richtext.RichTextCtrl(self, -1, value="")
-        self.boldFlag = False
+        self.boldFlag = False   
         self.italicFlag = False
         self.caps = False
 
@@ -124,12 +125,21 @@ class MyFrame(wx.Frame):
         '''
         '''
         try:
-            text = open('output.xml').read()
-            print(text)
-            _stringIO = StringIO(open('output.xml').read())
+            _bytesIO = BytesIO(open('output.xml', 'rb').read())
             _handler = wx.richtext.RichTextXMLHandler()
-            _handler.ImportXML(self.rt.GetBuffer(), self.rt, _stringIO)
+            _handler.LoadFile(self.rt.GetBuffer(), _bytesIO)
+            #_handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
             self.rt.Refresh()
+            self.loadXML()
+        except Exception as ex:
+            print(ex)
+
+    def loadXML(self):
+        try:
+            _xml = ET.parse('output.xml')
+            _root =  _xml.getroot()
+            print(_root)
+            print(_root[0][0].attribute)
         except Exception as ex:
             print(ex)
 
