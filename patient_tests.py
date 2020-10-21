@@ -12,6 +12,8 @@ import string
 import wx.richtext as rt
 from collections import OrderedDict
 import subprocess, os, platform
+import wx.lib.newevent
+from io import BytesIO
 
 filename="regis.jpeg"
 class MyApp(wx.App):
@@ -1862,10 +1864,13 @@ class TestPanel(scrolled.ScrolledPanel):
             self.controlSizer.Clear(True)
             k = 7
             flag = 1
-            antibdyIdDict = {}
-            optionIdDict = {}
+            self.antibdyIdDict = {}
+            self.optionIdDict = {}
             self.antiBodyDict = {}
             self.commentDict = {}
+            # self.boldFlag = False
+            # self.italicFlag = False
+            self.caps = False
             font = wx.Font(13, wx.DEFAULT, wx.NORMAL, wx.BOLD)
             for i in self.parent.pendingRequest:
                 if i['assayName'] == self.selectedString:
@@ -1887,44 +1892,69 @@ class TestPanel(scrolled.ScrolledPanel):
                     self.sizer2.Add(commentText, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
                     flag = 0
                     k+=1
-                def OnChoiceSelect(event, button_label=dic):
-                    if event.GetSelection():
-                        id1 = event.GetEventObject().GetId()
-                        antibdyId = antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
-                        optId = optionIdDict[antibdyId][event.GetString()]
-                        self.antiBodyDict[antibdyId] = optId
-                def onCommentModified(event, button_label=dic):
-                    if len(event.GetString()) > 0:
-                        id1 = event.GetEventObject().GetId()
-                        antibdyId = antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
-                        self.commentDict[antibdyId] = event.GetString()
 
                 choices=[i for i in dic['options'].values() if i != None]
                 if not choices:
                     continue
 
                 antibody = wx.StaticText(self, ids, dic['antiBody'])
-                antibdyIdDict[dic['antiBody']] = dic['antiBodyId']
-                optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
+                self.antibdyIdDict[dic['antiBody']] = dic['antiBodyId']
+                self.optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
                 choices.insert(0, '-- Select --')
                 print(choices)            
                 self.inputTwo = wx.Choice(self,id =ids, choices = choices)
                 self.inputTwo.SetSelection(0)
                 self.sizer2.Add(antibody, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
                 self.sizer2.Add(self.inputTwo, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
+
+
+                sizer = wx.BoxSizer(wx.VERTICAL)
+                sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+                #save_button = wx.Button(self, label="Save")
+                self.Bold = wx.Button(self, id =ids, label="B", size=(25, 18))
+                self.Bold.myname = "Bold"
+                Italic = wx.Button(self, id =ids, label="I", size=(25, 18))
+                Italic.myname = "Italic"
+
+                self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold, id = self.Bold.GetId())
+                Italic.Bind(wx.EVT_BUTTON, self.on_italic, id = Italic.GetId())
+
                 if dic['comment']:
-                    comment = wx.TextCtrl(self, ids, dic['comment'], size=(300, -1))
+                    self.rt = rt.RichTextCtrl(self, ids, value= dic['comment'], size=(250, 100))
+                    # comment = wx.TextCtrl(self, ids, dic['comment'], size=(300, -1))
                 else:
-                    comment = wx.TextCtrl(self, ids, '', size=(300, -1))
-                self.sizer2.Add(comment, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
-                self.inputTwo.Bind(wx.EVT_CHOICE, OnChoiceSelect)
-                self.commentDict[dic['antiBodyId']] = comment.GetValue()
-                comment.Bind(wx.EVT_TEXT, onCommentModified)
+                    self.rt = rt.RichTextCtrl(self, ids, value="", size=(250, 100))
+                    # comment = wx.TextCtrl(self, ids, '', size=(300, -1))
+
+                sizer.Add(self.rt, 1, wx.EXPAND|wx.ALL, 6)
+                sizer1.Add(self.Bold, 0, wx.EXPAND|wx.ALL, 6)
+                sizer1.Add(Italic, 0, wx.EXPAND|wx.ALL, 6)
+                sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 6)
+
+                self.sizer2.Add(sizer, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
+                self.inputTwo.Bind(wx.EVT_CHOICE, self.OnChoiceSelect)
+
+                self.SomeNewEvent, self.EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
+                # then bind the events in the constructor or somewhere
+                self.rt.Bind(wx.EVT_CHAR, self.onKeyDownHandler, id = self.rt.GetId())
+                self.rt.Bind(wx.EVT_LEFT_DOWN, self.onKeyDownHandler, id = self.rt.GetId())
+                self.rt.Bind(wx.EVT_RIGHT_UP, self.onKeyDownHandler, id = self.rt.GetId())
+                # bind also new event handler but 
+                self.rt.Bind(self.EVT_SOME_NEW_EVENT , self.onKeyDownAction, id = self.rt.GetId())
+
+                out = BytesIO()
+                handler = wx.richtext.RichTextXMLHandler()
+                rt_buffer = self.rt.GetBuffer()
+                handler.SaveFile(rt_buffer, out)
+                xml_content = out.getvalue()
+
+                self.commentDict[dic['antiBodyId']] = xml_content.decode('utf-8') #self.rt.GetValue()
+                self.rt.Bind(wx.EVT_TEXT, self.onCommentModified, id = self.rt.GetId())
                 k+=1
                 ids+=1
 
                 # id2 = comment.GetEventObject().GetId()
-                # antibdyId = antibdyIdDict[wx.FindWindowById(id2).GetValue()]
+                # antibdyId = self.antibdyIdDict[wx.FindWindowById(id2).GetValue()]
                 # self.antiBodyDict[antibdyId] = optId
             self.saveBtn = wx.Button(self, label = "Save", size=(90, 28))
             self.sizer2.Add(self.saveBtn, pos = (k+1, 13), flag = wx.LEFT|wx.BOTTOM, border = 250)
@@ -1937,8 +1967,193 @@ class TestPanel(scrolled.ScrolledPanel):
             self.Layout()
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
+
+    def OnChoiceSelect(self, event):
+        if event.GetSelection():
+            id1 = event.GetEventObject().GetId()
+            antibdyId = self.antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
+            optId = self.optionIdDict[antibdyId][event.GetString()]
+            self.antiBodyDict[antibdyId] = optId
+    def onCommentModified(self, event):
+        rtc = event.GetEventObject()
+        if len(rtc.GetValue()) > 0:
+            id1 = rtc.GetId()
+            antibdyId = self.antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
+
+            out = BytesIO()
+            handler = wx.richtext.RichTextXMLHandler()
+            rt_buffer = rtc.GetBuffer()
+            handler.SaveFile(rt_buffer, out)
+            xml_content = out.getvalue()
+
+            self.commentDict[antibdyId] = xml_content.decode('utf-8') #rtc.GetValue()
+            event.Skip()
+
+    def on_Bold(self, event):
+        boldBtnWidget = event.GetEventObject()
+        id1 = boldBtnWidget.GetId()
+        widgetCtrl = [rtcCtrl for rtcCtrl in [widgetCtrl for widgetCtrl in self.GetChildren() if isinstance(widgetCtrl, wx.richtext.RichTextCtrl)] if rtcCtrl.GetId() == id1][0]
+        # print(widgetCtrl)
+        # _selection = widgetCtrl.GetStringSelection()
+        # if _selection:
+        #     if widgetCtrl.IsSelectionBold():
+        #         self.boldFlag = False
+        #         boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+        #     elif not widgetCtrl.IsSelectionBold():
+        #         self.boldFlag = True
+        #         boldBtnWidget.SetBackgroundColour((255, 230, 200, 255))
+        #     widgetCtrl.ApplyBoldToSelection()
+        #     widgetCtrl.SetFocus()
+        #     pos = widgetCtrl.GetSelectionRange()[1]
+        #     print(pos)
+        #     widgetCtrl.SetInsertionPoint(pos)
+        #     return
+        # if not self.boldFlag:
+        #     # self.Bold.SetFocus()
+        #     boldBtnWidget.SetBackgroundColour((255, 230, 200, 255))
+        #     widgetCtrl.SetFocus()
+        #     pos1 = widgetCtrl.GetCaretPosition()
+        #     widgetCtrl.SetInsertionPoint(pos1+1)
+        #     widgetCtrl.BeginBold()
+        #     self.boldFlag = True
+        #     self.caps = True
+        # elif self.boldFlag:
+        #     boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+        #     widgetCtrl.SetFocus()
+        #     pos1 = widgetCtrl.GetCaretPosition()
+        #     widgetCtrl.SetInsertionPoint(pos1+1)
+        #     if self.caps:
+        #         widgetCtrl.EndBold()
+        #     else:
+        #         widgetCtrl.SetFont(wx.Font(10, family = wx.DEFAULT, style = wx.NORMAL, weight = wx.NORMAL))
+        #     self.boldFlag = False
+        #     self.caps = False
+        _selection = widgetCtrl.GetStringSelection()
+        if _selection:
+            # print(_selection)
+            if widgetCtrl.IsSelectionBold():
+                boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+            elif not widgetCtrl.IsSelectionBold():
+                boldBtnWidget.SetBackgroundColour(wx.LIGHT_GREY)
+            widgetCtrl.ApplyBoldToSelection()
+            widgetCtrl.SetFocus()
+            return
+        self.color_Match = boldBtnWidget.GetBackgroundColour() == wx.LIGHT_GREY
+        if not self.color_Match:
+            print('Bold',True)
+            # boldBtnWidget.SetFocus()
+            boldBtnWidget.SetBackgroundColour(wx.LIGHT_GREY)
+            widgetCtrl.SetFocus()
+            pos1 = widgetCtrl.GetCaretPosition()
+            widgetCtrl.SetInsertionPoint(pos1+1)
+            widgetCtrl.BeginBold()
+            # f = widgetCtrl.GetFont()
+            # f.SetWeight(wx.FONTWEIGHT_BOLD)
+            # widgetCtrl.BeginFont(f)
+            
+        elif self.color_Match:
+            widgetCtrl.SetFocus()
+            pos1 = widgetCtrl.GetCaretPosition()
+            widgetCtrl.SetInsertionPoint(pos1+1)
+            widgetCtrl.EndBold()
+            boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+            print('Bold',False)
+            # f = widgetCtrl.GetFont()
+            # f.SetWeight(wx.FONTWEIGHT_NORMAL)
+            # widgetCtrl.BeginFont(f)
+
+    def on_italic(self, event):
+        italicBtnWidget = event.GetEventObject()
+        id1 = italicBtnWidget.GetId()
+        widgetCtrl = [rtcCtrl for rtcCtrl in [widgetCtrl for widgetCtrl in self.GetChildren() if isinstance(widgetCtrl, wx.richtext.RichTextCtrl)] if rtcCtrl.GetId() == id1][0]
+        # widgetCtrl.ApplyItalicToSelection()
+        # # if not self.italicFlag:
+        # #     widgetCtrl.SetFocus()
+        # #     widgetCtrl.SetInsertionPointEnd()
+        # #     widgetCtrl.BeginItalic()
+        # #     self.italicFlag = True
+        # # elif self.italicFlag:
+        # #     widgetCtrl.SetFocus()
+        # #     widgetCtrl.SetInsertionPointEnd()
+        # #     widgetCtrl.EndItalic()
+        # #     self.italicFlag = False
+        # if not self.italicFlag:
+        #     italicBtnWidget.SetBackgroundColour((255, 230, 200, 255))
+        #     widgetCtrl.SetFocus()
+        #     pos1 = widgetCtrl.GetCaretPosition()
+        #     widgetCtrl.SetInsertionPointEnd(pos1+1)
+        #     widgetCtrl.BeginItalic()
+        #     self.italicFlag = True
+        # elif self.italicFlag:
+        #     italicBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+        #     widgetCtrl.SetFocus()
+        #     pos1 = widgetCtrl.GetCaretPosition()
+        #     widgetCtrl.SetInsertionPointEnd(pos1+1)
+        #     widgetCtrl.EndItalic()
+        #     self.italicFlag = False
+
+        _selection = widgetCtrl.GetStringSelection()
+        if _selection:
+            # print(_selection)
+            if widgetCtrl.IsSelectionItalics():
+                italicBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+            elif not widgetCtrl.IsSelectionItalics():
+                italicBtnWidget.SetBackgroundColour(wx.LIGHT_GREY)
+            widgetCtrl.ApplyItalicToSelection()
+            widgetCtrl.SetFocus()
+            return
+        self.color_Match1 = italicBtnWidget.GetBackgroundColour() == wx.LIGHT_GREY
+        if not self.color_Match1:
+            print('Italic',True)
+            italicBtnWidget.SetBackgroundColour(wx.LIGHT_GREY)
+            widgetCtrl.SetFocus()
+            pos1 = widgetCtrl.GetCaretPosition()
+            widgetCtrl.SetInsertionPoint(pos1+1)
+            widgetCtrl.BeginItalic()
+            # f = widgetCtrl.GetFont()
+            # f.SetStyle(wx.ITALIC)
+            # widgetCtrl.BeginFont(f)
+        elif self.color_Match1:
+            widgetCtrl.SetFocus()
+            pos1 = widgetCtrl.GetCaretPosition()
+            widgetCtrl.SetInsertionPoint(pos1+1)
+            italicBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+            widgetCtrl.EndItalic()
+            print('Italic', False)
+            # f = widgetCtrl.GetFont()
+            # f.SetStyle(wx.NORMAL)
+            # widgetCtrl.BeginFont(f)
+
+    # then define the handlers
+    def onKeyDownAction(self, event):
+        rtc = event.GetEventObject()
+        id1 = rtc.GetId()
+        print("Insertion point {}".format(rtc.GetInsertionPoint()))
+        btnWidget = [Btn for Btn in [widgetCtrl for widgetCtrl in self.GetChildren() if isinstance(widgetCtrl, wx.Button)] if Btn.GetId() == id1]
+        print(btnWidget)
+        for i in btnWidget:
+            if i.myname == "Bold":
+                boldBtnWidget = i
+            elif i.myname == "Italic":
+                italicBtnWidget = i
+        if rtc.IsSelectionBold():
+            boldBtnWidget.SetBackgroundColour(wx.LIGHT_GREY)
+        elif not rtc.IsSelectionBold():
+            boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+        if rtc.IsSelectionItalics():
+            italicBtnWidget.SetBackgroundColour(wx.LIGHT_GREY)
+        elif not rtc.IsSelectionItalics():
+            italicBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
+        event.Skip()
+    def onKeyDownHandler(self, event):
+        rtc = event.GetEventObject()
+        event.Skip()
+        # post the new event so it will be handled later
+        wx.PostEvent(rtc, self.SomeNewEvent())
+
     def onUpdateReport(self, event):
         print(self.antiBodyDict)
+        print(self.commentDict)
         if db.updatePendingReport(self.parent.RqstId, self.assayId, self.antiBodyDict, self.commentDict):
             self.selectedString = str(self.tests.GetString(self.index))
             self.parent.pendingTestAssays.remove(self.selectedString)

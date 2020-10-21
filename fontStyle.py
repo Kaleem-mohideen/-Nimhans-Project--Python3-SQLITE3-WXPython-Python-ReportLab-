@@ -24,17 +24,16 @@ class MyFrame(wx.Frame):
         save_button = wx.Button(self, label="Save")
         save_button.Bind(wx.EVT_BUTTON, self.on_save)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rt, 1, wx.EXPAND|wx.ALL, 6)
         sizer.Add(save_button, 0, wx.EXPAND|wx.ALL, 6)
         self.Bold = wx.Button(self, label="Bold")
-        Italic = wx.Button(self, label="Italic")
+        self.Italic = wx.Button(self, label="Italic")
 
         sizer.Add(self.Bold, 0, wx.EXPAND|wx.ALL, 6)
-        sizer.Add(Italic, 0, wx.EXPAND|wx.ALL, 6)
+        sizer.Add(self.Italic, 0, wx.EXPAND|wx.ALL, 6)
 
         self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
-        Italic.Bind(wx.EVT_BUTTON, self.on_italic)
+        self.Italic.Bind(wx.EVT_BUTTON, self.on_italic)
 
         self.loadText()
 
@@ -76,7 +75,6 @@ class MyFrame(wx.Frame):
             self.boldFlag = True
             self.caps = True
         elif self.boldFlag:
-            print('f', self.boldFlag)
             self.Bold.SetBackgroundColour(wx.Colour(240, 240, 240))
             self.rt.SetFocus()
             pos1 = self.rt.GetCaretPosition()
@@ -91,13 +89,17 @@ class MyFrame(wx.Frame):
     def on_italic(self, evt):
         self.rt.ApplyItalicToSelection()
         if not self.italicFlag:
+            self.Italic.SetBackgroundColour((255, 230, 200, 255))
             self.rt.SetFocus()
-            self.rt.SetInsertionPointEnd()
+            pos1 = self.rt.GetCaretPosition()
+            self.rt.SetInsertionPointEnd(pos1)
             self.rt.BeginItalic()
             self.italicFlag = True
         elif self.italicFlag:
+            self.Italic.SetBackgroundColour(wx.Colour(240, 240, 240))
             self.rt.SetFocus()
-            self.rt.SetInsertionPointEnd()
+            pos1 = self.rt.GetCaretPosition()
+            self.rt.SetInsertionPointEnd(pos1)
             self.rt.EndItalic()
             self.italicFlag = False
         # self.italicFlag = not self.italicFlag
