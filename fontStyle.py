@@ -1,9 +1,9 @@
 import wx
 import wx.richtext
+from wx.richtext import RichTextBuffer
 from io import BytesIO
+from io import StringIO
 import xml.dom.minidom
-import xml.etree.ElementTree as ET
-from lxml import etree
 
 class MyFrame(wx.Frame):
     def __init__(self):
@@ -35,6 +35,8 @@ class MyFrame(wx.Frame):
 
         self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
         Italic.Bind(wx.EVT_BUTTON, self.on_italic)
+
+        self.loadText()
 
         self.SetSizer(sizer)
         self.Show()
@@ -107,8 +109,8 @@ class MyFrame(wx.Frame):
         handler.SaveFile(rt_buffer, out)
         self.xml_content = out.getvalue()
         print(self.xml_content)
-        with open("output.xml", "a") as f:
-            f.write(str(self.xml_content))
+        with open("output.xml", "w") as f:
+            f.write(self.xml_content.decode('utf-8'))
         # parser = etree.XMLParser(recover=True)
         # xmlObject = etree.fromstring(str(self.xml_content), parser = parser)
         # e = xmlObject.xpath('//article[contains(text(), "stuff")]')
@@ -122,12 +124,41 @@ class MyFrame(wx.Frame):
         # create an XML handler
         handler = wx.richtext.RichTextXMLHandler()
         # load the stream into the control's buffer
-        handler.LoadStream( myRichTextCtrl.GetBuffer(), stream )
+        handler.LoadStream( self.GetBuffer(), stream )
         # refresh the control
         myRichTextCtrl.Refresh()
 
-class MyFrame(wx.Frame):
-    def __init__(self): 
+    def loadTextStream(self):
+        '''
+        '''
+        try:
+            _file = open('output.xml', 'r')
+            _rtf = _file.read()
+            _file.close()
+            print(_rtf)
+            self.rt.Freeze()
+            _handler = wx.richtext.RichTextXMLHandler()
+            _handler.SetFlags(wx.richtext.RICHTEXT_HANDLER_INCLUDE_STYLESHEET)
+            rt_buffer = self.rt.GetBuffer()
+            output = StringIO(_rtf)
+            _handler.LoadStream(rt_buffer,  output)
+            self.rt.refresh()
+            self.rt.Thaw()
+            #self.rt.LoadFile('output.xml',  wx.richtext.RICHTEXT_TYPE_XML)
+        except Exception as ex:
+            print(ex)
+    
+    def loadText(self):
+        '''
+        '''
+        try:
+            _stringIO = StringIO(open('output.xml').read())
+            _handler = wx.richtext.RichTextXMLHandler()
+            _handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
+            self.rt.Refresh()
+        except Exception as ex:
+            print(ex)
+
 
 
 # rainbow = ['red', 'coral', 'yellow', 'green', 'blue']
