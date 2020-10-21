@@ -399,6 +399,15 @@ class AntibodyMasterPanel(wx.Frame):
         self.choicesid ={choice: choiceId for choiceId, choice in getAntibdyDict[self.antiId]['Options'].items()}
         print(self.choicesid)
         comment = getAntibdyDict[self.antiId]['Comment']
+
+        try:
+            _stringIO = StringIO(open('output.xml').read())
+            _handler = wx.richtext.RichTextXMLHandler()
+            _handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
+            self.rt.Refresh()
+        except Exception as ex:
+            print(ex)
+
         self.comment = comment if comment else ''
 
         if not self.choices and self.flag:
@@ -408,21 +417,41 @@ class AntibodyMasterPanel(wx.Frame):
             else:
                 self.choices= [choice for choice in self.choicesid if choice]
             self.listResult = wx.ListBox(self.panel, choices= self.choices, size=(270, 100), style=wx.LB_MULTIPLE)
-            self.commentTxtctrl = wx.TextCtrl(self, id=-1, value='', pos=wx.DefaultPosition,size=(270,100), style= wx.TE_MULTILINE | wx.SUNKEN_BORDER)
-            self.commentTxtctrl.SetValue(self.comment)
+
+            sizer = wx.BoxSizer(wx.VERTICAL)
+            sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+            #save_button = wx.Button(self, label="Save")
+            self.Bold = wx.Button(self, label="B", size=(25, 18))
+            self.Italic = wx.Button(self, label="I", size=(25, 18))
+
+            self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
+            self.Italic.Bind(wx.EVT_BUTTON, self.on_italic)
+
+            if self.comment:
+                self.commentRichTxtctrl = rt.RichTextCtrl(self, value= self.comment, size=(250, 100))
+            else:
+                self.commentRichTxtctrl = rt.RichTextCtrl(self, value="", size=(250, 100))
+
+            sizer.Add(self.commentRichTxtctrl, 1, wx.EXPAND|wx.ALL, 6)
+            sizer1.Add(self.Bold, 0, wx.EXPAND|wx.ALL, 6)
+            sizer1.Add(self.Italic, 0, wx.EXPAND|wx.ALL, 6)
+            sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 6)
+
+            # self.commentRichTxtctrl = wx.TextCtrl(self, id=-1, value='', pos=wx.DefaultPosition,size=(270,100), style= wx.TE_MULTILINE | wx.SUNKEN_BORDER)
+            # self.commentRichTxtctrl.SetValue(self.comment)
             self.addBtnResult = wx.Button(self.panel, label = "Add", size=(90, 28))
             self.discardBtnResult = wx.Button(self.panel, label = "Discard", size=(90, 28))
             self.saveBtnComment = wx.Button(self.panel, label = "Save", size=(90, 28))
             font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-            self.antibdytitletResult = wx.StaticText(self.panel, label = self.antibdy_selectedText)
+            self.antibdytitletResult = wx.StaticText(self.panel, label = self.antibdy_selectedText + '{0}'.format(' Options'))
             self.antibdytitletResult.SetFont(font)
-            self.antibdytitletComment = wx.StaticText(self.panel, label = self.antibdy_selectedText)
+            self.antibdytitletComment = wx.StaticText(self.panel, label = self.antibdy_selectedText + '{0}'.format(' Comment'))
             self.antibdytitletComment.SetFont(font)
             #self.listResult.SetSelection(0)
             self.sizer.Add(self.antibdytitletResult, pos = (0,5), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
             self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
             self.sizer.Add(self.antibdytitletComment, pos = (0,7), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
-            self.sizer.Add(self.commentTxtctrl, pos = (1,7), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
+            self.sizer.Add(sizer, pos = (1,7), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
             self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 10)
             self.sizer.Add(self.discardBtnResult, pos = (5,6), flag = wx.RIGHT, border = 50)
             self.sizer.Add(self.saveBtnComment, pos = (5,8), flag = wx.RIGHT, border = 50)
@@ -436,11 +465,11 @@ class AntibodyMasterPanel(wx.Frame):
                 self.flag = 0
             else:
                 self.choices= [choice for choice in self.choicesid if choice]
-            self.antibdytitletResult.SetLabel(self.antibdy_selectedText)
-            self.antibdytitletComment.SetLabel(self.antibdy_selectedText)
+            self.antibdytitletResult.SetLabel(self.antibdy_selectedText+ '{0}'.format(' Options'))
+            self.antibdytitletComment.SetLabel(self.antibdy_selectedText+ '{0}'.format(' Comment'))
             self.listResult.Set(self.choices)
-            self.commentTxtctrl.Show()
-            self.commentTxtctrl.SetValue(self.comment)
+            self.commentRichTxtctrl.Show()
+            self.commentRichTxtctrl.SetValue(self.comment)
             self.saveBtnComment.Show()
             self.addBtnResult.Enable()
             self.discardBtnResult.Enable()
@@ -453,8 +482,73 @@ class AntibodyMasterPanel(wx.Frame):
         self.Layout()
         #self.panel.SetSize(wx.Size(1000,1400))
 
+    def on_Bold(self,evt):
+        _selection = self.commentRichTxtctrl.GetStringSelection()
+        if _selection:
+            print(_selection)
+            if self.commentRichTxtctrl.IsSelectionBold():
+                self.Bold.SetBackgroundColour(wx.Colour(240, 240, 240))
+            elif not self.commentRichTxtctrl.IsSelectionBold():
+                self.Bold.SetBackgroundColour(wx.LIGHT_GREY)
+            self.commentRichTxtctrl.ApplyBoldToSelection()
+            self.commentRichTxtctrl.SetFocus()
+            return
+        self.color_Match = self.Bold.GetBackgroundColour() == wx.LIGHT_GREY
+        print(self.color_Match)
+        if not self.color_Match:
+            print('Bold',True)
+            # self.Bold.SetFocus()
+            self.Bold.SetBackgroundColour(wx.LIGHT_GREY)
+            self.commentRichTxtctrl.SetFocus()
+            pos1 = self.commentRichTxtctrl.GetCaretPosition()
+            self.commentRichTxtctrl.SetInsertionPoint(pos1+1)
+            self.commentRichTxtctrl.BeginBold()
+
+        elif self.color_Match:
+            self.commentRichTxtctrl.SetFocus()
+            pos1 = self.commentRichTxtctrl.GetCaretPosition()
+            self.commentRichTxtctrl.SetInsertionPoint(pos1+1)
+            self.commentRichTxtctrl.EndBold()
+            self.Bold.SetBackgroundColour(wx.Colour(240, 240, 240))
+            print('Bold',False)
+
+
+    def on_italic(self, evt):
+        _selection = self.commentRichTxtctrl.GetStringSelection()
+        if _selection:
+            print(_selection)
+            if self.commentRichTxtctrl.IsSelectionItalics():
+                self.Italic.SetBackgroundColour(wx.Colour(240, 240, 240))
+            elif not self.commentRichTxtctrl.IsSelectionItalics():
+                self.Italic.SetBackgroundColour(wx.LIGHT_GREY)
+            self.commentRichTxtctrl.ApplyItalicToSelection()
+            self.commentRichTxtctrl.SetFocus()
+            return
+        self.color_Match1 = self.Italic.GetBackgroundColour() == wx.LIGHT_GREY
+        if not self.color_Match1:
+            print('Italic',True)
+            self.Italic.SetBackgroundColour(wx.LIGHT_GREY)
+            self.commentRichTxtctrl.SetFocus()
+            pos1 = self.commentRichTxtctrl.GetCaretPosition()
+            self.commentRichTxtctrl.SetInsertionPoint(pos1+1)
+            self.commentRichTxtctrl.BeginItalic()
+
+        elif self.color_Match1:
+            self.commentRichTxtctrl.SetFocus()
+            pos1 = self.commentRichTxtctrl.GetCaretPosition()
+            self.commentRichTxtctrl.SetInsertionPoint(pos1+1)
+            self.Italic.SetBackgroundColour(wx.Colour(240, 240, 240))
+            self.commentRichTxtctrl.EndItalic()
+            print('Italic', False)
+
     def onSaveComment(self, evt):
-        _comment = self.commentTxtctrl.GetValue()
+        out = BytesIO()
+        handler = wx.richtext.RichTextXMLHandler()
+        rt_buffer = self.commentRichTxtctrl.GetBuffer()
+        handler.SaveFile(rt_buffer, out)
+        xml_content = out.getvalue()
+
+        _comment = xml_content.decode('utf-8') #self.commentRichTxtctrl.GetValue()
         if db.updateAntiBodyComment(self.assayId, self.antibdy_itemsid[self.antibdy_selectedText], _comment):
             if _comment:
                 dialog = wx.MessageBox('Comment is Updated for {0} test'.format(self.antibdy_selectedText), 'Successfully Updated', wx.OK)
@@ -481,7 +575,7 @@ class AntibodyMasterPanel(wx.Frame):
                         self.discardBtn.Disable()
                     self.AntibdyList.Set(self.Antibdy_items)
                     self.listResult.Clear()
-                    self.commentTxtctrl.Hide()
+                    self.commentRichTxtctrl.Hide()
                     self.saveBtnComment.Hide()
                     self.antibdytitletComment.Hide()
                     self.antibdytitletResult.SetLabel('')
@@ -500,7 +594,7 @@ class AntibodyMasterPanel(wx.Frame):
             self.Antibdy_index = None
             self.listResult.Clear()
             self.antibdytitletResult.SetLabel('')
-            self.commentTxtctrl.Hide()
+            self.commentRichTxtctrl.Hide()
             self.saveBtnComment.Hide()
             self.antibdytitletComment.Hide()
             self.addBtnResult.Disable()
@@ -1918,6 +2012,14 @@ class TestPanel(scrolled.ScrolledPanel):
 
                 self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold, id = self.Bold.GetId())
                 Italic.Bind(wx.EVT_BUTTON, self.on_italic, id = Italic.GetId())
+
+                try:
+                    _stringIO = StringIO(open('output.xml').read())
+                    _handler = wx.richtext.RichTextXMLHandler()
+                    _handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
+                    self.rt.Refresh()
+                except Exception as ex:
+                    print(ex)
 
                 if dic['comment']:
                     self.rt = rt.RichTextCtrl(self, ids, value= dic['comment'], size=(250, 100))

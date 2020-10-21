@@ -15,11 +15,6 @@ class MyFrame(wx.Frame):
         self.boldFlag = False
         self.italicFlag = False
         self.caps = False
-        # self.rich.BeginFontSize(40)
-        # for c, colour in rainbow_text:
-        #     self.rich.BeginTextColour(colour)
-        #     self.rich.WriteText(c)
-        #     self.rich.EndTextColour()
 
         save_button = wx.Button(self, label="Save")
         save_button.Bind(wx.EVT_BUTTON, self.on_save)
@@ -55,16 +50,7 @@ class MyFrame(wx.Frame):
             print(pos)
             self.rt.SetInsertionPoint(pos)
             return
-            # font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.NORMAL, wx.FONTWEIGHT_BOLD, False)
-            # style = self.rt.GetDefaultStyleEx()
-            # style.SetFont(font)
-            # (begin, end) = self.rt.GetSelectionRange()
-            # print(begin, end)
-            # self.rt.SetStyle(begin, end, style)
-            # self.rt.SetFocus()
-            # self.rt.SetInsertionPointEnd()
-            # if self.boldFlag:
-            #     self.rt.EndBold()
+
         if not self.boldFlag:
             # self.Bold.SetFocus()
             self.Bold.SetBackgroundColour((255, 230, 200, 255))
@@ -102,8 +88,7 @@ class MyFrame(wx.Frame):
             self.rt.SetInsertionPointEnd(pos1)
             self.rt.EndItalic()
             self.italicFlag = False
-        # self.italicFlag = not self.italicFlag
-        # self.SetFontStyle(fontItalic = self.italiclag)
+
     def on_save(self, event):
         out = BytesIO()
         handler = wx.richtext.RichTextXMLHandler()
@@ -113,22 +98,7 @@ class MyFrame(wx.Frame):
         print(self.xml_content)
         with open("output.xml", "w") as f:
             f.write(self.xml_content.decode('utf-8'))
-        # parser = etree.XMLParser(recover=True)
-        # xmlObject = etree.fromstring(str(self.xml_content), parser = parser)
-        # e = xmlObject.xpath('//article[contains(text(), "stuff")]')
-        # for article in e:
-        #     print(etree.tostring(article, pretty_print=True))
-        # pretty_xml_as_string = etree.tostring(xmlObject).decode()
-        # print(pretty_xml_as_string)
-    def onClick(self,evt):
-        # initialize a string stream with XML data
-        stream = StringIO( myXmlString )
-        # create an XML handler
-        handler = wx.richtext.RichTextXMLHandler()
-        # load the stream into the control's buffer
-        handler.LoadStream( self.GetBuffer(), stream )
-        # refresh the control
-        myRichTextCtrl.Refresh()
+
 
     def loadTextStream(self):
         '''
@@ -154,37 +124,14 @@ class MyFrame(wx.Frame):
         '''
         '''
         try:
+            text = open('output.xml').read()
+            print(text)
             _stringIO = StringIO(open('output.xml').read())
             _handler = wx.richtext.RichTextXMLHandler()
-            _handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
+            _handler.ImportXML(self.rt.GetBuffer(), self.rt, _stringIO)
             self.rt.Refresh()
         except Exception as ex:
             print(ex)
-
-
-
-# rainbow = ['red', 'coral', 'yellow', 'green', 'blue']
-# text = """
-#  Welcome to fabulous
-#         Las Vegas"""
-# # create a list of (char, colour) tuples
-# rainbow_text = []
-# ix = 0
-# for c in text:
-#     if c.isalpha():
-#         colour = rainbow[ix]
-#         if ix < len(rainbow)-1:
-#             ix += 1
-#         else:
-#             ix = 0
-#     else:
-#         colour = 'white'
-#     rainbow_text.append((c, colour))
-# app = wx.App(0)
-# title = 'Rainbow Text'
-# MyFrame(None, title, rainbow_text).Show()
-# app.MainLoop()
-
 
 if __name__ == "__main__":
     app = wx.App(False)
