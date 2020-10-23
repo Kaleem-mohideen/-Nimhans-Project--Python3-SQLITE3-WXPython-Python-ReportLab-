@@ -130,7 +130,7 @@ class MyFrame(wx.Frame):
             _handler.LoadFile(self.rt.GetBuffer(), _bytesIO)
             #_handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
             self.rt.Refresh()
-            self.loadXML()
+            # self.loadXML()
         except Exception as ex:
             print(ex)
 

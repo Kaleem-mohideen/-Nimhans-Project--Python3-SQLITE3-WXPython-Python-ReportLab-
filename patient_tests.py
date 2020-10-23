@@ -400,15 +400,7 @@ class AntibodyMasterPanel(wx.Frame):
         print(self.choicesid)
         comment = getAntibdyDict[self.antiId]['Comment']
 
-        try:
-            _stringIO = StringIO(open('output.xml').read())
-            _handler = wx.richtext.RichTextXMLHandler()
-            _handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
-            self.rt.Refresh()
-        except Exception as ex:
-            print(ex)
-
-        self.comment = comment if comment else ''
+        # self.comment = comment if comment else ''
 
         if not self.choices and self.flag:
             if len(self.choicesid)==1 and list(self.choicesid.keys())[0] == None and list(self.choicesid.values())[0] == None:
@@ -427,18 +419,27 @@ class AntibodyMasterPanel(wx.Frame):
             self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
             self.Italic.Bind(wx.EVT_BUTTON, self.on_italic)
 
-            if self.comment:
-                self.commentRichTxtctrl = rt.RichTextCtrl(self, value= self.comment, size=(250, 100))
-            else:
-                self.commentRichTxtctrl = rt.RichTextCtrl(self, value="", size=(250, 100))
+            # if self.comment:
+            #     self.commentRichTxtctrl = rt.RichTextCtrl(self, value= self.comment, size=(250, 100))
+            # else:
+            self.commentRichTxtctrl = rt.RichTextCtrl(self, value="", size=(250, 100))
+
+            try:
+                _bytesIO = BytesIO(bytes(comment, 'utf-8'))
+                _handler = wx.richtext.RichTextXMLHandler()
+                _handler.LoadFile(self.commentRichTxtctrl.GetBuffer(), _bytesIO)
+                self.commentRichTxtctrl.Refresh()
+                # self.loadXML()
+            except Exception as ex:
+                print(ex)
 
             sizer.Add(self.commentRichTxtctrl, 1, wx.EXPAND|wx.ALL, 6)
             sizer1.Add(self.Bold, 0, wx.EXPAND|wx.ALL, 6)
             sizer1.Add(self.Italic, 0, wx.EXPAND|wx.ALL, 6)
             sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 6)
 
-            # self.commentRichTxtctrl = wx.TextCtrl(self, id=-1, value='', pos=wx.DefaultPosition,size=(270,100), style= wx.TE_MULTILINE | wx.SUNKEN_BORDER)
-            # self.commentRichTxtctrl.SetValue(self.comment)
+            # self.commentTxtctrl = wx.TextCtrl(self, id=-1, value='', pos=wx.DefaultPosition,size=(270,100), style= wx.TE_MULTILINE | wx.SUNKEN_BORDER)
+            # self.commentTxtctrl.SetValue(self.comment)
             self.addBtnResult = wx.Button(self.panel, label = "Add", size=(90, 28))
             self.discardBtnResult = wx.Button(self.panel, label = "Discard", size=(90, 28))
             self.saveBtnComment = wx.Button(self.panel, label = "Save", size=(90, 28))
@@ -469,7 +470,15 @@ class AntibodyMasterPanel(wx.Frame):
             self.antibdytitletComment.SetLabel(self.antibdy_selectedText+ '{0}'.format(' Comment'))
             self.listResult.Set(self.choices)
             self.commentRichTxtctrl.Show()
-            self.commentRichTxtctrl.SetValue(self.comment)
+            # self.commentRichTxtctrl.SetValue(self.comment)
+            try:
+                _bytesIO = BytesIO(bytes(comment, 'utf-8'))
+                _handler = wx.richtext.RichTextXMLHandler()
+                _handler.LoadFile(self.commentRichTxtctrl.GetBuffer(), _bytesIO)
+                self.commentRichTxtctrl.Refresh()
+                # self.loadXML()
+            except Exception as ex:
+                print(ex)
             self.saveBtnComment.Show()
             self.addBtnResult.Enable()
             self.discardBtnResult.Enable()
@@ -2013,20 +2022,21 @@ class TestPanel(scrolled.ScrolledPanel):
                 self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold, id = self.Bold.GetId())
                 Italic.Bind(wx.EVT_BUTTON, self.on_italic, id = Italic.GetId())
 
+                # if dic['comment']:
+                #     self.rt = rt.RichTextCtrl(self, ids, value= dic['comment'], size=(250, 100))
+                #     # comment = wx.TextCtrl(self, ids, dic['comment'], size=(300, -1))
+                # else:
+                self.rt = rt.RichTextCtrl(self, ids, value="", size=(250, 100))
+                    # comment = wx.TextCtrl(self, ids, '', size=(300, -1))
+
                 try:
-                    _stringIO = StringIO(open('output.xml').read())
+                    _bytesIO = BytesIO(bytes(dic['comment'], 'utf-8'))
                     _handler = wx.richtext.RichTextXMLHandler()
-                    _handler.LoadFile(self.rt.GetBuffer(), 'output.xml')
+                    _handler.LoadFile(self.rt.GetBuffer(), _bytesIO)
                     self.rt.Refresh()
+                    # self.loadXML()
                 except Exception as ex:
                     print(ex)
-
-                if dic['comment']:
-                    self.rt = rt.RichTextCtrl(self, ids, value= dic['comment'], size=(250, 100))
-                    # comment = wx.TextCtrl(self, ids, dic['comment'], size=(300, -1))
-                else:
-                    self.rt = rt.RichTextCtrl(self, ids, value="", size=(250, 100))
-                    # comment = wx.TextCtrl(self, ids, '', size=(300, -1))
 
                 sizer.Add(self.rt, 1, wx.EXPAND|wx.ALL, 6)
                 sizer1.Add(self.Bold, 0, wx.EXPAND|wx.ALL, 6)
@@ -2095,41 +2105,6 @@ class TestPanel(scrolled.ScrolledPanel):
         boldBtnWidget = event.GetEventObject()
         id1 = boldBtnWidget.GetId()
         widgetCtrl = [rtcCtrl for rtcCtrl in [widgetCtrl for widgetCtrl in self.GetChildren() if isinstance(widgetCtrl, wx.richtext.RichTextCtrl)] if rtcCtrl.GetId() == id1][0]
-        # print(widgetCtrl)
-        # _selection = widgetCtrl.GetStringSelection()
-        # if _selection:
-        #     if widgetCtrl.IsSelectionBold():
-        #         self.boldFlag = False
-        #         boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
-        #     elif not widgetCtrl.IsSelectionBold():
-        #         self.boldFlag = True
-        #         boldBtnWidget.SetBackgroundColour((255, 230, 200, 255))
-        #     widgetCtrl.ApplyBoldToSelection()
-        #     widgetCtrl.SetFocus()
-        #     pos = widgetCtrl.GetSelectionRange()[1]
-        #     print(pos)
-        #     widgetCtrl.SetInsertionPoint(pos)
-        #     return
-        # if not self.boldFlag:
-        #     # self.Bold.SetFocus()
-        #     boldBtnWidget.SetBackgroundColour((255, 230, 200, 255))
-        #     widgetCtrl.SetFocus()
-        #     pos1 = widgetCtrl.GetCaretPosition()
-        #     widgetCtrl.SetInsertionPoint(pos1+1)
-        #     widgetCtrl.BeginBold()
-        #     self.boldFlag = True
-        #     self.caps = True
-        # elif self.boldFlag:
-        #     boldBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
-        #     widgetCtrl.SetFocus()
-        #     pos1 = widgetCtrl.GetCaretPosition()
-        #     widgetCtrl.SetInsertionPoint(pos1+1)
-        #     if self.caps:
-        #         widgetCtrl.EndBold()
-        #     else:
-        #         widgetCtrl.SetFont(wx.Font(10, family = wx.DEFAULT, style = wx.NORMAL, weight = wx.NORMAL))
-        #     self.boldFlag = False
-        #     self.caps = False
         _selection = widgetCtrl.GetStringSelection()
         if _selection:
             # print(_selection)
@@ -2168,32 +2143,6 @@ class TestPanel(scrolled.ScrolledPanel):
         italicBtnWidget = event.GetEventObject()
         id1 = italicBtnWidget.GetId()
         widgetCtrl = [rtcCtrl for rtcCtrl in [widgetCtrl for widgetCtrl in self.GetChildren() if isinstance(widgetCtrl, wx.richtext.RichTextCtrl)] if rtcCtrl.GetId() == id1][0]
-        # widgetCtrl.ApplyItalicToSelection()
-        # # if not self.italicFlag:
-        # #     widgetCtrl.SetFocus()
-        # #     widgetCtrl.SetInsertionPointEnd()
-        # #     widgetCtrl.BeginItalic()
-        # #     self.italicFlag = True
-        # # elif self.italicFlag:
-        # #     widgetCtrl.SetFocus()
-        # #     widgetCtrl.SetInsertionPointEnd()
-        # #     widgetCtrl.EndItalic()
-        # #     self.italicFlag = False
-        # if not self.italicFlag:
-        #     italicBtnWidget.SetBackgroundColour((255, 230, 200, 255))
-        #     widgetCtrl.SetFocus()
-        #     pos1 = widgetCtrl.GetCaretPosition()
-        #     widgetCtrl.SetInsertionPointEnd(pos1+1)
-        #     widgetCtrl.BeginItalic()
-        #     self.italicFlag = True
-        # elif self.italicFlag:
-        #     italicBtnWidget.SetBackgroundColour(wx.Colour(240, 240, 240))
-        #     widgetCtrl.SetFocus()
-        #     pos1 = widgetCtrl.GetCaretPosition()
-        #     widgetCtrl.SetInsertionPointEnd(pos1+1)
-        #     widgetCtrl.EndItalic()
-        #     self.italicFlag = False
-
         _selection = widgetCtrl.GetStringSelection()
         if _selection:
             # print(_selection)
