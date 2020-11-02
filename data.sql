@@ -4,7 +4,6 @@ INSERT INTO assayMaster(assayName) VALUES ('AANA Profile 3');
 
 
 
-INSERT INTO antiBodies (assayId, antiBody) VALUES (1,'Autoantibodies against');
 INSERT INTO antiBodies (assayId, antiBody) VALUES (1,'nRNP-Sm');
 INSERT INTO antiBodies (assayId, antiBody) VALUES (1,'Sm');
 INSERT INTO antiBodies (assayId, antiBody) VALUES (1,'SS-A');
