@@ -52,10 +52,26 @@ CREATE TABLE antiBodyOptions(
 	assayId			INTEGER NOT NULL,
 	antiBodyId		INTEGER NOT NULL,
 	optionText		TEXT NOT NULL,
+	isDefault		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 0,
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
 	UNIQUE(optionId, antiBodyId, assayId),
 	UNIQUE(assayId, antiBodyId, optionText),
 	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodies(antiBodyId, assayId));
+CREATE TRIGGER changeDefault 
+	AFTER UPDATE ON antiBodyOptions 
+	WHEN NEW.isDefault = 1 AND OLD.isDefault = 0
+		BEGIN
+			UPDATE antiBodyOptions SET isDefault = 0 WHERE 
+			optionId !=  OLD.optionId AND assayId = NEW.assayId AND antiBodyId = NEW.antibodyId;
+		END;
+CREATE TRIGGER insertDefault 
+	AFTER INSERT ON antiBodyOptions 
+	WHEN NEW.isDefault = 1 
+		BEGIN
+			UPDATE antiBodyOptions SET isDefault = 0 WHERE 
+			optionId !=  NEW.optionId AND assayId = NEW.assayId AND antiBodyId = NEW.antibodyId;
+		END;
+
 
 CREATE TABLE hospitalMaster(
 	hospitalName		TEXT PRIMARY KEY,
