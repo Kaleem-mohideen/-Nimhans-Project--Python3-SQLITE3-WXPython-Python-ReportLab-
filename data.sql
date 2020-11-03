@@ -114,9 +114,9 @@ INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,11, 'Negat
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,12, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,12, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,12, 'Negative');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,13, 'Strongly Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,13, 'Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(1,13, 'Negative');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,13, 'Strongly Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,13, 'Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,13, 'Negative');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,14, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,14, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,14, 'Negative');
@@ -153,9 +153,9 @@ INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,24, 'Negat
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,25, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,25, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,25, 'Negative');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,26, 'Strongly Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,26, 'Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(2,26, 'Negative');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,26, 'Strongly Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,26, 'Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,26, 'Negative');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,27, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,27, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,27, 'Negative');
@@ -174,9 +174,9 @@ INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,31, 'Negat
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,32, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,32, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,32, 'Negative');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,33, 'Strongly Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,33, 'Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(3,33, 'Negative');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,33, 'Strongly Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,33, 'Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,33, 'Negative');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,34, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,34, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,34, 'Negative');
@@ -195,9 +195,9 @@ INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,38, 'Negat
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,39, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,39, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,39, 'Negative');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,40, 'Strongly Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,40, 'Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(4,40, 'Negative');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,40, 'Strongly Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,40, 'Positive');
+INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,40, 'Negative');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,41, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,41, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,41, 'Negative');
@@ -243,9 +243,6 @@ INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,54, 'Negat
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,55, 'Strongly Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,55, 'Positive');
 INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,55, 'Negative');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,56, 'Strongly Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,56, 'Positive');
-INSERT INTO antiBodyOptions(assayId, antiBodyId, optionText) VALUES(5,56, 'Negative');
 			
 INSERT INTO hospitalMaster(hospitalName) VALUES
 	('Apollo'), ('VMC'), ('VDC');
