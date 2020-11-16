@@ -429,6 +429,27 @@ def addAntiBody(_assayId, _antiBody):
                         return _antiBodyIdResults[1][0]['antiBodyId']
     return -1
 
+def setDefaultOption(_assayId, _antiBodyId, _optionId):
+    '''
+    '''
+    _checkQuery = 'SELECT * FROM antiBodyOptions WHERE assayID = ? AND antiBodyId = ? AND optionId = ?'
+    _results = selectQuery(_checkQuery, (_assayId, _antiBodyId, _optionId))
+    if _results[0]:
+        if len(_results[1]) != 1:
+            raise Exception ('No such combination of assayId:{0}, antiBodyId:{1} and optionId:{2}'.format(_assayId, _antiBodyId, _optionId))
+        if _results[1][0]['enabled']:
+            _query = 'UPDATE antiBodyOptions SET isDefault = 1 WHERE optionId = ?'#WE DONT NEED THE OTHER TWO
+            _status = insertUpdateQuery(_query, (_optionId,))
+            if _status[0]:
+                return _status[1]
+            else:
+                return -1
+    else:
+        if isinstance(_results[1], Exception):
+            raise _results[1]
+        raise Exception(_results[1])
+
+
 def disableOption(_assayId, _antiBodyId, _optionId):
     '''
     '''
