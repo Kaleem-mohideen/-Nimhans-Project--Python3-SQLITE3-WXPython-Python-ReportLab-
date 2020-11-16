@@ -137,7 +137,7 @@ CREATE VIEW viewOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
 
 CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.assayDescription, 
 					body.antiBodyId, body.antiBody, body.comments,
-					options.optionId, options.optionText 
+					options.optionId, options.optionText, options.isDefault
 			FROM viewAssays assay LEFT JOIN viewAntiBodies body 
 			ON assay.assayId = body.assayId
 			LEFT JOIN viewOptions options 
