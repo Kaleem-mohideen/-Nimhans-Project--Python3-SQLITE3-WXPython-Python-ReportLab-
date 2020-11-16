@@ -452,7 +452,7 @@ def disableOption(_assayId, _antiBodyId, _optionId):
 
 
 
-def addOption(_assayId, _antiBodyId, _option):
+def addOption(_assayId, _antiBodyId, _option, isDefault=False):
     '''
     check if _assayId and _antiBodyId are enabled
     check if _option already exists
@@ -465,9 +465,9 @@ def addOption(_assayId, _antiBodyId, _option):
         if len(_results[1]) ==  1:
             if _results[1][0]['enabled'] == 0:
                 raise Exception('No such enabled combination of assayId:{0} and antiBodyId{0}'.format(_assayId, _antiBodyId))
-            _insertQuery = 'INSERT INTO antiBodyOptions (assayId, antiBodyId, optionText) VALUES (?,?,?)'
+            _insertQuery = 'INSERT INTO antiBodyOptions (assayId, antiBodyId, optionText, isDefault) VALUES (?,?,?)'
             print('inserting ' , _insertQuery)
-            _status = insertUpdateQuery(_insertQuery, (_assayId, _antiBodyId, _option))
+            _status = insertUpdateQuery(_insertQuery, (_assayId, _antiBodyId, _option, isDefault))
             print(_status)
             if _status[0]:
                 return _status[1]
