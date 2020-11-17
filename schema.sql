@@ -52,10 +52,26 @@ CREATE TABLE antiBodyOptions(
 	assayId			INTEGER NOT NULL,
 	antiBodyId		INTEGER NOT NULL,
 	optionText		TEXT NOT NULL,
+	isDefault		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 0,
 	enabled 		BOOLEAN NOT NULL CHECK(enabled IN (0,1)) DEFAULT 1,
 	UNIQUE(optionId, antiBodyId, assayId),
 	UNIQUE(assayId, antiBodyId, optionText),
 	FOREIGN KEY(antiBodyId, assayId) REFERENCES antiBodies(antiBodyId, assayId));
+CREATE TRIGGER changeDefault 
+	AFTER UPDATE ON antiBodyOptions 
+	WHEN NEW.isDefault = 1 AND OLD.isDefault = 0
+		BEGIN
+			UPDATE antiBodyOptions SET isDefault = 0 WHERE 
+			optionId !=  OLD.optionId AND assayId = NEW.assayId AND antiBodyId = NEW.antibodyId;
+		END;
+CREATE TRIGGER insertDefault 
+	AFTER INSERT ON antiBodyOptions 
+	WHEN NEW.isDefault = 1 
+		BEGIN
+			UPDATE antiBodyOptions SET isDefault = 0 WHERE 
+			optionId !=  NEW.optionId AND assayId = NEW.assayId AND antiBodyId = NEW.antibodyId;
+		END;
+
 
 CREATE TABLE hospitalMaster(
 	hospitalName		TEXT PRIMARY KEY,
@@ -121,7 +137,7 @@ CREATE VIEW viewOptions AS SELECT * FROM antiBodyOptions WHERE enabled = 1;
 
 CREATE VIEW viewAntiBodyOptions AS SELECT assay.assayId, assay.assayName, assay.assayDescription, 
 					body.antiBodyId, body.antiBody, body.comments,
-					options.optionId, options.optionText 
+					options.optionId, options.optionText, options.isDefault
 			FROM viewAssays assay LEFT JOIN viewAntiBodies body 
 			ON assay.assayId = body.assayId
 			LEFT JOIN viewOptions options 
