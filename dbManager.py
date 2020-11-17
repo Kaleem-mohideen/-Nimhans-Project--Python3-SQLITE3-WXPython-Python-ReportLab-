@@ -486,7 +486,7 @@ def addOption(_assayId, _antiBodyId, _option, isDefault=False):
         if len(_results[1]) ==  1:
             if _results[1][0]['enabled'] == 0:
                 raise Exception('No such enabled combination of assayId:{0} and antiBodyId{0}'.format(_assayId, _antiBodyId))
-            _insertQuery = 'INSERT INTO antiBodyOptions (assayId, antiBodyId, optionText, isDefault) VALUES (?,?,?)'
+            _insertQuery = 'INSERT INTO antiBodyOptions (assayId, antiBodyId, optionText, isDefault) VALUES (?,?,?,?)'
             print('inserting ' , _insertQuery)
             _status = insertUpdateQuery(_insertQuery, (_assayId, _antiBodyId, _option, isDefault))
             print(_status)
@@ -529,10 +529,13 @@ def getAntiBodies(_assayId=None):
                 _optionId = _row['optionId']
                 _option = _row['optionText']
                 _comments = _row['comments']
+                _isDefault = _row['isDefault']
                 if _antiBodyId in _ret:
                     _ret[_antiBodyId]['Options'][_optionId] = _option
                 else:
                     _ret[_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}, 'Comment' : _comments}
+                if _isDefault:
+                    _ret[_antiBodyId]['Default'] = _optionId
             return _ret
         else:
             raise Exception(_results[1])
@@ -548,6 +551,7 @@ def getAntiBodies(_assayId=None):
                 _optionId = _row['optionId']
                 _option = _row['optionText']
                 _comment =_row['comments']
+                _isDefault = _row['isDefault']
                 if _assayId in _ret:
                     if _antiBodyId in _ret[_assayId]:
                         _ret[_assayId][_antiBodyId]['Options'][_optionId] = _option
@@ -555,6 +559,8 @@ def getAntiBodies(_assayId=None):
                         _ret[_assayId][_antiBodyId] = {'Name': _antiBodyName, 'Options': {_optionId : _option}, 'Comment': _comment}
                 else:
                     _ret[_assayId] = {_antiBodyId : { 'Name' : _antiBodyName, 'Options': {_optionId : _option}, 'Comment' : _comment}}
+                if _isDefault:
+                    _ret[_assayId][_antiBodyId]['Default'] = _optionId
             return _ret
     
 
