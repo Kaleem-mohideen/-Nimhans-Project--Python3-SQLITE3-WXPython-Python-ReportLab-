@@ -14,30 +14,68 @@ from collections import OrderedDict
 import subprocess, os, platform
 import wx.lib.newevent
 from io import BytesIO
+from wx.lib.wordwrap import wordwrap
 
-filename="regis.jpeg"
+
+filename="regis1.jpeg"
 class MyApp(wx.App):
     def __init__(self):
         super().__init__()
 
-        frame = MyFrame(parent=None, title="Menu Bar App")
+        frame = MyFrame(parent=None, title="Register")
+        frame.SetIcon(wx.Icon("./SoftLogo2.ico"))
         frame.Show()
 
 
 class MyFrame(wx.Frame):         
-    def __init__(self, parent, title): 
-        super().__init__(parent, title = title, size = (500, 400))  
+    def __init__(self, parent, title, style= wx.DEFAULT_FRAME_STYLE): 
+        super(MyFrame, self).__init__(parent, title = title, size = (1300, 800)) 
+        path = os.path.abspath("./SoftLogo2.png")
+        self.icon = wx.Icon(path, wx.BITMAP_TYPE_PNG)
+        self.SetIcon(self.icon)
         self.InitUI()
         # wx.Frame.__init__(self, None, wx.ID_ANY, "Choose Dot in Picture", size=(700,500))
         self.panel = wx.Panel(self, wx.ID_ANY)
-        jpeg = wx.Image(filename, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        image=wx.StaticBitmap(self.panel, -1, jpeg, (150, 80), (jpeg.GetWidth(), jpeg.GetHeight()))
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        self.img = wx.Image(filename, wx.BITMAP_TYPE_ANY)
+        jpeg = self.img.ConvertToBitmap()
+        self.image=wx.StaticBitmap(self.panel, wx.ID_ANY, jpeg, wx.DefaultPosition, wx.DefaultSize, 0)
         #print(image.GetScaleMode())
-        image.Bind(wx.EVT_LEFT_DOWN, self.on_clic)
+        hbox.Add(self.image, 0, wx.CENTER)
+        vbox.Add((0,0), 1, wx.EXPAND)
+        vbox.Add(hbox, 0, wx.CENTER)
+        vbox.Add((0,0), 1, wx.EXPAND)
+        
+        self.image.Bind(wx.EVT_LEFT_DOWN, self.on_clic)
+        self.Bind(wx.EVT_SIZE, self.onResize)
+        self.panel.SetSizer(vbox)
+        self.SetBackgroundColour(wx.LIGHT_GREY)
+        
+        self.Layout()
+        # self.Centre()
         self.Show(True)
+        
+    def MakeModal(self, modal=True):
+        if modal and not hasattr(self, '_disabler'):
+            self._disabler = wx.WindowDisabler(self)
+        if not modal and hasattr(self, '_disabler'):
+            del self._disabler
+
+    def onResize(self, event):
+        # self.Layout()
+        frame_size = self.GetSize()
+        frame_h = (frame_size[0]-10) / 2
+        frame_w = (frame_size[1]-10) / 2
+        img1 = self.img.Scale(frame_h,frame_w)
+        self.image.SetBitmap(img1.ConvertToBitmap())
+        self.Refresh()
+        self.Layout()
 
     def on_clic(self, evt):
-        PatientDetails(self, title = 'ENTER PATIENT DETAILS')
+        PatientDetails(self, title = 'ENTER PATIENT DETAILS').ShowModal() 
         x, y=evt.GetPosition()
         #print("clicked at", x, y)
 
@@ -52,15 +90,72 @@ class MyFrame(wx.Frame):
         masterMenu = MasterMenu(parentFrame=self)
         menuBar.Append(masterMenu, '&Master')
 
-        self.SetMenuBar(menuBar) 
+        aboutMenu = AboutMenu(parentFrame=self)
+        menuBar.Append(aboutMenu, '&About')
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.SetFont(self.font)
 
-        #self.Bind(wx.EVT_MENU, self.MenuHandler)
+        self.SetMenuBar(menuBar)
+
+        self.toolbar = self.CreateToolBar()
+        self.toolbar.Realize()
+        self.toolbar.SetBackgroundColour(wx.Colour(255, 255, 0))
+        self.statusBar = self.CreateStatusBar() 
+        # self.SetIcon(self.icon)
+        # self.Bind(wx.EVT_MENU, self.ToggleStatusBar)
+        # self.Bind(wx.EVT_MENU, self.ToggleToolBar)
+        # self.Bind(wx.EVT_PAINT, self.OnPaint, self.toolbar)
         self.Centre() 
         self.Show(True)
 
+    def OnPaint(self, e):
+        dc = wx.PaintDC(self)
+        dc.SetBrush(wx.Brush('#c56c00'))
+        dc.DrawRectangle(10, 15, 90, 60)
+
+    def ToggleStatusBar(self, event):
+        if self.shst.IsChecked():
+            self.statusbar.Show()
+        else:
+            self.statusbar.Hide()
+
+    def ToggleToolBar(self, event):
+        if self.shtl.IsChecked():
+            self.toolbar.Show()
+        else:
+            self.toolbar.Hide()
+
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    
+class AboutMenu(wx.Menu):
+    def __init__(self, parentFrame):
+        super().__init__()
+        # self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        # self.SetFont(self.font)
+        self.OnInit()
+        self.parentFrame = parentFrame
+    def OnInit(self):
+        aboutItem = wx.MenuItem(parentMenu=self, id=wx.ID_ANY, text='&About', helpString = "Opens the About Box", kind=wx.ITEM_NORMAL)
+        self.Append(aboutItem)
+        self.Bind(wx.EVT_MENU, handler=self.onAboutDlg, source=aboutItem)
+
+    def onAboutDlg(self, event):
+        info = wx.adv.AboutDialogInfo()
+        info.SetName("CPC DIAGNOSTICS")
+        # info.SetVersion("0.0.1 Beta")
+        info.SetCopyright("(C) 2008 Python Geeks Everywhere")
+        info.SetDescription(wordwrap(
+            "Developed by CPC Diagnostics for Nimhans ",
+            350, wx.ClientDC(self.parentFrame.panel)))
+        info.SetWebSite("https://www.cpcdiagnostics.in/", "CPC Diagnostics Page")
+        info.SetDevelopers(["Mir kaleem Mohideen", "Vivek"])
+        info.SetLicence(wordwrap("Completely and totally open source!", 500,
+                                wx.ClientDC(self.parentFrame.panel)))
+        info.SetIcon(wx.Icon("./cpc.ico"))
+        # Show the wx.AboutBox
+        wx.adv.AboutBox(info)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class ReportsMenu(wx.Menu):
     def __init__(self, parentFrame):
         super().__init__()
@@ -84,16 +179,16 @@ class ReportsMenu(wx.Menu):
 
     def onGenerate(self, event):
         app = wx.App(redirect=False)
-        frame = GeneratePanel(None, 'PENDING REPORTS')
-        frame.SetSize((1000, 880))
-        frame.Show()
+        frame = GeneratePanel(None, 'PENDING REPORTS').ShowModal()
+        # frame.SetSize((1000, 880))
+        # frame.Show()
         app.MainLoop()
 
     def onView(self, event):
         app = wx.App(redirect=False)
-        frame = ViewPanel(None, 'VIEW REPORTS')
-        frame.SetSize((1000, 880))
-        frame.Show()
+        frame = ViewPanel(None, 'VIEW REPORTS').ShowModal()
+        # frame.SetSize((1000, 880))
+        # frame.Show()
         app.MainLoop()     
 
     def onQuit(self, event):
@@ -123,36 +218,36 @@ class MasterMenu(wx.Menu):
 
     def onTestMaster(self, event):
         app = wx.App(redirect=False)
-        frame = TestMasterPanel(None, 'Test Master')
-        frame.SetSize((800, 580))
-        frame.Show()
+        frame = TestMasterPanel(None, 'Test Master').ShowModal()
+        # frame.SetSize((900, 700))
+        # frame.Show()
         app.MainLoop()
         #pass
     def onHospitalMaster(self, event):
         app = wx.App(redirect=False)
-        frame = HospitalMasterPanel(None, 'Hospital Master')
-        frame.SetSize((800, 580))
-        frame.Show()
+        frame = HospitalMasterPanel(None, 'Hospital Master').ShowModal()
+        # frame.SetSize((900, 700))
+        # frame.Show()
         app.MainLoop()
 
     def onLabMaster(self, event):
         app = wx.App(redirect=False)
-        frame = LabMasterPanel(None, 'Lab Master')
-        frame.SetSize((800, 580))
-        frame.Show()
+        frame = LabMasterPanel(None, 'Lab Master').ShowModal()
+        # frame.SetSize((900, 700))
+        # frame.Show()
         app.MainLoop()
 
     def onDepartmentMaster(self, event):
         app = wx.App(redirect=False)
-        frame = DepartmentMasterPanel(None, 'Department Master')
-        frame.SetSize((800, 580))
-        frame.Show()
+        frame = DepartmentMasterPanel(None, 'Department Master').ShowModal()
+        # frame.SetSize((900, 700))
+        # frame.Show()
         app.MainLoop()
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
-class TestMasterPanel(wx.Frame):
+class TestMasterPanel(wx.Dialog):
     def __init__(self, parent, title):
-        super(TestMasterPanel, self).__init__(parent, title = title)
+        super(TestMasterPanel, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parentFrame = parent
         self.InitUI()
         self.Centre() 
@@ -161,7 +256,9 @@ class TestMasterPanel(wx.Frame):
 
     def InitUI(self):
         self.panel = wx.Panel(self)
-        sizer = wx.GridBagSizer(0,0)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
+        self.sizer = wx.GridBagSizer(0,0)
         self.test_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
         if len(self.test_itemsid)==1 and list(self.test_itemsid.keys())[0] == None and list(self.test_itemsid.values())[0] == None:
             self.test_items = []
@@ -171,44 +268,65 @@ class TestMasterPanel(wx.Frame):
         print(self.test_itemsid)
         self.testsList = wx.ListBox(self.panel, choices=self.test_items, size=(270, 250), style=wx.LB_MULTIPLE)
         #self.testsList.SetSelection(0)
-        sizer.Add(self.testsList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.sizer.Add(self.testsList, pos = (0,0), flag = wx.ALL|wx.EXPAND, border = 5)
         self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.testsList)
 
         self.antibodiesBtn = wx.Button(self.panel, label = "Antibody", size=(90, 28)) 
-        self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
-        addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+
+        bitmap1 = wx.Bitmap("delete.png", wx.BITMAP_TYPE_PNG)
+        pic1 = self.scale_bitmap(bitmap1, 35, 30)
+        self.discardBtn = wx.BitmapButton(self.panel, id = wx.ID_ANY, bitmap = pic1)
+        self.discardBtn.SetToolTip("Remove")
+        # self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
+
+        bitmap = wx.Bitmap("plus1.png", wx.BITMAP_TYPE_PNG)
+        pic = self.scale_bitmap(bitmap, 35, 30)
+        addBtn = wx.BitmapButton(self.panel, id = wx.ID_ANY, bitmap = pic)
+        addBtn.SetToolTip("Add")
+        # addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
 
 
 
-        sizer.Add(self.antibodiesBtn, pos = (2,0), flag = wx.LEFT, border = 50)
-        sizer.Add(self.discardBtn, pos = (1,3), flag = wx.RIGHT, border = 50)
-        sizer.Add(addBtn, pos = (8,0), flag = wx.LEFT, border = 50)
+        self.sizer.Add(self.antibodiesBtn, pos = (2,0), flag = wx.LEFT, border = 50)
+        self.sizer.Add(self.discardBtn, pos = (1,3), flag = wx.RIGHT, border = 50)
+        self.sizer.Add(addBtn, pos = (8,0), flag = wx.LEFT, border = 50)
 
         self.antibodiesBtn.Bind(wx.EVT_BUTTON, self.onAntibodiesClick)
         self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
         addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
 
-        if not self.test_items:
-            self.discardBtn.Disable()
-            self.antibodiesBtn.Disable()
-        else:
-            self.discardBtn.Enable()
-            self.antibodiesBtn.Enable()
+        # if not self.test_items:
+        #     self.discardBtn.Disable()
+        #     self.antibodiesBtn.Disable()
+        # else:
+        self.discardBtn.Hide()
+        self.antibodiesBtn.Disable()
 
-        sizer.AddGrowableCol(0)
-        self.panel.SetSizerAndFit(sizer)
+        self.sizer.AddGrowableCol(0)
+        self.panel.SetSizerAndFit(self.sizer)
         self.Centre()
+        self.sizer.Layout()
         self.Layout() 
+
+    def scale_bitmap(self, bitmap, width, height):
+        image = wx.ImageFromBitmap(bitmap)
+        image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
+        result = wx.Bitmap(image)
+        # result = wx.BitmapFromImage(image)
+        return result
 
     def onListboxSelection(self, evt):
         #pass
         self.index = evt.GetSelection()
-        
+        self.discardBtn.Show()
+        self.antibodiesBtn.Enable()
+        # self.panel.SetSizerAndFit(self.sizer)
+        self.sizer.Layout()
 
     def onDiscard(self, evt):
         if self.index != None:
             self.selectedString = str(self.testsList.GetString(self.index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} test?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} test?'.format(self.selectedString), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 #print(self.selectedString)
@@ -216,9 +334,9 @@ class TestMasterPanel(wx.Frame):
                 if db.disableAssay(self.test_itemsid[self.selectedString]):
                     del self.test_itemsid[self.selectedString] 
                     self.test_items.remove(self.selectedString)
-                    if not self.test_items:
-                        self.antibodiesBtn.Disable()
-                        self.discardBtn.Disable()
+                    # if not self.test_items:
+                    self.antibodiesBtn.Disable()
+                    self.discardBtn.Hide()
                     self.testsList.Deselect(self.index)
                     self.index = None
                     self.testsList.Set(self.test_items)
@@ -233,35 +351,39 @@ class TestMasterPanel(wx.Frame):
         if self.index != None:
             self.testsList.Deselect(self.index)
             self.index = None
-        dlg = MyDialog(self)
+            self.discardBtn.Hide()
+            self.antibodiesBtn.Disable()
+        dlg = MyDialog(self).ShowModal()
         print(self.test_itemsid)
         dlg.Destroy()
 
     def onAntibodiesClick(self, evt):
         if self.index != None:
             selectedString = str(self.testsList.GetString(self.index))
-            app = wx.App(redirect=False)
-            Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master', selectedString, self.test_itemsid)
+            # app = wx.App(redirect=False)
+            Antibdy_Frame = AntibodyMasterPanel(None, 'Antibody Master', selectedString, self.test_itemsid).ShowModal()
             self.testsList.Deselect(self.index)
             self.index = None
-            Antibdy_Frame.SetSize((1500, 580))
-            Antibdy_Frame.Show()
-            app.MainLoop()
+            # Antibdy_Frame.SetSize((900, 700))
+            # Antibdy_Frame.Show()
+            # app.MainLoop()
 
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class MyDialog(wx.Dialog, TestMasterPanel):
+class MyDialog(wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.addPanel.SetFont(self.font)
         self.text = wx.StaticText(self.addPanel, -1, "Enter the test that you want to Add:", pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
-        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
         self.addtext.SetFont(font)
         self.addtext.SetForegroundColour('#848484') 
         self.addtext.SetHint("Enter the test name")  # This text is grey, and disappears when you type
@@ -284,7 +406,7 @@ class MyDialog(wx.Dialog, TestMasterPanel):
 
     def onFirstClick(self, evt):
         if self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
 
@@ -292,11 +414,11 @@ class MyDialog(wx.Dialog, TestMasterPanel):
         testInput = None
         if self.addtext.GetValue(): testInput =self.addtext.GetValue()
         if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
         else:
-            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
 
@@ -307,8 +429,8 @@ class MyDialog(wx.Dialog, TestMasterPanel):
                 self.parent.test_itemsid[testInput] = addedAssayId
                 self.parent.test_items.append(testInput)
                 self.parent.testsList.Set(self.parent.test_items)
-                self.parent.discardBtn.Enable()
-                self.parent.antibodiesBtn.Enable()
+                self.parent.discardBtn.Hide()
+                self.parent.antibodiesBtn.Disable()
                 self.Close()
             else:
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
@@ -319,14 +441,14 @@ class MyDialog(wx.Dialog, TestMasterPanel):
             # print(wx.OK)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
-                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the test name")  # This text is grey, and disappears when you type
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class AntibodyMasterPanel(wx.Frame):
+class AntibodyMasterPanel(wx.Dialog):
     def __init__(self, parent, title, selectedString, assayIdDict):
-        super(AntibodyMasterPanel, self).__init__(parent, title = title)
+        super(AntibodyMasterPanel, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parentFrame = parent
         self.testName = selectedString
         self.assayId = assayIdDict[self.testName]
@@ -334,18 +456,42 @@ class AntibodyMasterPanel(wx.Frame):
         self.Result_index = None  
         self.choices = []
         self.flag = 1
-        self.InitUI()
-        self.Centre() 
-        self.Show()      
+        h = self.InitUI()
+        # self.Centre() 
+        # self.Show()      
 
-    def InitUI(self):
-        self.panel = wx.Panel(self)
-        self.sizer = wx.GridBagSizer(0,0)
+    def InitUI(self): 
+        self.finalSizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer1 = wx.BoxSizer(wx.VERTICAL)
+        self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer3 = wx.BoxSizer(wx.VERTICAL)
+        self.sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer5 = wx.BoxSizer(wx.VERTICAL)
+        self.sizer6 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.test_name = wx.StaticText(self.panel, label = self.testName + ':', size = (20, 100)) 
-        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, False, "Arial")
+        dc = wx.ScreenDC()
+        dc.SetFont(font)
+        testName = "   "+self.testName + ':'
+        self.panel = wx.Panel(self, size = dc.GetTextExtent(testName))
+        self.panel1 = wx.Panel(self)
+        self.panel2 = wx.Panel(self)
+        self.panel3 = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
+        self.panel1.SetFont(self.font)
+        self.panel2.SetFont(self.font)
+        self.panel3.SetFont(self.font)
+
+        # self.sizer = wx.GridBagSizer(0,0)
+
+        self.test_name = wx.StaticText(self.panel, label = testName) 
         self.test_name.SetFont(font)
-        self.sizer.Add(self.test_name, pos = (0,0), flag = wx.TOP|wx.LEFT|wx.EXPAND, border = 4)
+
+        self.antibodyTitle = wx.StaticText(self.panel1, label = "Antibodies", style=wx.ALIGN_CENTER) 
+        self.font1 = wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.BOLD, False, "Arial")
+        self.antibodyTitle.SetFont(self.font1)
 
         self.antibdy_itemsid = {antibody['Name'] : anti_id  for anti_id, antibody in db.getAntiBodies(self.assayId).items()}
         #print(self.antibdy_itemsid)
@@ -354,142 +500,206 @@ class AntibodyMasterPanel(wx.Frame):
             self.antibdy_itemsid = {}
         else:
             self.Antibdy_items = [antibodyNames for antibodyNames in self.antibdy_itemsid if antibodyNames]
-        self.AntibdyList = wx.ListBox(self.panel, choices=self.Antibdy_items, size=(270, 100), style=wx.LB_MULTIPLE)
+        self.AntibdyList = wx.ListBox(self.panel1, choices=self.Antibdy_items, size=(270, 250), style=wx.LB_MULTIPLE)
         print(self.antibdy_itemsid)
-        #self.AntibdyList.SetSelection(0)
-        self.sizer.Add(self.AntibdyList, pos = (1,0), flag = wx.BOTTOM|wx.LEFT|wx.EXPAND, border = 10)
-        self.Bind(wx.EVT_LISTBOX, self.onListboxSelection, self.AntibdyList)
+        # # self.AntibdyList.SetSelection(0)
+        # self.sizer.Add(self.AntibdyList, pos = (2,0), flag = wx.LEFT|wx.RIGHT|wx.EXPAND, border = 40)
+        self.AntibdyList.Bind(wx.EVT_LISTBOX, self.onListboxSelection)
 
-        self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
-        self.addBtn = wx.Button(self.panel, label = "Add", size=(90, 28))
+        bitmap1 = wx.Bitmap("delete.png", wx.BITMAP_TYPE_PNG)
+        pic1 = self.scale_bitmap(bitmap1, 35, 40)
+        self.discardBtn = wx.BitmapButton(self.panel1, id = wx.ID_ANY, bitmap = pic1)
+        self.discardBtn.SetToolTip("Remove")
+        bitmap = wx.Bitmap("plus1.png", wx.BITMAP_TYPE_PNG)
+        pic = self.scale_bitmap(bitmap, 35, 40)
+        self.addBtn = wx.BitmapButton(self.panel1, id = wx.ID_ANY, bitmap = pic)
+        self.addBtn.SetToolTip("Add")
 
         self.addBtn.Bind(wx.EVT_BUTTON, self.onAdd)
         self.discardBtn.Bind(wx.EVT_BUTTON, self.onMsg)
+        self.sizer1.Add(self.antibodyTitle, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer1.Add(self.AntibdyList, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer2.Add(self.addBtn, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer2.Add(self.discardBtn, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer1.Add(self.sizer2, 0, wx.ALL|wx.CENTER, 5)
 
-        self.sizer.Add(self.discardBtn, pos = (5,1), flag = wx.RIGHT, border = 50)
-        self.sizer.Add(self.addBtn, pos = (5,0), flag = wx.LEFT|wx.BOTTOM, border = 10)
+        self.antibdytitleComment = wx.StaticText(self.panel2, label = "", size = (270, 23), style=wx.ALIGN_CENTER) #self.antibdy_selectedText + '{0}'.format(' Comment')
+        self.antibdytitleComment.SetFont(self.font1)
+        self.commentRichTxtctrl = rt.RichTextCtrl(self.panel2, value=" ", size=(270, 250))
+        self.Bold = wx.Button(self.panel2, label="B", size=(25, 18))
+        self.Italic = wx.Button(self.panel2, label="I", size=(25, 18))
+        self.saveBtnComment = wx.Button(self.panel2, label = "Save", size=(90, 28))
 
-        if not self.Antibdy_items:
-            self.discardBtn.Disable()
-        else:
-            self.discardBtn.Enable()
+        self.sizer3.Add(self.antibdytitleComment, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer3.Add(self.commentRichTxtctrl, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer4.Add(self.Bold, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer4.Add(self.Italic, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer4.Add(self.saveBtnComment, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer3.Add(self.sizer4, 0, wx.ALL|wx.CENTER, 5)
 
-        self.sizer.AddGrowableCol(0)
-        self.panel.SetSizerAndFit(self.sizer)
+
+        self.antibdytitleResult = wx.StaticText(self.panel3, size = (270, 23), label = "", style=wx.ALIGN_CENTER) #self.antibdy_selectedText + '{0}'.format(' Options')
+        self.antibdytitleResult.SetFont(self.font1)
+        self.listResult = wx.ListCtrl(self.panel3, -1, size=(270, 250), style=wx.LB_SINGLE)
+        # self.listResult = wx.ListBox(self.panel3, size=(270, 250), style=wx.LB_SINGLE)  # choices= self.choices,
+        bitmap1 = wx.Bitmap("delete.png", wx.BITMAP_TYPE_PNG)
+        pic1 = self.scale_bitmap(bitmap1, 35, 40)
+        self.discardBtnResult = wx.BitmapButton(self.panel3, id = wx.ID_ANY, bitmap = pic1)
+        self.discardBtnResult.SetToolTip("Remove")
+        # self.discardBtn = wx.Button(self.panel, label = "Discard", size=(90, 28))
+        bitmap = wx.Bitmap("plus1.png", wx.BITMAP_TYPE_PNG)
+        pic = self.scale_bitmap(bitmap, 35, 40)
+        self.addBtnResult = wx.BitmapButton(self.panel3, id = wx.ID_ANY, bitmap = pic)
+        self.addBtnResult.SetToolTip("Add")
+
+        self.sizer5.Add(self.antibdytitleResult, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer5.Add(self.listResult, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer6.Add(self.addBtnResult, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer6.Add(self.discardBtnResult, 0, wx.ALL|wx.CENTER, 5)
+        self.sizer5.Add(self.sizer6, 0, wx.ALL|wx.CENTER, 5)
+
+        self.panel1.SetSizer(self.sizer1)
+        self.panel2.SetSizer(self.sizer3)
+        self.panel3.SetSizer(self.sizer5)
+
+        self.sizer.Add(self.panel1, 1, wx.EXPAND, 0)
+        self.sizer.Add(self.panel2, 1, wx.EXPAND, 0)
+        self.sizer.Add(self.panel3, 1, wx.EXPAND, 0)
+
+        # self.panel.SetBackgroundColour(wx.Colour(0, 255, 0))
+        self.finalSizer.Add(self.test_name, 0, wx.EXPAND, 0)
+        self.finalSizer.Add(self.sizer, 1, wx.EXPAND, 0)
+
+        self.antibdytitleComment.Hide()
+        self.commentRichTxtctrl.Hide()
+        self.Bold.Hide()
+        self.Italic.Hide()
+        self.saveBtnComment.Hide()
+        self.antibdytitleResult.Hide()
+        self.listResult.Hide()
+        self.discardBtnResult.Hide()
+        self.addBtnResult.Hide()
+        self.discardBtn.Hide()
+
+        self.SetSizer(self.finalSizer)
+        # self.finalSizer.Fit(self)
+        self.Layout()
+
+
+    def scale_bitmap(self, bitmap, width, height):
+        image = wx.ImageFromBitmap(bitmap)
+        image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
+        result = wx.Bitmap(image)
+        # result = wx.BitmapFromImage(image)
+        return result
 
     def onMsg(self, evt):
         if self.Antibdy_index == None :  
             wx.MessageBox('None of them Choosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onListboxSelection(self, evt):
+        # dc = wx.ScreenDC()
+        # dc.SetFont(self.font1)
+        self.lastSelected = -1
         self.Antibdy_index = evt.GetSelection()
-
-        if self.Result_index != None:
-            self.listResult.Deselect(self.Result_index)
-            self.Result_index = None
-
         self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
 
         self.antibdy_selectedText = str(self.AntibdyList.GetString(self.Antibdy_index))
         self.antiId = self.antibdy_itemsid[self.antibdy_selectedText]
-        #print(self.assayId)
         getAntibdyDict = db.getAntiBodies(self.assayId)
-        #print(self.antiId)
-        #print(getAntibdyDict)
         self.choicesid ={choice: choiceId for choiceId, choice in getAntibdyDict[self.antiId]['Options'].items()}
         print(self.choicesid)
         comment = getAntibdyDict[self.antiId]['Comment']
 
-        # self.comment = comment if comment else ''
-
-        if not self.choices and self.flag:
-            if len(self.choicesid)==1 and list(self.choicesid.keys())[0] == None and list(self.choicesid.values())[0] == None:
-                self.choices = []
-                self.flag = 0
-            else:
-                self.choices= [choice for choice in self.choicesid if choice]
-            self.listResult = wx.ListBox(self.panel, choices= self.choices, size=(270, 100), style=wx.LB_MULTIPLE)
-
-            sizer = wx.BoxSizer(wx.VERTICAL)
-            sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-            #save_button = wx.Button(self, label="Save")
-            self.Bold = wx.Button(self, label="B", size=(25, 18))
-            self.Italic = wx.Button(self, label="I", size=(25, 18))
-
-            self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
-            self.Italic.Bind(wx.EVT_BUTTON, self.on_italic)
-
-            # if self.comment:
-            #     self.commentRichTxtctrl = rt.RichTextCtrl(self, value= self.comment, size=(250, 100))
-            # else:
-            self.commentRichTxtctrl = rt.RichTextCtrl(self, value="", size=(250, 100))
-
-            try:
-                _bytesIO = BytesIO(bytes(comment, 'utf-8'))
-                _handler = wx.richtext.RichTextXMLHandler()
-                _handler.LoadFile(self.commentRichTxtctrl.GetBuffer(), _bytesIO)
-                self.commentRichTxtctrl.Refresh()
-                # self.loadXML()
-            except Exception as ex:
-                print(ex)
-
-            sizer.Add(self.commentRichTxtctrl, 1, wx.EXPAND|wx.ALL, 6)
-            sizer1.Add(self.Bold, 0, wx.EXPAND|wx.ALL, 6)
-            sizer1.Add(self.Italic, 0, wx.EXPAND|wx.ALL, 6)
-            sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 6)
-
-            # self.commentTxtctrl = wx.TextCtrl(self, id=-1, value='', pos=wx.DefaultPosition,size=(270,100), style= wx.TE_MULTILINE | wx.SUNKEN_BORDER)
-            # self.commentTxtctrl.SetValue(self.comment)
-            self.addBtnResult = wx.Button(self.panel, label = "Add", size=(90, 28))
-            self.discardBtnResult = wx.Button(self.panel, label = "Discard", size=(90, 28))
-            self.saveBtnComment = wx.Button(self.panel, label = "Save", size=(90, 28))
-            font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-            self.antibdytitletResult = wx.StaticText(self.panel, label = self.antibdy_selectedText + '{0}'.format(' Options'))
-            self.antibdytitletResult.SetFont(font)
-            self.antibdytitletComment = wx.StaticText(self.panel, label = self.antibdy_selectedText + '{0}'.format(' Comment'))
-            self.antibdytitletComment.SetFont(font)
-            #self.listResult.SetSelection(0)
-            self.sizer.Add(self.antibdytitletResult, pos = (0,5), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
-            self.sizer.Add(self.listResult, pos = (1,5), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
-            self.sizer.Add(self.antibdytitletComment, pos = (0,7), flag = wx.TOP|wx.RIGHT|wx.EXPAND, border = 40)
-            self.sizer.Add(sizer, pos = (1,7), flag = wx.BOTTOM|wx.RIGHT|wx.EXPAND, border = 10)
-            self.sizer.Add(self.addBtnResult, pos = (5,5), flag = wx.BOTTOM|wx.RIGHT, border = 10)
-            self.sizer.Add(self.discardBtnResult, pos = (5,6), flag = wx.RIGHT, border = 50)
-            self.sizer.Add(self.saveBtnComment, pos = (5,8), flag = wx.RIGHT, border = 50)
-            self.sizer.AddGrowableCol(5)
-            self.sizer.AddGrowableCol(4)
-
+        if len(self.choicesid)==1 and list(self.choicesid.keys())[0] == None and list(self.choicesid.values())[0] == None:
+            self.choices = []
+            self.choicesid = {}
+            self.flag = 0
         else:
-            if len(self.choicesid)==1 and list(self.choicesid.keys())[0] == None and list(self.choicesid.values())[0] == None:
-                self.choices = []
-                self.choicesid = {}
-                self.flag = 0
-            else:
-                self.choices= [choice for choice in self.choicesid if choice]
-            self.antibdytitletResult.SetLabel(self.antibdy_selectedText+ '{0}'.format(' Options'))
-            self.antibdytitletComment.SetLabel(self.antibdy_selectedText+ '{0}'.format(' Comment'))
-            self.listResult.Set(self.choices)
-            self.commentRichTxtctrl.Show()
-            # self.commentRichTxtctrl.SetValue(self.comment)
-            try:
-                _bytesIO = BytesIO(bytes(comment, 'utf-8'))
-                _handler = wx.richtext.RichTextXMLHandler()
-                _handler.LoadFile(self.commentRichTxtctrl.GetBuffer(), _bytesIO)
-                self.commentRichTxtctrl.Refresh()
-                # self.loadXML()
-            except Exception as ex:
-                print(ex)
-            self.saveBtnComment.Show()
-            self.addBtnResult.Enable()
-            self.discardBtnResult.Enable()
-        self.Bind(wx.EVT_LISTBOX, self.onListbox1Selection, self.listResult)
+            self.choices= [choice for choice in self.choicesid if choice]
+        self.antibdytitleResult.SetLabel('Options')
+        self.antibdytitleResult.SetForegroundColour(wx.RED)
+        self.antibdytitleComment.SetLabel('Comment')
+        self.antibdytitleComment.SetForegroundColour(wx.RED)
+        # size1 = dc.GetTextExtent(self.antibdy_selectedText+ '{0}'.format(' Options'))
+        # size2 = dc.GetTextExtent(self.antibdy_selectedText+ '{0}'.format(' Comment'))
+        self.antibdytitleComment.Show()
+        self.commentRichTxtctrl.Show()
+        self.Bold.Show()
+        self.Italic.Show()
+        self.saveBtnComment.Show()
+        self.antibdytitleResult.Show()
+        self.listResult.Show()
+        self.discardBtnResult.Hide()
+        self.addBtnResult.Show()
+        self.discardBtn.Show()
+        # self.listResult.Set(self.choices)
+        self.listResult.InsertColumn(0, "Choices", width = self.panel1.GetSize()[0])
+        for row, item in enumerate(self.choices):
+            self.listResult.InsertItem(row, item)
+
+        self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
+        self.Italic.Bind(wx.EVT_BUTTON, self.on_italic)
+        # self.commentRichTxtctrl.SetValue(self.comment)
+        try:
+            _bytesIO = BytesIO(bytes(comment, 'utf-8'))
+            _handler = wx.richtext.RichTextXMLHandler()
+            _handler.LoadFile(self.commentRichTxtctrl.GetBuffer(), _bytesIO)
+            self.commentRichTxtctrl.Refresh()
+            # self.loadXML()
+        except Exception as ex:
+            print(ex)
+
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onListbox1Selection, self.listResult)
+        self.Bind(wx.EVT_CONTEXT_MENU, self.showPopupMenu, self.listResult)
         self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onMsg1)
         self.saveBtnComment.Bind(wx.EVT_BUTTON, self.onSaveComment)
-        self.panel.SetSizerAndFit(self.sizer)
-        self.Centre()
+
+        # self.antibdytitleComment.Wrap(dc.GetTextExtent(self.antibdytitleComment.Label)[1])
+        # self.antibdytitleResult.Wrap(220)
+        # self.panel2.SetSizer(self.sizer3)
+        # self.panel3.SetSizer(self.sizer5)
+        self.createMenu()
+        self.SetSizer(self.finalSizer)
         self.Layout()
+
         #self.panel.SetSize(wx.Size(1000,1400))
+
+    def onMenu(self, evt):
+        ListBox = evt.GetEventObject()
+        SelectIndex = ListBox.GetSelection()
+        print(SelectIndex)
+        # pass
+    def createMenu(self):
+        self.menu = wx.Menu()
+        item1 = self.menu.Append(-1,'set as Default')
+        self.Bind(wx.EVT_MENU, handler=self.Show, source=item1)
+        # item2 = self.menu.Append(-1,'Item 2')
+
+    def Show(self, evt):
+        self.listResult.Show()
+        font = self.listResult.Parent.GetFont()
+        font.SetStyle(wx.FONTSTYLE_ITALIC)
+        if self.lastSelected > -1:
+            self.listCtrlColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOX)
+            # self.listResult.SetBackgroundColour(wx.RED)
+            self.listResult.SetItemBackgroundColour(self.lastSelected, self.listCtrlColor)
+            self.listResult.SetItemTextColour(self.lastSelected, wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOXTEXT))
+        self.listResult.SetItemFont(self.SelectIndex,font)
+        self.listResult.SetItemBackgroundColour(self.SelectIndex, wx.Colour(223, 223, 223))
+        self.listResult.SetItemTextColour(self.SelectIndex, wx.RED)
+        self.lastSelected = self.SelectIndex
+        
+    def showPopupMenu(self,evt):
+        # position = evt.GetPosition()
+        # print(evt.GetSelection())
+        ListBox = evt.GetEventObject()
+        self.SelectIndex = ListBox.GetFirstSelected()
+        self.default = ListBox.GetItemText(self.SelectIndex)
+        print(self.default)
+        self.PopupMenu(self.menu)
+        
 
     def on_Bold(self,evt):
         _selection = self.commentRichTxtctrl.GetStringSelection()
@@ -571,7 +781,7 @@ class AntibodyMasterPanel(wx.Frame):
 
     def onDiscard(self, evt):
         if self.Antibdy_index != None:
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Antibody->{0} for {1} Test?'.format(self.antibdy_selectedText, self.testName), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Antibody->{0} for {1} Test?'.format(self.antibdy_selectedText, self.testName), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 print(self.antibdy_itemsid[self.antibdy_selectedText])
@@ -580,16 +790,19 @@ class AntibodyMasterPanel(wx.Frame):
                     self.Antibdy_items.remove(self.antibdy_selectedText)
                     self.AntibdyList.Deselect(self.Antibdy_index)
                     self.Antibdy_index = None
-                    if not self.Antibdy_items:
-                        self.discardBtn.Disable()
+                    # if not self.Antibdy_items:
+                    #     self.discardBtn.Hide()
                     self.AntibdyList.Set(self.Antibdy_items)
-                    self.listResult.Clear()
+                    self.listResult.Hide()
                     self.commentRichTxtctrl.Hide()
                     self.saveBtnComment.Hide()
-                    self.antibdytitletComment.Hide()
-                    self.antibdytitletResult.SetLabel('')
-                    self.addBtnResult.Disable()
-                    self.discardBtnResult.Disable()
+                    self.Bold.Hide()
+                    self.Italic.Hide()
+                    self.antibdytitleComment.Hide()
+                    self.antibdytitleResult.Hide()
+                    self.addBtnResult.Hide()
+                    self.discardBtnResult.Hide()
+                    self.discardBtn.Hide()
                     print(self.antibdy_itemsid)
                 else:
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
@@ -601,30 +814,38 @@ class AntibodyMasterPanel(wx.Frame):
         if self.Antibdy_index != None:
             self.AntibdyList.Deselect(self.Antibdy_index)
             self.Antibdy_index = None
-            self.listResult.Clear()
-            self.antibdytitletResult.SetLabel('')
+            self.listResult.Hide()
+            self.antibdytitleResult.Hide()
             self.commentRichTxtctrl.Hide()
+            self.Bold.Hide()
+            self.Italic.Hide()
             self.saveBtnComment.Hide()
-            self.antibdytitletComment.Hide()
-            self.addBtnResult.Disable()
-            self.discardBtnResult.Disable()
-        dlg1 = MyDialog1(self)
+            self.antibdytitleComment.Hide()
+            self.addBtnResult.Hide()
+            self.discardBtnResult.Hide()
+            self.discardBtn.Hide()
+        dlg1 = MyDialog1(self).ShowModal()
         print(self.antibdy_itemsid)
         dlg1.Destroy()
 
     def onListbox1Selection(self, evt):
-        self.Result_index = evt.GetSelection()
+        ListBox = evt.GetEventObject()
+        self.Result_index = ListBox.GetFirstSelected()
+        # self.Result_index = evt.GetSelection()
+        self.discardBtnResult.Show()
 
-        if self.Antibdy_index != None:
-            self.AntibdyList.Deselect(self.Antibdy_index)
-            self.Antibdy_index = None
+        # if self.Antibdy_index != None:
+        #     self.AntibdyList.Deselect(self.Antibdy_index)
+        #     self.Antibdy_index = None
 
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onDiscardResult)
+        self.Layout()
+        # self.panel.SetSizerAndFit(self.sizer)
 
     def onDiscardResult(self, evt):
         if self.Result_index != None:
-            self.selected_String1 = str(self.listResult.GetString(self.Result_index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Option->{0} for {1} Antibody?'.format(self.selected_String1, self.antibdy_selectedText), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            self.selected_String1 = str(self.listResult.GetItemText(self.Result_index))#.GetString(self.Result_index))
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Option->{0} for {1} Antibody?'.format(self.selected_String1, self.antibdy_selectedText), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 optionId = self.choicesid[self.selected_String1]
@@ -633,12 +854,14 @@ class AntibodyMasterPanel(wx.Frame):
                 if ret_value != -1:
                     del self.choicesid[self.selected_String1]
                     self.choices.remove(self.selected_String1)
+                    self.discardBtnResult.Hide()
                     if not self.choices:
                         self.flag = 0
-                        self.discardBtnResult.Disable()
-                    self.listResult.Deselect(self.Result_index)
+                        # self.discardBtnResult.Hide()
+                    self.listResult.DeleteItem(self.Result_index)
+                    # self.listResult.Deselect(self.Result_index)
                     self.Result_index = None
-                    self.listResult.Set(self.choices)
+                    # self.listResult.Set(self.choices)
                     print(self.choicesid)
                 else:
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
@@ -648,23 +871,26 @@ class AntibodyMasterPanel(wx.Frame):
 
     def onAddResult(self, evt):
         if self.Result_index != None:
-            self.listResult.Deselect(self.Result_index)
+            # self.listResult.Deselect(self.Result_index)
+            self.listResult.Select(-1)
             self.Result_index = None
-
-        dlg2 = MyDialog2(self)
+            self.discardBtnResult.Hide()
+        dlg2 = MyDialog2(self).ShowModal()
         print(self.choicesid)
-        dlg2.Destroy()
+        # dlg2.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class MyDialog1(wx.Dialog, AntibodyMasterPanel):
+class MyDialog1(wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.addPanel.SetFont(self.font)
         self.text = wx.StaticText(self.addPanel, -1, 'Enter the Antibody that you want to Add in Test->{0}:'.format(self.parent.testName), pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
-        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
         self.addtext.SetFont(font)
         self.addtext.SetForegroundColour('#848484') 
         self.addtext.SetHint("Enter the Antibody name")  # This text is grey, and disappears when you type
@@ -687,7 +913,7 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
 
     def onFirstClick(self, evt):
         if self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
 
@@ -695,11 +921,11 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
         antibdyInput = None
         if self.addtext.GetValue(): antibdyInput =self.addtext.GetValue()
         if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
         else:
-            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
         if antibdyInput is not None and antibdyInput not in self.parent.Antibdy_items:
@@ -708,7 +934,7 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
                 self.parent.antibdy_itemsid[antibdyInput] = addedAntibdyId
                 self.parent.Antibdy_items.append(antibdyInput)
                 self.parent.AntibdyList.Set(self.parent.Antibdy_items)
-                self.parent.discardBtn.Enable()
+                self.parent.discardBtn.Hide()
                 self.Close()
             else:
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
@@ -720,23 +946,25 @@ class MyDialog1(wx.Dialog, AntibodyMasterPanel):
             # print(wx.OK)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
-                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the Antibody name")  # This text is grey, and disappears when you type
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
-class MyDialog2(wx.Dialog, AntibodyMasterPanel):
+class MyDialog2(wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.addPanel.SetFont(self.font)
         self.text1 = wx.StaticText(self.addPanel, -1,'Enter the Option that you want to Add in Antibody->{0}:'.format(self.parent.antibdy_selectedText), pos=(10, 12))
         self.addtext1 = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn1 = wx.Button(self.addPanel, label = "Add", size=(75, 28))
-        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
         self.addtext1.SetFont(font)
         self.addtext1.SetForegroundColour('#848484') 
         self.addtext1.SetHint("Enter the Option name")  # This text is grey, and disappears when you type
@@ -759,7 +987,7 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
 
     def onFirstClick1(self, evt):
         if self.addtext1.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext1.SetFont(font)
             self.addtext1.SetForegroundColour(wx.BLACK)
 
@@ -767,11 +995,11 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
         optionInput = None
         if self.addtext1.GetValue(): optionInput =self.addtext1.GetValue()
         if self.addtext1.GetValue() and self.addtext1.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext1.SetFont(font)
             self.addtext1.SetForegroundColour(wx.BLACK)
         else:
-            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
             self.addtext1.SetFont(font)
             self.addtext1.SetForegroundColour('#848484') 
         if optionInput is not None and optionInput not in self.parent.choices:
@@ -779,8 +1007,9 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
             if addedChoiceId and type(addedChoiceId) == int:
                 self.parent.choicesid[optionInput] = addedChoiceId
                 self.parent.choices.append(optionInput)
-                self.parent.listResult.Set(self.parent.choices)
-                self.parent.discardBtnResult.Enable()
+                self.parent.listResult.Append([optionInput])
+                # self.parent.listResult.Set(self.parent.choices)
+                self.parent.discardBtnResult.Hide()
                 self.Close()
             else:
                 wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
@@ -792,15 +1021,15 @@ class MyDialog2(wx.Dialog, AntibodyMasterPanel):
             # print(wx.OK)
             if msgBox == wx.OK:
                 self.addtext1.SetValue('')
-                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
                 self.addtext1.SetFont(font)
                 self.addtext1.SetForegroundColour('#848484')
                 self.addtext1.SetHint("Enter the Option name")  # This text is grey, and disappears when you type
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class HospitalMasterPanel(wx.Frame):
+class HospitalMasterPanel(wx.Dialog):
     def __init__(self, parent, title):
-        super(HospitalMasterPanel, self).__init__(parent, title = title)
+        super(HospitalMasterPanel, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parentFrame = parent
         self.InitUI()
         self.Centre() 
@@ -809,6 +1038,8 @@ class HospitalMasterPanel(wx.Frame):
 
     def InitUI(self):
         self.panel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
         sizer = wx.GridBagSizer(0,0)
         self.hsp_items = db.getHospitals()
         print(self.hsp_items)
@@ -844,7 +1075,7 @@ class HospitalMasterPanel(wx.Frame):
     def onDiscard(self, evt):
         if self.index != None:
             self.selectedString = str(self.hspList.GetString(self.index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Hospital?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Hospital?'.format(self.selectedString), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 print(self.selectedString)
@@ -866,21 +1097,23 @@ class HospitalMasterPanel(wx.Frame):
         if self.index != None:
             self.hspList.Deselect(self.index)
             self.index = None
-        dlg = MyDialog3(self)
+        dlg = MyDialog3(self).ShowModal()
         print(self.hsp_items)
         dlg.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
-class MyDialog3(wx.Dialog, HospitalMasterPanel):
+class MyDialog3(wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.addPanel.SetFont(self.font)
         self.text = wx.StaticText(self.addPanel, -1, "Enter the Hospital that you want to Add:", pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
-        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
         self.addtext.SetFont(font)
         self.addtext.SetForegroundColour('#848484') 
         self.addtext.SetHint("Enter the Hospital name")  # This text is grey, and disappears when you type
@@ -902,7 +1135,7 @@ class MyDialog3(wx.Dialog, HospitalMasterPanel):
 
     def onFirstClick(self, evt):
         if self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
 
@@ -910,11 +1143,11 @@ class MyDialog3(wx.Dialog, HospitalMasterPanel):
         hspInput = None
         if self.addtext.GetValue(): hspInput =self.addtext.GetValue()
         if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
         else:
-            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
 
@@ -933,14 +1166,14 @@ class MyDialog3(wx.Dialog, HospitalMasterPanel):
             msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Hospital'.format(hspInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
-                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the Hospital name")  # This text is grey, and disappears when you type
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class LabMasterPanel(wx.Frame):
+class LabMasterPanel(wx.Dialog):
     def __init__(self, parent, title):
-        super(LabMasterPanel, self).__init__(parent, title = title)
+        super(LabMasterPanel, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parentFrame = parent
         self.InitUI()
         self.Centre() 
@@ -949,6 +1182,8 @@ class LabMasterPanel(wx.Frame):
 
     def InitUI(self):
         self.panel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
         sizer = wx.GridBagSizer(0,0)
         self.lab_items = db.getLabs()
         print(self.lab_items)
@@ -985,7 +1220,7 @@ class LabMasterPanel(wx.Frame):
     def onDiscard(self, evt):
         if self.index != None:
             self.selectedString = str(self.labList.GetString(self.index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Lab?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Lab?'.format(self.selectedString), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 print(self.selectedString)
@@ -1007,20 +1242,22 @@ class LabMasterPanel(wx.Frame):
         if self.index != None:
             self.labList.Deselect(self.index)
             self.index = None
-        dlg = MyDialog4(self)
+        dlg = MyDialog4(self).ShowModal()
         print(self.lab_items)
         dlg.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class MyDialog4(wx.Dialog, LabMasterPanel):
+class MyDialog4(wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.addPanel.SetFont(self.font)
         self.text = wx.StaticText(self.addPanel, -1, "Enter the Lab that you want to Add:", pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
-        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
         self.addtext.SetFont(font)
         self.addtext.SetForegroundColour('#848484') 
         self.addtext.SetHint("Enter the Lab name")  # This text is grey, and disappears when you type
@@ -1043,7 +1280,7 @@ class MyDialog4(wx.Dialog, LabMasterPanel):
 
     def onFirstClick(self, evt):
         if self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
 
@@ -1051,11 +1288,11 @@ class MyDialog4(wx.Dialog, LabMasterPanel):
         labInput = None
         if self.addtext.GetValue(): labInput =self.addtext.GetValue()
         if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
         else:
-            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
 
@@ -1074,14 +1311,14 @@ class MyDialog4(wx.Dialog, LabMasterPanel):
             msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Lab'.format(labInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
-                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the Lab name")  # This text is grey, and disappears when you type
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class DepartmentMasterPanel(wx.Frame):
+class DepartmentMasterPanel(wx.Dialog):
     def __init__(self, parent, title):
-        super(DepartmentMasterPanel, self).__init__(parent, title = title)
+        super(DepartmentMasterPanel, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parentFrame = parent
         self.InitUI()
         self.Centre() 
@@ -1090,6 +1327,8 @@ class DepartmentMasterPanel(wx.Frame):
 
     def InitUI(self):
         self.panel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
         sizer = wx.GridBagSizer(0,0)
         self.dpt_items = db.getDepartments()
         print(self.dpt_items)
@@ -1126,7 +1365,7 @@ class DepartmentMasterPanel(wx.Frame):
     def onDiscard(self, evt):
         if self.index != None:
             self.selectedString = str(self.dptList.GetString(self.index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Department?'.format(self.selectedString), 'Question', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard {0} Department?'.format(self.selectedString), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             dia = dialog.ShowModal() 
             if dia == wx.ID_YES:
                 print(self.selectedString)
@@ -1148,20 +1387,22 @@ class DepartmentMasterPanel(wx.Frame):
         if self.index != None:
             self.dptList.Deselect(self.index)
             self.index = None
-        dlg = MyDialog5(self)
+        dlg = MyDialog5(self).ShowModal()
         print(self.dpt_items)
         dlg.Destroy()
 #---------------------------------------------------------------------------------------------------------------------------------------------
-class MyDialog5(wx.Dialog, DepartmentMasterPanel):
+class MyDialog5(wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="Add", size=(800,135))
         self.parent = parent
         self.addPanel = wx.Panel(self)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.addPanel.SetFont(self.font)
         self.text = wx.StaticText(self.addPanel, -1, "Enter the Department that you want to Add:", pos=(10, 12))
         self.addtext = wx.TextCtrl(self.addPanel, size = (35,35), style = wx.TE_PROCESS_ENTER)
         self.addBtn = wx.Button(self.addPanel, label = "Add", size=(75, 28))
-        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+        font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
         self.addtext.SetFont(font)
         self.addtext.SetForegroundColour('#848484') 
         self.addtext.SetHint("Enter the Department name")  # This text is grey, and disappears when you type
@@ -1184,7 +1425,7 @@ class MyDialog5(wx.Dialog, DepartmentMasterPanel):
 
     def onFirstClick(self, evt):
         if self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
 
@@ -1192,11 +1433,11 @@ class MyDialog5(wx.Dialog, DepartmentMasterPanel):
         dptInput = None
         if self.addtext.GetValue(): dptInput =self.addtext.GetValue()
         if self.addtext.GetValue() and self.addtext.GetForegroundColour() == '#848484':
-            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour(wx.BLACK)
         else:
-            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+            font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
             self.addtext.SetFont(font)
             self.addtext.SetForegroundColour('#848484') 
 
@@ -1215,7 +1456,7 @@ class MyDialog5(wx.Dialog, DepartmentMasterPanel):
             msgBox = wx.MessageBox('The {0} had already exists, Try Adding New Department'.format(dptInput), 'Existing Error', wx.OK| wx.ICON_WARNING)
             if msgBox == wx.OK:
                 self.addtext.SetValue('')
-                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL)
+                font = wx.Font(10, wx.DEFAULT, wx.FONTSTYLE_ITALIC, wx.NORMAL, False, "Arial")
                 self.addtext.SetFont(font)
                 self.addtext.SetForegroundColour('#848484')
                 self.addtext.SetHint("Enter the Department name")  # This text is grey, and disappears when you type
@@ -1306,14 +1547,15 @@ class MouseNavigate(wx.Validator):
     def OnSetFocus(self, event):
         self.parent.Navigate(wx.NavigationKeyEvent.IsForward)
 
-class PatientDetails(wx.Frame): 
+class PatientDetails(wx.Dialog): 
     def __init__(self, parent, title):
-        super(PatientDetails, self).__init__(parent, title = title, size = (700, 500)) 
+        super(PatientDetails, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER) 
         self.parentFrame = parent  
         #HIGHLIGHT_COLOR = (255, 0, 0)
         #self.highligt_color = wx.Colour(HIGHLIGHT_COLOR)
         self.windowFrameColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME)
-        self.InitUI() 
+        self.SetBackgroundColour(wx.LIGHT_GREY)
+        self.InitUI(self) 
         self.Centre() 
         self.Show()      
 
@@ -1329,21 +1571,27 @@ class PatientDetails(wx.Frame):
         rtc.EndFontSize()
         rtc.EnableVerticalScrollbar(False)
         rtc.GetCaret().Hide()
-        rtc.SetBackgroundColour(self.windowFrameColor)
+        rtc.SetBackgroundColour(wx.LIGHT_GREY)
 
-    def InitUI(self): 
-       
+    def InitUI(self, parent): 
+        
         self.panel = wx.Panel(self) 
         sizer = wx.GridBagSizer(0,0)
-            
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
+        # self.panel.SetBackgroundColour(wx.Colour(35, 35, 142))
         #text = wx.StaticText(self.panel, label = "UHID:") 
-        text = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
+        text = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self)) 
         self.Assign(text, "UHID:")
+        text.SetForegroundColour(wx.BLACK)
         sizer.Add(text, pos = (0, 0), flag = wx.ALL, border = 5)
+        text.SetForegroundColour(wx.BLACK)
+        # text.SetEditable(False)
         
         self.tc = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc, pos = (0, 1), flag = wx.ALL|wx.EXPAND, border = 5)
         self.tc.SetToolTip("Enter UHID No.")
+        self.tc.SetForegroundColour(wx.BLACK)
 
         #text1 = wx.StaticText(self.panel, label = "Referring Hospital:")
         text1 = rt.RichTextCtrl(self.panel,size=(170,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
@@ -1359,12 +1607,15 @@ class PatientDetails(wx.Frame):
          
         text2 = wx.StaticText(self.panel, label = " MRD No:") 
         sizer.Add(text2, pos = (1, 0), flag = wx.ALL, border = 5)
+        text2.SetForegroundColour(wx.BLACK)
             
         self.tc2 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc2, pos = (1,1), flag = wx.ALL|wx.EXPAND, border = 5) 
+        self.tc2.SetForegroundColour(wx.BLACK)
 
         text3 = wx.StaticText(self.panel,label = " Referring Dept:") 
         sizer.Add(text3, pos = (1, 2), flag = wx.ALL, border = 5)
+        text3.SetForegroundColour(wx.BLACK)
 
         self.dpt_items = db.getDepartments()
         self.dpt_items.insert(0, "-- Select --")
@@ -1379,9 +1630,11 @@ class PatientDetails(wx.Frame):
             
         self.tc4 = wx.TextCtrl(self.panel, validator=CharValidator('only-alpha')) 
         sizer.Add(self.tc4, pos = (2,1), flag = wx.ALL|wx.EXPAND, border = 5) 
+        self.tc4.SetForegroundColour(wx.BLACK)
             
         text5 = wx.StaticText(self.panel,label = " Sample Collection Date:") 
         sizer.Add(text5, pos = (2, 2), flag = wx.ALL, border = 5)
+        text5.SetForegroundColour(wx.BLACK)
 
         self.date1 = wx.adv.DatePickerCtrl( self.panel, wx.ID_ANY, size=(120,-1), style = wx.TAB_TRAVERSAL| wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE)
         self.date1.SetValue(wx.DefaultDateTime)
@@ -1405,9 +1658,11 @@ class PatientDetails(wx.Frame):
 
         text7 = wx.StaticText(self.panel,label = " Lab Reference No:") 
         sizer.Add(text7, pos = (3, 2), flag = wx.ALL, border = 5)
+        text7.SetForegroundColour(wx.BLACK)
 
         self.tc7 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc7, pos = (3,3), flag = wx.EXPAND|wx.ALL, border = 5)
+        self.tc7.SetForegroundColour(wx.BLACK)
 
         #text8 = wx.StaticText(self.panel,label = "Gender:")
         text8 = rt.RichTextCtrl(self.panel,size=(130,30),style=wx.richtext.RE_READONLY|wx.NO_BORDER|wx.FONTFAMILY_DEFAULT|wx.TEXT_ATTR_FONT_FACE, validator = MouseNavigate(self))
@@ -1420,6 +1675,7 @@ class PatientDetails(wx.Frame):
 
         text9 = wx.StaticText(self.panel,label = " Lab Name:") 
         sizer.Add(text9, pos = (4, 2), flag = wx.ALL, border = 5)
+        text9.SetForegroundColour(wx.BLACK)
 
         self.lab_items = db.getLabs()
         self.lab_items.insert(0, "-- Select --")
@@ -1429,21 +1685,27 @@ class PatientDetails(wx.Frame):
 
         text10 = wx.StaticText(self.panel,label = " Ward Name/Collection Centre:") 
         sizer.Add(text10, pos = (5, 0), flag = wx.ALL, border = 5) 
+        text10.SetForegroundColour(wx.BLACK)
             
         self.tc9 = wx.TextCtrl(self.panel) 
-        sizer.Add(self.tc9, pos = (5,1), flag = wx.ALL|wx.EXPAND, border = 5) 
+        sizer.Add(self.tc9, pos = (5,1), flag = wx.ALL|wx.EXPAND, border = 5)
+        self.tc9.SetForegroundColour(wx.BLACK) 
 
         text11 = wx.StaticText(self.panel,label = "Email:") 
         sizer.Add(text11, pos = (5, 2), flag = wx.ALL, border = 5)
+        text11.SetForegroundColour(wx.BLACK)
 
         self.tc10 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc10, pos = (5,3),flag = wx.ALL|wx.EXPAND, border = 5)
+        self.tc10.SetForegroundColour(wx.BLACK)
 
         text12 = wx.StaticText(self.panel,label = "Phone No:") 
         sizer.Add(text12, pos = (6, 0), flag = wx.ALL, border = 5)
+        text12.SetForegroundColour(wx.BLACK)
 
         self.tc11 = wx.TextCtrl(self.panel) 
         sizer.Add(self.tc11, pos = (6,1),flag = wx.ALL|wx.EXPAND, border = 5)
+        self.tc11.SetForegroundColour(wx.BLACK)
 
         sizer.AddGrowableCol(1)
         sizer.AddGrowableCol(3)
@@ -1451,6 +1713,10 @@ class PatientDetails(wx.Frame):
         saveBtn = wx.Button(self.panel, label = "Save", size=(90, 28)) 
         cancelBtn = wx.Button(self.panel, wx.ID_CLOSE, label = "Cancel", size=(90, 28))
         saveBtn.SetToolTip("Register")
+        saveBtn.SetBackgroundColour(wx.Colour(47, 47, 47))
+        saveBtn.SetForegroundColour(wx.Colour(255, 255, 255))
+        cancelBtn.SetBackgroundColour(wx.Colour(47, 47, 47))
+        cancelBtn.SetForegroundColour(wx.Colour(255, 255, 255))
             
         sizer.Add(cancelBtn, pos = (8, 2), flag = wx.LEFT, border = 50) 
         sizer.Add(saveBtn, pos = (8, 3), flag = wx.RIGHT|wx.BOTTOM, border = 10)
@@ -1483,7 +1749,7 @@ class PatientDetails(wx.Frame):
                     if dic['Date of Birth']:
                         if dic['Gender']:
                             _requestId = db.registerPatient(dic['UHID'], dic['Patient Name'], dic['Date of Birth'], dic['Referring Hospital'], dic['Gender'], dic['MRD No'], dic['Ward Name/Collection Centre'], dic['Sample Collection Date'], dic['Lab Reference No'], dic['Referring Dept'], dic['Lab Name'], dic['Email'], dic['phone'])
-                            TestRegisterScreen(None, -1, 'Register Tests', _requestId, dic['Patient Name'])
+                            TestRegisterScreen(self, -1, 'Register Tests', _requestId, dic['Patient Name']).ShowModal()
                         else:
                             #color = self.windowFrameColor if self.textctrl.GetValue() else self.highligt_color
                             #self.gender.SetHint("Mandatory field")
@@ -1520,7 +1786,7 @@ class PatientDetails(wx.Frame):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-class TestRegisterScreen(wx.Frame):
+class TestRegisterScreen(wx.Dialog):
     def __init__(self, parent, id, title, _requestId, patientName):
         # #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
         # self.requestId = _requestId
@@ -1574,9 +1840,10 @@ class TestRegisterScreen(wx.Frame):
 
         #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (950, 550))
         self.requestId = _requestId
-        super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (950, 550))
+        super(TestRegisterScreen, self).__init__(parent, id, title, wx.DefaultPosition, (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.testsUpdateList_items = []
         self.test_itemsChosenid = []
+        self.parent = parent
         self.test_itemsid = {dict_value['Name'] : dict_key  for lst_items in db.getAssayList() for dict_key, dict_value in lst_items.items()}
         if len(self.test_itemsid)==1 and list(self.test_itemsid.keys())[0] == None and list(self.test_itemsid.values())[0] == None:
             self.test_items = []
@@ -1590,18 +1857,22 @@ class TestRegisterScreen(wx.Frame):
         sizer = wx.GridBagSizer(0,0)
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        
-        text = wx.StaticText(panel, label = "Tests")
-        self.testsListbox = wx.ListBox(panel, -1, size=(270, 230), choices=self.test_items, style=wx.LB_SINGLE)
-        #self.testsListbox.SetSelection(0)
-        text2 = wx.StaticText(panel, label = "Choosen Tests")
-        self.testsChosenListbox = wx.ListBox(panel, -1, size=(270, 230), choices=[], style=wx.LB_SINGLE)
 
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        panel.SetFont(self.font)
+
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD, False, "Arial")
         # font1 = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         # font1.SetPointSize(12)
-
-        name = wx.StaticText(self, label= patientName)
+        
+        text = wx.StaticText(panel, label = "Tests", size = (170,80))
+        self.testsListbox = wx.ListBox(panel, -1, size=(270, 230), choices=self.test_items, style=wx.LB_SINGLE)
+        text.SetFont(font)
+        #self.testsListbox.SetSelection(0)
+        text2 = wx.StaticText(panel, label = "Choosen Tests", size = (170,80))
+        self.testsChosenListbox = wx.ListBox(panel, -1, size=(270, 230), choices=[], style=wx.LB_SINGLE)
+        text2.SetFont(font)
+        name = wx.StaticText(self, label= "Name: " +patientName, size = (220, 120))
         name.SetFont(font)
         # age = wx.StaticText(self, label= "Age     : {0}".format(self.parent.age))
         # age.SetFont(font1)
@@ -1612,15 +1883,21 @@ class TestRegisterScreen(wx.Frame):
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectFirst, self.testsListbox)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSelectSecond, self.testsChosenListbox)
         #self.Bind(wx.EVT_LISTBOX, self.OnSelectSecond, self.testsChosenListbox)
-        vbox.Add(name, flag=wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=10)
+        vbox.Add(name, flag=wx.LEFT|wx.TOP, border=50)
         #sizer.Add(name, pos = (0, 0), flag = wx.CENTER|wx.TOP|wx.BOTTOM, border = 20)
-        sizer.Add(text, pos = (1, 0), flag = wx.LEFT, border = 100)
-        sizer.Add(text2, pos = (1, 3), flag = wx.LEFT|wx.RIGHT, border = 100)
+        sizer.Add(text, pos = (1, 0), flag = wx.ALIGN_CENTER)
+            # flag = wx.LEFT, border = 100)
+        sizer.Add(text2, pos = (1, 3), flag = wx.ALIGN_CENTER) 
+         # flag = wx.LEFT|wx.RIGHT, border = 100)
         sizer.Add(self.testsListbox, pos = (2, 0), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, border = 50)
         sizer.Add(self.testsChosenListbox, pos = (2, 3), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, border = 50)
 
         saveBtn = wx.Button(panel, wx.ID_CLOSE, label = "Save", size=(90, 28)) 
         cancelBtn = wx.Button(panel, label = "Cancel", size=(90, 28)) 
+        cancelBtn.SetBackgroundColour(wx.Colour(47, 47, 47))
+        cancelBtn.SetForegroundColour(wx.Colour(255, 255, 255))
+        saveBtn.SetBackgroundColour(wx.Colour(47, 47, 47))
+        saveBtn.SetForegroundColour(wx.Colour(255, 255, 255))
             
         sizer.Add(cancelBtn, pos = (4, 2), flag = wx.RIGHT, border = 50) 
         sizer.Add(saveBtn, pos = (4, 3), flag = wx.RIGHT|wx.LEFT|wx.BOTTOM, border = 5)
@@ -1650,6 +1927,7 @@ class TestRegisterScreen(wx.Frame):
             dialog = wx.MessageBox('Registered Tests are {0}'.format(self.testsUpdateList_items), 'Successfully Registered', wx.OK)
             if dialog == wx.OK:
                 self.Close()
+                self.parent.Close()
         else:
             if self.test_itemsChosenid:
                 wx.MessageBox('Test not Registered', 'Error', wx.OK | wx.ICON_WARNING)
@@ -1686,9 +1964,9 @@ class TestRegisterScreen(wx.Frame):
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-class GeneratePanel(wx.Frame):
+class GeneratePanel(wx.Dialog):
     def __init__(self, parent, title):
-        super(GeneratePanel, self).__init__(parent, title = title, size = (700, 1000)) 
+        super(GeneratePanel, self).__init__(parent, title = title, size = (1300, 800), style = wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER) 
         self.index = 0
         self.selectedIndex = None
         self.myRowDict = {}
@@ -1698,6 +1976,9 @@ class GeneratePanel(wx.Frame):
 
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer()
+
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        panel.SetFont(self.font)
 
         self.dpc1 = wx.adv.DatePickerCtrl( panel, wx.ID_ANY, size=(120,-1))
         self.Bind(wx.adv.EVT_DATE_CHANGED, self.OnFromDateChanged, self.dpc1)
@@ -1776,7 +2057,6 @@ class GeneratePanel(wx.Frame):
 
         sizer.AddGrowableRow(6)
         panel.SetSizerAndFit(sizer)
-
     def Onfocus(self, evt):
         if self.selectedIndex != None:
             self.textareaExpectedResults.Select(self.selectedIndex, on=0)
@@ -1826,7 +2106,7 @@ class GeneratePanel(wx.Frame):
             print(self.selectedIndex)
             rqstId = self.myRequestIdDict[self.selectedIndex]
             print(rqstId)
-            ResultDetails(self, -1, 'Result Details', rqstId)
+            ResultDetails(self, -1, 'Result Details', rqstId).ShowModal()
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
@@ -1883,10 +2163,10 @@ class GeneratePanel(wx.Frame):
         wx.CallAfter(self.onMatches)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-class ResultDetails(wx.Frame):
+class ResultDetails(wx.Dialog):
     def __init__(self, parent, id, title, RqstId):
         #wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (650, 450))
-        super(ResultDetails, self).__init__(parent, id, title, wx.DefaultPosition, (1100, 900))
+        super(ResultDetails, self).__init__(parent, id, title, wx.DefaultPosition, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         #self.parent = parent
         self.RqstId = RqstId
         self.email = parent.details[RqstId]["Email"]
@@ -1901,6 +2181,7 @@ class ResultDetails(wx.Frame):
         self.pendingTestAssays = []
         print(self.pendingRequest)
         TestPanel(self)
+        self.Centre()
         self.Show()
 
 class TestPanel(scrolled.ScrolledPanel):
@@ -1910,6 +2191,8 @@ class TestPanel(scrolled.ScrolledPanel):
         scrolled.ScrolledPanel.__init__(self, parent=parent, id= -1)
         self.parent = parent
         self.index = None
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.parent.SetFont(self.font)
         if self.parent.pendingRequest != None:
             for i in self.parent.pendingRequest:
                 self.parent.pendingTestAssays.append(i['assayName'])
@@ -1918,7 +2201,7 @@ class TestPanel(scrolled.ScrolledPanel):
 
         self.tests = wx.ListBox(self, -1, size=(370, 130), choices=self.parent.pendingTestAssays, style=wx.LB_MULTIPLE)
         self.Bind(wx.EVT_LISTBOX, self.Onlistbox, self.tests)
-        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, False, "Arial")
         font1 = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         font1.SetPointSize(12)
 
@@ -1974,7 +2257,7 @@ class TestPanel(scrolled.ScrolledPanel):
             # self.boldFlag = False
             # self.italicFlag = False
             self.caps = False
-            font = wx.Font(13, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+            font = wx.Font(13, wx.DEFAULT, wx.NORMAL, wx.BOLD, False, "Arial")
             for i in self.parent.pendingRequest:
                 if i['assayName'] == self.selectedString:
                     self.assayId = i['assayId']
@@ -2000,7 +2283,10 @@ class TestPanel(scrolled.ScrolledPanel):
                 if not choices:
                     continue
 
-                antibody = wx.StaticText(self, ids, dic['antiBody'])
+                dc = wx.ScreenDC()
+                # dc.SetFont(font)
+
+                antibody = wx.StaticText(self, ids, dic['antiBody'], size= dc.GetTextExtent(dic['antiBody'] + "          "))
                 self.antibdyIdDict[dic['antiBody']] = dic['antiBodyId']
                 self.optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
                 choices.insert(0, '-- Select --')
@@ -2232,7 +2518,7 @@ class TestPanel(scrolled.ScrolledPanel):
                 jsonResults = db.getPatientReport(self.parent.RqstId)
                 pdfReportFileName =pdf.Header(jsonHead, jsonResults)
                 db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
-                OpenReport(self, "Open Report", self.parent.email, self.parent.name, jsonHead['reportFile'])
+                OpenReport(self, "Open Report", self.parent.email, self.parent.name, jsonHead['reportFile']).ShowModal()
             else:
                 self.controlSizer.Clear(True)
                 dialog = wx.MessageBox('Results is Updated for {0} test'.format(self.selectedString), 'Successfully Updated', wx.OK)
@@ -2247,9 +2533,9 @@ class TestPanel(scrolled.ScrolledPanel):
             wx.MessageBox('Test Report not updated', 'Error', wx.OK | wx.ICON_WARNING)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-class ViewPanel(wx.Frame):
+class ViewPanel(wx.Dialog):
     def __init__(self, parent, title):
-        super(ViewPanel, self).__init__(parent, title = title, size = (700, 500)) 
+        super(ViewPanel, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER) 
         self.index = 0
         self.selectedIndex = None
         self.myRowDict = {}
@@ -2259,6 +2545,9 @@ class ViewPanel(wx.Frame):
 
         panel = wx.Panel(self, -1)
         sizer = wx.GridBagSizer()
+
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        panel.SetFont(self.font)
 
         self.dpc1 = wx.adv.DatePickerCtrl( panel, wx.ID_ANY, size=(120,-1))
         self.Bind(wx.adv.EVT_DATE_CHANGED, self.OnFromDateChanged, self.dpc1)
@@ -2404,7 +2693,7 @@ class ViewPanel(wx.Frame):
             jsonHead['reportFile'] = jsonHeader['reportFile'] if 'reportFile' in jsonHeader else utilsDb.getFileName(jsonHead['Patient Name'], jsonHead['UHID'])
             pdfReportFileName =pdf.Header(jsonHead, jsonResults)
             db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
-            OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"], jsonHead['reportFile'])
+            OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"], jsonHead['reportFile']).ShowModal()
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
@@ -2461,9 +2750,9 @@ class ViewPanel(wx.Frame):
         wx.CallAfter(self.onMatches)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-class OpenReport(wx.Frame):
+class OpenReport(wx.Dialog):
     def __init__(self, parent, title, email, name, reportname):
-        super(OpenReport, self).__init__(parent, title = title, size = (1000, 500))
+        super(OpenReport, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parentFrame = parent
         self.email = email
         self.name = name
@@ -2472,10 +2761,12 @@ class OpenReport(wx.Frame):
         self.Centre() 
         self.Show()     
     def InitUI(self):
-        self.panel = wx.Panel(self)
+        self.panel = wx.Panel(self)        
+        self.font=wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, "Arial")
+        self.panel.SetFont(self.font)
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        font = wx.Font(15, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        font = wx.Font(15, wx.DEFAULT, wx.NORMAL, wx.BOLD, False, "Arial")
 
         if self.email:
             text = wx.TextCtrl(self.panel,-1, self.email, size=(300, -1))
@@ -2483,22 +2774,22 @@ class OpenReport(wx.Frame):
         else:
             text = wx.TextCtrl(self.panel,-1, size=(300, -1))
 
-        st1 = wx.StaticText(self.panel, label='Name:')
+        st1 = wx.StaticText(self.panel, label='Name:', size = (100, 100))
         st1.SetFont(font)
         hbox1.Add(st1, flag=wx.RIGHT, border=8)
-        name = wx.StaticText(self.panel, label= self.name)
+        name = wx.StaticText(self.panel, label= self.name, size = (350, 100))
         name.SetFont(font)
         hbox1.Add(name, proportion=0)
         vbox.Add(hbox1, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, border=10)
-        vbox.Add((-1, 50))
+        # vbox.Add((-1, 50))
 
-        st2 = wx.StaticText(self.panel, label='Email:')
+        st2 = wx.StaticText(self.panel, label='Email:', size = (100, 50))
         st2.SetFont(font)
         vbox.Add(st2, flag=wx.LEFT | wx.TOP, border=10)
-        vbox.Add((-1, 10))
+        # vbox.Add((-1, 10))
 
         vbox.Add(text, flag=wx.LEFT|wx.RIGHT,border=10)
-        vbox.Add((-1, 25))
+        # vbox.Add((-1, 25))
 
         hbox5 = wx.BoxSizer(wx.HORIZONTAL)
         self.openBtn = wx.Button(self.panel, label='Open', size=(90, 30))
