@@ -600,7 +600,8 @@ class AntibodyMasterPanel(wx.Dialog):
     def onListboxSelection(self, evt):
         # dc = wx.ScreenDC()
         # dc.SetFont(self.font1)
-        self.lastSelected = -1
+        self.listResult.ClearAll()
+        self.previousDefaultIndex = -1
         self.Antibdy_index = evt.GetSelection()
         self.discardBtn.Bind(wx.EVT_BUTTON, self.onDiscard)
 
@@ -608,6 +609,11 @@ class AntibodyMasterPanel(wx.Dialog):
         self.antiId = self.antibdy_itemsid[self.antibdy_selectedText]
         getAntibdyDict = db.getAntiBodies(self.assayId)
         self.choicesid ={choice: choiceId for choiceId, choice in getAntibdyDict[self.antiId]['Options'].items()}
+        defaultOptionId = getAntibdyDict[self.antiId].get('Default', -1)
+        if defaultOptionId:  
+            self.defaultOption = list(self.choicesid.keys())[list(self.choicesid.values()).index(defaultOptionId)]
+        else:
+            self.defaultOption = ''
         print(self.choicesid)
         comment = getAntibdyDict[self.antiId]['Comment']
 
@@ -635,8 +641,18 @@ class AntibodyMasterPanel(wx.Dialog):
         self.discardBtn.Show()
         # self.listResult.Set(self.choices)
         self.listResult.InsertColumn(0, "Choices", width = self.panel1.GetSize()[0])
-        for row, item in enumerate(self.choices):
-            self.listResult.InsertItem(row, item)
+        if self.choices:
+            for row, item in enumerate(self.choices):
+                self.listResult.InsertItem(row, item)
+        if self.defaultOption:
+            defaultIndex = self.listResult.FindItem(-1, self.defaultOption)
+            # print(defaultIndex)
+            self.previousDefaultIndex = defaultIndex
+            font = self.listResult.Parent.GetFont()
+            font.SetStyle(wx.FONTSTYLE_ITALIC)
+            self.listResult.SetItemFont(defaultIndex,font)
+            self.listResult.SetItemBackgroundColour(defaultIndex, wx.Colour(223, 223, 223))
+            self.listResult.SetItemTextColour(defaultIndex, wx.RED)
 
         self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold)
         self.Italic.Bind(wx.EVT_BUTTON, self.on_italic)
@@ -651,6 +667,10 @@ class AntibodyMasterPanel(wx.Dialog):
             print(ex)
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onListbox1Selection, self.listResult)
+        # focus = self.listResult.GetFocusedItem()
+        # self.listResult.GetItem(defaultIndex).SetToolTipString(msg)
+        # self.listResult.GetItem(defaultIndex).SetText("Default Option")
+        # self.Bind(wx.EVT_LIST_ITEM_FOCUSED, self.on_focus, self.listResult)
         self.Bind(wx.EVT_CONTEXT_MENU, self.showPopupMenu, self.listResult)
         self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onMsg1)
@@ -666,11 +686,24 @@ class AntibodyMasterPanel(wx.Dialog):
 
         #self.panel.SetSize(wx.Size(1000,1400))
 
-    def onMenu(self, evt):
-        ListBox = evt.GetEventObject()
-        SelectIndex = ListBox.GetSelection()
-        print(SelectIndex)
-        # pass
+    # def onMenu(self, evt):
+    #     ListBox = evt.GetEventObject()
+    #     SelectIndex = ListBox.GetSelection()
+    #     print(SelectIndex)
+    #     # pass
+    # def onSetToolTip(self, event):
+    #     """
+    #     Set the tool tip on the selected row
+    #     """
+    #     item = self.dataOlv.GetSelectedObject()
+    #     tooltip = "%s is a good writer!" % item.author
+    #     event.GetEventObject().SetToolTipString(tooltip)
+    #     event.Skip()
+    # def on_focus(self, evt):
+    #     print(self.listResult.GetFocusedItem())
+    #     # self.listResult.SetToolTip("Default Option")
+    #     # print(1)
+    #     pass
     def createMenu(self):
         self.menu = wx.Menu()
         item1 = self.menu.Append(-1,'set as Default')
@@ -681,23 +714,27 @@ class AntibodyMasterPanel(wx.Dialog):
         self.listResult.Show()
         font = self.listResult.Parent.GetFont()
         font.SetStyle(wx.FONTSTYLE_ITALIC)
-        if self.lastSelected > -1:
+        if self.previousDefaultIndex > -1:
+            font1 = self.listResult.Parent.GetFont()
             self.listCtrlColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOX)
             # self.listResult.SetBackgroundColour(wx.RED)
-            self.listResult.SetItemBackgroundColour(self.lastSelected, self.listCtrlColor)
-            self.listResult.SetItemTextColour(self.lastSelected, wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOXTEXT))
+            self.listResult.SetItemFont(self.previousDefaultIndex,font1)
+            self.listResult.SetItemBackgroundColour(self.previousDefaultIndex, self.listCtrlColor)
+            self.listResult.SetItemTextColour(self.previousDefaultIndex, wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOXTEXT))
         self.listResult.SetItemFont(self.SelectIndex,font)
         self.listResult.SetItemBackgroundColour(self.SelectIndex, wx.Colour(223, 223, 223))
         self.listResult.SetItemTextColour(self.SelectIndex, wx.RED)
-        self.lastSelected = self.SelectIndex
+        optionId = self.choicesid[self.setDefaultFor]
+        db.setDefaultOption(self.assayId, self.antiId, optionId)  
+        self.previousDefaultIndex = self.SelectIndex
         
     def showPopupMenu(self,evt):
         # position = evt.GetPosition()
         # print(evt.GetSelection())
         ListBox = evt.GetEventObject()
         self.SelectIndex = ListBox.GetFirstSelected()
-        self.default = ListBox.GetItemText(self.SelectIndex)
-        print(self.default)
+        self.setDefaultFor = ListBox.GetItemText(self.SelectIndex)
+        print(self.setDefaultFor)
         self.PopupMenu(self.menu)
         
 
@@ -860,6 +897,7 @@ class AntibodyMasterPanel(wx.Dialog):
                         # self.discardBtnResult.Hide()
                     self.listResult.DeleteItem(self.Result_index)
                     # self.listResult.Deselect(self.Result_index)
+                    self.listResult.Select(-1)
                     self.Result_index = None
                     # self.listResult.Set(self.choices)
                     print(self.choicesid)
