@@ -2302,7 +2302,7 @@ class TestPanel(scrolled.ScrolledPanel):
                     antibodiesOptions = i['antiBodies']
                     print(antibodiesOptions)
             self.sizer2 = wx.GridBagSizer()
-            ids = 0
+            ids = 1
             for dic in antibodiesOptions:
                 if flag:
                     antibodyText = wx.StaticText(self, -1, 'Antibodies')
@@ -2327,10 +2327,17 @@ class TestPanel(scrolled.ScrolledPanel):
                 antibody = wx.StaticText(self, ids, dic['antiBody'], size= dc.GetTextExtent(dic['antiBody'] + "          "))
                 self.antibdyIdDict[dic['antiBody']] = dic['antiBodyId']
                 self.optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
-                choices.insert(0, '-- Select --')
+
+                defaultOptionId = dic.get('default', -1)
+                if defaultOptionId:
+                    self.defaultOption = list(self.optionIdDict[dic['antiBodyId']].keys())[list(self.optionIdDict[dic['antiBodyId']].values()).index(defaultOptionId)]
+                    choices.insert(0,choices.pop(choices.index(self.defaultOption)))
+                    self.antiBodyDict[dic['antiBodyId']] = defaultOptionId
+                else:
+                    choices.insert(0, '-- Select --')
                 print(choices)            
                 self.inputTwo = wx.Choice(self,id =ids, choices = choices)
-                self.inputTwo.SetSelection(0)
+                # self.inputTwo.SetSelection(0)
                 self.sizer2.Add(antibody, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
                 self.sizer2.Add(self.inputTwo, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
 
@@ -2407,6 +2414,8 @@ class TestPanel(scrolled.ScrolledPanel):
     def OnChoiceSelect(self, event):
         if event.GetSelection():
             id1 = event.GetEventObject().GetId()
+            print(id1)
+            print(wx.FindWindowById(id1).GetLabel())
             antibdyId = self.antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
             optId = self.optionIdDict[antibdyId][event.GetString()]
             self.antiBodyDict[antibdyId] = optId
