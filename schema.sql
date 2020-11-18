@@ -178,7 +178,7 @@ CREATE VIEW viewCompletedPatients AS
 
 CREATE VIEW viewPendingReportDetails AS 
 	SELECT vpr.requestId, vabo.assayId, vabo.assayName, vabo.assayDescription, 
-	vabo.antiBodyId, vabo.antiBody, vabo.comments, vabo.optionId, vabo.optionText FROM 
+	vabo.antiBodyId, vabo.antiBody, vabo.comments, vabo.optionId, vabo.optionText, vabo.isDefault FROM 
 	viewPendingReports vpr LEFT JOIN viewAntiBodyOptions vabo ON 
 	vpr.assayId = vabo.assayId AND vpr.antiBodyId = vabo.antiBodyId;
 
