@@ -656,13 +656,20 @@ def getPendingRequest(_requestId):
         _assayId = _status[1][0]['assayId']
         _antiBodyId = _status[1][0]['antiBodyId']
         _comment = _status[1][0]['comments']
+        _default = _status[1][0]['optionId'] if _status[1][0]['isDefault'] else -1
         _assay = {
                     'assayId' : _assayId, 'assayName' : _status[1][0]['assayName'],
-                    'antiBodies' : [{'antiBodyId': _antiBodyId, 'antiBody': _status[1][0]['antiBody'],
-                        'comment' : _comment,
-                        'options': {_status[1][0]['optionId'] : _status[1][0]['optionText']}}]
+                    'antiBodies' : [{
+                                    'antiBodyId': _antiBodyId, 
+                                    'antiBody': _status[1][0]['antiBody'],
+                                    'comment' : _comment,
+                                    'options': {_status[1][0]['optionId'] : _status[1][0]['optionText']}
+                                    }]
                     }
+        if _default:
+            _assay['antiBodies'][-1]['default'] = _default
         for _row in _status[1][1:]:
+            _default = _row['optionId'] if _row['isDefault'] else -1
             if _assayId ==  _row['assayId']:
                 if _antiBodyId == _row['antiBodyId']:
                     _assay['antiBodies'][-1]['options'][_row['optionId']] = _row['optionText']
@@ -671,6 +678,8 @@ def getPendingRequest(_requestId):
                         'comment': _row['comments'],
                         'options': {_row['optionId'] : _row['optionText']}})
                     _antiBodyId = _row['antiBodyId']
+                if _default:
+                    _assay['antiBodies'][-1]['default'] = _default
             else:
                 _ret.append(_assay)
                 _assayId = _row['assayId']
@@ -681,6 +690,8 @@ def getPendingRequest(_requestId):
                                 'comment' : _row['comments'],
                                 'options': {_row['optionId'] : _row['optionText']}}]
                             }
+                if _default:
+                    _assay['antiBodies'][-1]['default'] = _default
         _ret.append(_assay)
         return _ret
     else:
