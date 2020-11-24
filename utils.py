@@ -14,6 +14,7 @@ import base64
 
 
 
+import xml.etree.ElementTree as ET 
 
 
 def createDir():
@@ -108,6 +109,31 @@ def sendEmail(_mailDict, _creds=None):
                     print (ex)
         print(server.sendmail(_creds['login'], _senders , msg.as_string()))
     server.quit()
+
+
+def getRichTextFormat(_xmlString):
+    _responseString = ''
+    _tree = ET.fromstring(_xmlString)
+    for _layout in _tree:
+        for _paragraph in _layout:
+            _format = []
+            for _text in _paragraph:
+                if _text.tag.split('}')[-1] == 'text' and _text.text.strip() != '':
+                    _bold = False
+                    _italic = False
+                    _textFormatted = _text.text.replace('"', '')
+                    if 'fontweight' in _text.attrib:
+                        _bold = _text.attrib['fontweight']  == '700'
+                    if 'fontstyle' in _text.attrib:
+                        _italic = _text.attrib['fontstyle'] == '93'
+                    if _bold:
+                        _textFormatted = '<b>' + _textFormatted + '</b>'
+                    if _italic:
+                        _textFormatted = '<i>' + _textFormatted + '</i>'
+                    _responseString+= _textFormatted
+            _responseString+= '<br />\n'
+    return _responseString
+
 
 
 if __name__ == '__main__':
