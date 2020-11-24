@@ -1,12 +1,14 @@
 #!env/bin/python
 import sys
 import os
+import xml.etree.ElementTree as ET 
 
 from dbManager import selectQuery
 from dbManager import insertUpdateQuery
 
-if __name__ == '__main__':
-    _list = os.listdir(sys.argv[1])
+
+def loadDb(_directory):
+    _list = os.listdir(_directory)
     _xmlFiles = [e for e in _list if e.endswith('.xml') and os.path.isfile(os.path.join(sys.argv[1],e))]
     print(_xmlFiles)
     _antiBodies = selectQuery('SELECT * FROM viewAntiBodyOptions GROUP BY antiBodyId')
@@ -67,3 +69,7 @@ if __name__ == '__main__':
             else:
                 print('Only numbers between 1 and {0} allowed\n\n\n'.format(len(_assayIds)))
 
+
+
+if __name__ == '__main__':
+    loadDb(sys.argv[1])
