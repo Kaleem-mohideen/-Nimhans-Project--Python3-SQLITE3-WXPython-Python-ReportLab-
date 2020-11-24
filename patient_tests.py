@@ -610,7 +610,7 @@ class AntibodyMasterPanel(wx.Dialog):
         getAntibdyDict = db.getAntiBodies(self.assayId)
         self.choicesid ={choice: choiceId for choiceId, choice in getAntibdyDict[self.antiId]['Options'].items()}
         defaultOptionId = getAntibdyDict[self.antiId].get('Default', -1)
-        if defaultOptionId:  
+        if defaultOptionId > -1:  
             self.defaultOption = list(self.choicesid.keys())[list(self.choicesid.values()).index(defaultOptionId)]
         else:
             self.defaultOption = ''
@@ -793,7 +793,7 @@ class AntibodyMasterPanel(wx.Dialog):
             self.commentRichTxtctrl.SetFocus()
             pos1 = self.commentRichTxtctrl.GetCaretPosition()
             self.commentRichTxtctrl.SetInsertionPoint(pos1+1)
-            self.Italic.SetBackgroundColour(wx.Colour(240, 240, 240))
+            self.Italic.SetBackgroundonDiscardResultColour(wx.Colour(240, 240, 240))
             self.commentRichTxtctrl.EndItalic()
             print('Italic', False)
 
@@ -2292,6 +2292,7 @@ class TestPanel(scrolled.ScrolledPanel):
             self.optionIdDict = {}
             self.antiBodyDict = {}
             self.commentDict = {}
+            self.checklistSelect = []
             # self.boldFlag = False
             # self.italicFlag = False
             self.caps = False
@@ -2303,7 +2304,7 @@ class TestPanel(scrolled.ScrolledPanel):
                     print(antibodiesOptions)
             self.sizer2 = wx.GridBagSizer()
             ids = 1
-            for dic in antibodiesOptions:
+            for dic in antibodiesOptionsH:
                 if flag:
                     antibodyText = wx.StaticText(self, -1, 'Antibodies')
                     optionsText = wx.StaticText(self, -1, 'Options')
@@ -2329,15 +2330,16 @@ class TestPanel(scrolled.ScrolledPanel):
                 self.optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
 
                 defaultOptionId = dic.get('default', -1)
-                if defaultOptionId:
+                if defaultOptionId > -1:
                     self.defaultOption = list(self.optionIdDict[dic['antiBodyId']].keys())[list(self.optionIdDict[dic['antiBodyId']].values()).index(defaultOptionId)]
                     choices.insert(0,choices.pop(choices.index(self.defaultOption)))
                     self.antiBodyDict[dic['antiBodyId']] = defaultOptionId
                 else:
                     choices.insert(0, '-- Select --')
+                    self.checklistSelect.append(ids)
                 print(choices)            
                 self.inputTwo = wx.Choice(self,id =ids, choices = choices)
-                # self.inputTwo.SetSelection(0)
+                self.inputTwo.SetSelection(0)
                 self.sizer2.Add(antibody, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
                 self.sizer2.Add(self.inputTwo, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
 
@@ -2412,11 +2414,18 @@ class TestPanel(scrolled.ScrolledPanel):
             wx.MessageBox('None of them Choosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def OnChoiceSelect(self, event):
-        if event.GetSelection():
-            id1 = event.GetEventObject().GetId()
-            print(id1)
-            print(wx.FindWindowById(id1).GetLabel())
-            antibdyId = self.antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
+        id1 = event.GetEventObject().GetId()
+        print(id1)
+        print(wx.FindWindowById(id1).GetLabel())
+        antibdyId = self.antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
+        if id1 in self.checklistSelect:
+            if event.GetSelection()>0:
+                optId = self.optionIdDict[antibdyId][event.GetString()]
+                self.antiBodyDict[antibdyId] = optId
+            elif event.GetSelection()==0:
+                wx.MessageBox("Choose the result for Update", 'Error', wx.OK | wx.ICON_WARNING)
+                self.antiBodyDict.pop(antibdyId, None)
+        elif event.GetSelection()>=0:
             optId = self.optionIdDict[antibdyId][event.GetString()]
             self.antiBodyDict[antibdyId] = optId
     def onCommentModified(self, event):
@@ -2537,47 +2546,50 @@ class TestPanel(scrolled.ScrolledPanel):
 
     def onUpdateReport(self, event):
         print(self.antiBodyDict)
-        print(self.commentDict)
-        if db.updatePendingReport(self.parent.RqstId, self.assayId, self.antiBodyDict, self.commentDict):
-            self.selectedString = str(self.tests.GetString(self.index))
-            self.parent.pendingTestAssays.remove(self.selectedString)
-            if not self.parent.pendingTestAssays:
-                jsonHead = {}
-                self.saveBtn.Disable()
-                self.controlSizer.Clear(True)
-                jsonHeader = db.getRequestHeader(self.parent.RqstId)
-                print(jsonHeader)
-                jsonHead['UHID'] = jsonHeader['uhid'] if 'uhid' in jsonHeader else ''
-                jsonHead['Referring Hospital'] = jsonHeader['hospitalName'] if 'hospitalName' in jsonHeader else ''
-                jsonHead['MRD No'] = jsonHeader['mrd'] if 'mrd' in jsonHeader else ''
-                jsonHead['Referring Dept'] = jsonHeader['departmentName'] if 'departmentName' in jsonHeader else ''
-                jsonHead['Patient Name'] = jsonHeader['patientName'] if 'patientName' in jsonHeader else ''
-                jsonHead['Sample Collection Date'] = jsonHeader['collectionDate'] if 'collectionDate' in jsonHeader else ''
-                jsonHead['Age'] = utilsDb.getAge(jsonHeader['patientDob']) if 'patientDob' in jsonHeader else ''
-                jsonHead['Lab Reference No'] = jsonHeader['labReferenceNumber'] if 'labReferenceNumber' in jsonHeader else ''
-                jsonHead['Gender'] = jsonHeader['patientGender'] if 'patientGender' in jsonHeader else ''
-                jsonHead['Report Generated Date'] = jsonHeader['reportDate'] if 'reportDate' in jsonHeader else ''
-                jsonHead['Ward Name/Collection Centre'] = jsonHeader['collectionPoint'] if 'collectionPoint' in jsonHeader else ''
-                jsonHead['Lab Name'] = jsonHeader['labName'] if 'labName' in jsonHeader else ''  
-                jsonHead['Email'] = jsonHeader['patientEmail'] if 'patientEmail' in jsonHeader else ''
-                jsonHead['Ph No'] = jsonHeader['mobile'] if 'mobile' in jsonHeader else ''
-                jsonHead['reportFile'] = jsonHeader['reportFile'] if 'reportFile' in jsonHeader else utilsDb.getFileName(jsonHead['Patient Name'], jsonHead['UHID'])
-                jsonResults = db.getPatientReport(self.parent.RqstId)
-                pdfReportFileName =pdf.Header(jsonHead, jsonResults)
-                db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
-                OpenReport(self, "Open Report", self.parent.email, self.parent.name, jsonHead['reportFile']).ShowModal()
+        # print(self.commentDict)
+        try:
+            if db.updatePendingReport(self.parent.RqstId, self.assayId, self.antiBodyDict, self.commentDict):
+                self.selectedString = str(self.tests.GetString(self.index))
+                self.parent.pendingTestAssays.remove(self.selectedString)
+                if not self.parent.pendingTestAssays:
+                    jsonHead = {}
+                    self.saveBtn.Disable()
+                    self.controlSizer.Clear(True)
+                    jsonHeader = db.getRequestHeader(self.parent.RqstId)
+                    print(jsonHeader)
+                    jsonHead['UHID'] = jsonHeader['uhid'] if 'uhid' in jsonHeader else ''
+                    jsonHead['Referring Hospital'] = jsonHeader['hospitalName'] if 'hospitalName' in jsonHeader else ''
+                    jsonHead['MRD No'] = jsonHeader['mrd'] if 'mrd' in jsonHeader else ''
+                    jsonHead['Referring Dept'] = jsonHeader['departmentName'] if 'departmentName' in jsonHeader else ''
+                    jsonHead['Patient Name'] = jsonHeader['patientName'] if 'patientName' in jsonHeader else ''
+                    jsonHead['Sample Collection Date'] = jsonHeader['collectionDate'] if 'collectionDate' in jsonHeader else ''
+                    jsonHead['Age'] = utilsDb.getAge(jsonHeader['patientDob']) if 'patientDob' in jsonHeader else ''
+                    jsonHead['Lab Reference No'] = jsonHeader['labReferenceNumber'] if 'labReferenceNumber' in jsonHeader else ''
+                    jsonHead['Gender'] = jsonHeader['patientGender'] if 'patientGender' in jsonHeader else ''
+                    jsonHead['Report Generated Date'] = jsonHeader['reportDate'] if 'reportDate' in jsonHeader else ''
+                    jsonHead['Ward Name/Collection Centre'] = jsonHeader['collectionPoint'] if 'collectionPoint' in jsonHeader else ''
+                    jsonHead['Lab Name'] = jsonHeader['labName'] if 'labName' in jsonHeader else ''  
+                    jsonHead['Email'] = jsonHeader['patientEmail'] if 'patientEmail' in jsonHeader else ''
+                    jsonHead['Ph No'] = jsonHeader['mobile'] if 'mobile' in jsonHeader else ''
+                    jsonHead['reportFile'] = jsonHeader['reportFile'] if 'reportFile' in jsonHeader else utilsDb.getFileName(jsonHead['Patient Name'], jsonHead['UHID'])
+                    jsonResults = db.getPatientReport(self.parent.RqstId)
+                    pdfReportFileName =pdf.Header(jsonHead, jsonResults)
+                    db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
+                    OpenReport(self, "Open Report", self.parent.email, self.parent.name, jsonHead['reportFile']).ShowModal()
+                else:
+                    self.controlSizer.Clear(True)
+                    dialog = wx.MessageBox('Results is Updated for {0} test'.format(self.selectedString), 'Successfully Updated', wx.OK)
+                self.tests.Deselect(self.index)
+                self.index = None
+                self.tests.Clear()
+                self.tests.Set(self.parent.pendingTestAssays)
+                self.tests.Update()
+                # for i in db.getPendingRequest(self.parent.RqstId):
+                #     print(i['assayName'])
             else:
-                self.controlSizer.Clear(True)
-                dialog = wx.MessageBox('Results is Updated for {0} test'.format(self.selectedString), 'Successfully Updated', wx.OK)
-            self.tests.Deselect(self.index)
-            self.index = None
-            self.tests.Clear()
-            self.tests.Set(self.parent.pendingTestAssays)
-            self.tests.Update()
-            # for i in db.getPendingRequest(self.parent.RqstId):
-            #     print(i['assayName'])
-        else:
-            wx.MessageBox('Test Report not updated', 'Error', wx.OK | wx.ICON_WARNING)
+                wx.MessageBox('Test Report not updated', 'Error', wx.OK | wx.ICON_WARNING)
+        except Exception as err:
+            wx.MessageBox(str(err), 'Error', wx.OK | wx.ICON_WARNING)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class ViewPanel(wx.Dialog):
