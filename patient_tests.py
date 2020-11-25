@@ -2286,13 +2286,15 @@ class TestPanel(scrolled.ScrolledPanel):
     def onUpdate(self, evt):
         if self.index != None:
             self.controlSizer.Clear(True)
-            k = 7
-            flag = 1
+            # flag = 0
             self.antibdyIdDict = {}
             self.optionIdDict = {}
             self.antiBodyDict = {}
             self.commentDict = {}
             self.checklistSelect = []
+            self.addMany = []
+            self.antiBodyOptionCheck = {}
+            self.isdefault = {}
             # self.boldFlag = False
             # self.italicFlag = False
             self.caps = False
@@ -2300,32 +2302,41 @@ class TestPanel(scrolled.ScrolledPanel):
             for i in self.parent.pendingRequest:
                 if i['assayName'] == self.selectedString:
                     self.assayId = i['assayId']
-                    antibodiesOptions = i['antiBodies']
-                    print(antibodiesOptions)
-            self.sizer2 = wx.GridBagSizer()
+                    antibodiesOptionsComments = i['antiBodies']
+                    print(antibodiesOptionsComments)
+            # self.sizer2 = wx.GridBagSizer()
             ids = 1
-            for dic in antibodiesOptionsH:
-                if flag:
-                    antibodyText = wx.StaticText(self, -1, 'Antibodies')
-                    optionsText = wx.StaticText(self, -1, 'Options')
-                    commentText = wx.StaticText(self, -1, 'Comments')
-                    antibodyText.SetFont(font)
-                    optionsText.SetFont(font)
-                    commentText.SetFont(font)
-                    self.sizer2.Add(antibodyText, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
-                    self.sizer2.Add(optionsText, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
-                    self.sizer2.Add(commentText, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
-                    flag = 0
-                    k+=1
+            antibodyCount= len(antibodiesOptionsComments)
+            if antibodyCount%3 != 0:
+                rows = antibodyCount//3 +1
+            elif antibodyCount%3 == 0:
+                rows = antibodyCount//3
+            cols = 3
+            self.gs = wx.GridSizer(rows, cols, 25, 65)
+            for dic in antibodiesOptionsComments:
+                # if flag%3 == 0 or flag == 0:
+                #     vbox1 = wx.BoxSizer(wx.VERTICAL)
+                #     antibodyText = wx.StaticText(self, -1, 'Antibodies')
+                #     optionsText = wx.StaticText(self, -1, 'Options')
+                #     commentText = wx.StaticText(self, -1, 'Comments')
+                #     antibodyText.SetFont(font)
+                #     optionsText.SetFont(font)
+                #     commentText.SetFont(font)
+                #     vbox1.Add(antibodyText, flag = wx.EXPAND)
+                #     vbox1.Add(optionsText, flag = wx.EXPAND|wx.BOTTOM, border = 10)
+                #     vbox1.Add(commentText, flag = wx.EXPAND)
+                #     self.addMany.append((vbox1, 0, wx.EXPAND))
+                # flag+=1
 
                 choices=[i for i in dic['options'].values() if i != None]
                 if not choices:
                     continue
-
+                vbox = wx.BoxSizer(wx.VERTICAL)
                 dc = wx.ScreenDC()
                 # dc.SetFont(font)
 
                 antibody = wx.StaticText(self, ids, dic['antiBody'], size= dc.GetTextExtent(dic['antiBody'] + "          "))
+                antibody.SetFont(font)
                 self.antibdyIdDict[dic['antiBody']] = dic['antiBodyId']
                 self.optionIdDict[dic['antiBodyId']] = {option: Id for Id, option in dic['options'].items()}
 
@@ -2334,32 +2345,30 @@ class TestPanel(scrolled.ScrolledPanel):
                     self.defaultOption = list(self.optionIdDict[dic['antiBodyId']].keys())[list(self.optionIdDict[dic['antiBodyId']].values()).index(defaultOptionId)]
                     choices.insert(0,choices.pop(choices.index(self.defaultOption)))
                     self.antiBodyDict[dic['antiBodyId']] = defaultOptionId
+                    self.antiBodyOptionCheck[dic['antiBody']] = {'default' : self.defaultOption}
+                    self.isdefault[dic['antiBody']]= {'default' : self.defaultOption}
                 else:
                     choices.insert(0, '-- Select --')
                     self.checklistSelect.append(ids)
                 print(choices)            
                 self.inputTwo = wx.Choice(self,id =ids, choices = choices)
                 self.inputTwo.SetSelection(0)
-                self.sizer2.Add(antibody, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
-                self.sizer2.Add(self.inputTwo, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
-
+                # self.sizer2.Add(antibody, pos = (k,9), flag = wx.RIGHT|wx.BOTTOM, border = 100)
+                # self.sizer2.Add(self.inputTwo, pos = (k,12), flag = wx.LEFT|wx.RIGHT|wx.BOTTOM, border = 100)
 
                 sizer = wx.BoxSizer(wx.VERTICAL)
                 sizer1 = wx.BoxSizer(wx.HORIZONTAL)
                 #save_button = wx.Button(self, label="Save")
+                self.rt = rt.RichTextCtrl(self, ids, value="", size=(250, 100))
                 self.Bold = wx.Button(self, id =ids, label="B", size=(25, 18))
                 self.Bold.myname = "Bold"
                 Italic = wx.Button(self, id =ids, label="I", size=(25, 18))
                 Italic.myname = "Italic"
 
-                self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold, id = self.Bold.GetId())
-                Italic.Bind(wx.EVT_BUTTON, self.on_italic, id = Italic.GetId())
-
                 # if dic['comment']:
                 #     self.rt = rt.RichTextCtrl(self, ids, value= dic['comment'], size=(250, 100))
                 #     # comment = wx.TextCtrl(self, ids, dic['comment'], size=(300, -1))
                 # else:
-                self.rt = rt.RichTextCtrl(self, ids, value="", size=(250, 100))
                     # comment = wx.TextCtrl(self, ids, '', size=(300, -1))
 
                 try:
@@ -2376,16 +2385,23 @@ class TestPanel(scrolled.ScrolledPanel):
                 sizer1.Add(Italic, 0, wx.EXPAND|wx.ALL, 6)
                 sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 6)
 
-                self.sizer2.Add(sizer, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
-                self.inputTwo.Bind(wx.EVT_CHOICE, self.OnChoiceSelect)
+                # self.sizer2.Add(sizer, pos = (k,13), flag = wx.LEFT|wx.BOTTOM, border = 100)
+                vbox.Add(antibody, flag = wx.EXPAND|wx.BOTTOM, border = 5)
+                vbox.Add(self.inputTwo, flag = wx.EXPAND)
+                vbox.Add(sizer, flag = wx.EXPAND)
+                self.addMany.append((vbox, 0, wx.EXPAND))
 
                 self.SomeNewEvent, self.EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
                 # then bind the events in the constructor or somewhere
+                self.inputTwo.Bind(wx.EVT_CHOICE, self.OnChoiceSelect)
                 self.rt.Bind(wx.EVT_CHAR, self.onKeyDownHandler, id = self.rt.GetId())
                 self.rt.Bind(wx.EVT_LEFT_DOWN, self.onKeyDownHandler, id = self.rt.GetId())
                 self.rt.Bind(wx.EVT_RIGHT_UP, self.onKeyDownHandler, id = self.rt.GetId())
                 # bind also new event handler but 
                 self.rt.Bind(self.EVT_SOME_NEW_EVENT , self.onKeyDownAction, id = self.rt.GetId())
+                self.rt.Bind(wx.EVT_TEXT, self.onCommentModified, id = self.rt.GetId())
+                self.Bold.Bind(wx.EVT_BUTTON, self.on_Bold, id = self.Bold.GetId())
+                Italic.Bind(wx.EVT_BUTTON, self.on_italic, id = Italic.GetId())
 
                 out = BytesIO()
                 handler = wx.richtext.RichTextXMLHandler()
@@ -2393,19 +2409,19 @@ class TestPanel(scrolled.ScrolledPanel):
                 handler.SaveFile(rt_buffer, out)
                 xml_content = out.getvalue()
 
-                self.commentDict[dic['antiBodyId']] = xml_content.decode('utf-8') #self.rt.GetValue()
-                self.rt.Bind(wx.EVT_TEXT, self.onCommentModified, id = self.rt.GetId())
-                k+=1
+                self.commentDict[dic['antiBodyId']] = utilsDb.getRichTextFormat(xml_content.decode('utf-8')) #self.rt.GetValue()
                 ids+=1
 
                 # id2 = comment.GetEventObject().GetId()
                 # antibdyId = self.antibdyIdDict[wx.FindWindowById(id2).GetValue()]
                 # self.antiBodyDict[antibdyId] = optId
+            self.gs.AddMany(self.addMany)
             self.saveBtn = wx.Button(self, label = "Save", size=(90, 28))
-            self.sizer2.Add(self.saveBtn, pos = (k+1, 13), flag = wx.LEFT|wx.BOTTOM, border = 250)
-            self.saveBtn.Bind(wx.EVT_BUTTON, self.onUpdateReport)
-            self.controlSizer.Add(self.sizer2, 0, wx.ALL, 5)
-            #self.SetSizer(self.controlSizer)
+            # self.sizer2.Add(self.saveBtn, pos = (k+1, 13), flag = wx.LEFT|wx.BOTTOM, border = 250)
+            self.saveBtn.Bind(wx.EVT_BUTTON, self.onMsgbox)#onUpdateReport)
+            self.controlSizer.Add(self.gs, 0, wx.ALL, 5)
+            self.controlSizer.Add(self.saveBtn, 0, wx.ALL|wx.ALIGN_CENTER, 10)
+            # self.controlSizer.Add(self.sizer2, 0, wx.ALL, 5)
             self.SetSizer(self.mainSizer)
             self.SetupScrolling()
             #self.Centre()
@@ -2413,21 +2429,47 @@ class TestPanel(scrolled.ScrolledPanel):
         else:
             wx.MessageBox('None of them Choosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
+    def onMsgbox(self,event):
+        checkString = [not(isinstance(val, dict)) for val in self.antiBodyOptionCheck.values()]
+        isNoDefaultAll = any(checkString)
+        string = """The choosed option are:"""
+        if isNoDefaultAll:
+            for antibody, value in self.antiBodyOptionCheck.items():
+                if not isinstance(value, dict):
+                    string += """\n{} -> {}""".format(antibody, value)
+            wx.MessageBox(string, "Confirm" ,wx.OK | wx.ICON_INFORMATION)
+        else:
+            wx.MessageBox("ALL are choosed as default","Confirm",wx.OK | wx.ICON_INFORMATION)
+
+
     def OnChoiceSelect(self, event):
         id1 = event.GetEventObject().GetId()
-        print(id1)
-        print(wx.FindWindowById(id1).GetLabel())
-        antibdyId = self.antibdyIdDict[wx.FindWindowById(id1).GetLabel()]
+        # print(id1)
+        # print(wx.FindWindowById(id1).GetLabel())
+        antibody = wx.FindWindowById(id1).GetLabel()
+        antibdyId = self.antibdyIdDict[antibody]
+        option = event.GetString()
         if id1 in self.checklistSelect:
             if event.GetSelection()>0:
-                optId = self.optionIdDict[antibdyId][event.GetString()]
+                optId = self.optionIdDict[antibdyId][option]
                 self.antiBodyDict[antibdyId] = optId
+                # if antibody in self.isdefault:
+                #     if option == self.isdefault[antibody]['default']:
+                #         self.antiBodyOptionCheck[antibody] = self.isdefault[antibody]
+                #     else:
+                self.antiBodyOptionCheck[antibody] = option
             elif event.GetSelection()==0:
                 wx.MessageBox("Choose the result for Update", 'Error', wx.OK | wx.ICON_WARNING)
                 self.antiBodyDict.pop(antibdyId, None)
+                self.antiBodyOptionCheck.pop(antibody, None)
         elif event.GetSelection()>=0:
-            optId = self.optionIdDict[antibdyId][event.GetString()]
+            optId = self.optionIdDict[antibdyId][option]
             self.antiBodyDict[antibdyId] = optId
+            if antibody in self.isdefault:
+                if option == self.isdefault[antibody]['default']:
+                    self.antiBodyOptionCheck[antibody] = self.isdefault[antibody]
+                else:
+                    self.antiBodyOptionCheck[antibody] = option
     def onCommentModified(self, event):
         rtc = event.GetEventObject()
         if len(rtc.GetValue()) > 0:
