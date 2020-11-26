@@ -2409,7 +2409,7 @@ class TestPanel(scrolled.ScrolledPanel):
                 handler.SaveFile(rt_buffer, out)
                 xml_content = out.getvalue()
 
-                self.commentDict[dic['antiBodyId']] = utilsDb.getRichTextFormat(xml_content.decode('utf-8')) #self.rt.GetValue()
+                self.commentDict[dic['antiBodyId']] = xml_content.decode('utf-8') #utilsDb.getRichTextFormat(xml_content.decode('utf-8')) #self.rt.GetValue()
                 ids+=1
 
                 # id2 = comment.GetEventObject().GetId()
@@ -2430,16 +2430,9 @@ class TestPanel(scrolled.ScrolledPanel):
             wx.MessageBox('None of them Choosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onMsgbox(self,event):
-        checkString = [not(isinstance(val, dict)) for val in self.antiBodyOptionCheck.values()]
-        isNoDefaultAll = any(checkString)
-        string = """The choosed option are:"""
-        if isNoDefaultAll:
-            for antibody, value in self.antiBodyOptionCheck.items():
-                if not isinstance(value, dict):
-                    string += """\n{} -> {}""".format(antibody, value)
-            wx.MessageBox(string, "Confirm" ,wx.OK | wx.ICON_INFORMATION)
-        else:
-            wx.MessageBox("ALL are choosed as default","Confirm",wx.OK | wx.ICON_INFORMATION)
+        dia = Confirmation(self, "Confirmation").ShowModal() 
+        # if dia == wx.ID_YES:
+
 
 
     def OnChoiceSelect(self, event):
@@ -2621,6 +2614,8 @@ class TestPanel(scrolled.ScrolledPanel):
                 else:
                     self.controlSizer.Clear(True)
                     dialog = wx.MessageBox('Results is Updated for {0} test'.format(self.selectedString), 'Successfully Updated', wx.OK)
+                # self.ScrollChildIntoView(self.tests)
+                self.SetupScrolling(rate_y=5, scrollToTop=True, scrollIntoView=True)
                 self.tests.Deselect(self.index)
                 self.index = None
                 self.tests.Clear()
@@ -2632,6 +2627,60 @@ class TestPanel(scrolled.ScrolledPanel):
                 wx.MessageBox('Test Report not updated', 'Error', wx.OK | wx.ICON_WARNING)
         except Exception as err:
             wx.MessageBox(str(err), 'Error', wx.OK | wx.ICON_WARNING)
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+class Confirmation(wx.Dialog):
+    def __init__(self, parent, title):
+        super(Confirmation, self).__init__(parent, title = title, size = (1300, 800), style =  wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        self.parent = parent
+        pnl = wx.Panel(self)
+        h_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        h_sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        checkString = [not(isinstance(val, dict)) for val in self.parent.antiBodyOptionCheck.values()]
+        isNoDefaultAll = any(checkString)
+        string = """The choosed option are:"""
+        if isNoDefaultAll:
+            self.msgcontrol= wx.ListCtrl(pnl, -1, size=(400, 600), style=wx.LB_SINGLE) #style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
+            self.msgcontrol.InsertColumn(0, 'Antibodies', width = 250) 
+            self.msgcontrol.InsertColumn(1, 'Choosed Options', wx.LIST_FORMAT_RIGHT, 150)
+            for antibody, value in self.parent.antiBodyOptionCheck.items():
+                if not isinstance(value, dict):
+                    # string += """\n{} -> {}""".format(antibody, value)
+                    self.index = self.msgcontrol.InsertItem(0, antibody) 
+                    self.msgcontrol.SetItem(self.index, 1, value)
+            # wx.MessageBox(string, "Confirm" ,wx.OK | wx.ICON_INFORMATION)
+        else:
+            # wx.MessageBox("ALL are choosed as default","Confirm",wx.OK | wx.ICON_INFORMATION)
+            self.msgcontrol = wx.StaticText(pnl, label = "ALL are choosed as default")
+            font = wx.Font(18, wx.DECORATIVE, wx.BOLD, wx.NORMAL)
+            self.msgcontrol.SetFont(font)
+
+        self.confirmBtn = wx.Button(pnl, label = "Confirm", size=(90, 28))
+        self.confirmBtn.Bind(wx.EVT_BUTTON, self.onConfirm)
+        self.cancelBtn = wx.Button(pnl, label = "Cancel", size=(90, 28))
+        self.cancelBtn.Bind(wx.EVT_BUTTON, self.onCancel)
+
+        h_sizer.Add(self.msgcontrol, 0, wx.CENTER)
+        h_sizer1.Add(self.cancelBtn, 0, wx.ALL, 10)
+        h_sizer1.Add(self.confirmBtn, 0, wx.ALL, 10)
+        
+        main_sizer.Add((0,0), 1, wx.EXPAND)
+        main_sizer.Add(h_sizer, 0, wx.CENTER)
+        main_sizer.Add(h_sizer1, 0, wx.CENTER)
+        # main_sizer.Add(self.confirmBtn, 0, wx.ALL|wx.ALIGN_RIGHT, 10)
+        # main_sizer.Add(self.cancelBtn, 0, wx.ALL|wx.ALIGN_RIGHT, 10)
+        main_sizer.Add((0,0), 1, wx.EXPAND)
+        
+        pnl.SetSizer(main_sizer)
+    def onConfirm(self, evt):
+        self.Close()
+        self.parent.onUpdateReport(evt)
+    #     TestPanel().onUpdateReport
+    #     # pass
+    def onCancel(self, evt):
+        self.Close()
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class ViewPanel(wx.Dialog):
