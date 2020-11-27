@@ -58,11 +58,11 @@ class MyFrame(wx.Frame):
         # self.Centre()
         self.Show(True)
         
-    def MakeModal(self, modal=True):
-        if modal and not hasattr(self, '_disabler'):
-            self._disabler = wx.WindowDisabler(self)
-        if not modal and hasattr(self, '_disabler'):
-            del self._disabler
+    # def MakeModal(self, modal=True):
+    #     if modal and not hasattr(self, '_disabler'):
+    #         self._disabler = wx.WindowDisabler(self)
+    #     if not modal and hasattr(self, '_disabler'):
+    #         del self._disabler
 
     def onResize(self, event):
         # self.Layout()
@@ -345,7 +345,7 @@ class TestMasterPanel(wx.Dialog):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Test that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Test that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.index != None:
@@ -369,7 +369,7 @@ class TestMasterPanel(wx.Dialog):
             # app.MainLoop()
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
 class MyDialog(wx.Dialog):
@@ -595,7 +595,7 @@ class AntibodyMasterPanel(wx.Dialog):
 
     def onMsg(self, evt):
         if self.Antibdy_index == None :  
-            wx.MessageBox('None of them Choosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onListboxSelection(self, evt):
         # dc = wx.ScreenDC()
@@ -667,10 +667,9 @@ class AntibodyMasterPanel(wx.Dialog):
             print(ex)
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onListbox1Selection, self.listResult)
-        # focus = self.listResult.GetFocusedItem()
-        # self.listResult.GetItem(defaultIndex).SetToolTipString(msg)
-        # self.listResult.GetItem(defaultIndex).SetText("Default Option")
-        # self.Bind(wx.EVT_LIST_ITEM_FOCUSED, self.on_focus, self.listResult)
+
+        self.listResult.Bind(wx.EVT_MOTION, self.onMouseOver)
+
         self.Bind(wx.EVT_CONTEXT_MENU, self.showPopupMenu, self.listResult)
         self.addBtnResult.Bind(wx.EVT_BUTTON, self.onAddResult)
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onMsg1)
@@ -686,24 +685,6 @@ class AntibodyMasterPanel(wx.Dialog):
 
         #self.panel.SetSize(wx.Size(1000,1400))
 
-    # def onMenu(self, evt):
-    #     ListBox = evt.GetEventObject()
-    #     SelectIndex = ListBox.GetSelection()
-    #     print(SelectIndex)
-    #     # pass
-    # def onSetToolTip(self, event):
-    #     """
-    #     Set the tool tip on the selected row
-    #     """
-    #     item = self.dataOlv.GetSelectedObject()
-    #     tooltip = "%s is a good writer!" % item.author
-    #     event.GetEventObject().SetToolTipString(tooltip)
-    #     event.Skip()
-    # def on_focus(self, evt):
-    #     print(self.listResult.GetFocusedItem())
-    #     # self.listResult.SetToolTip("Default Option")
-    #     # print(1)
-    #     pass
     def createMenu(self):
         self.menu = wx.Menu()
         item1 = self.menu.Append(-1,'set as Default')
@@ -813,7 +794,7 @@ class AntibodyMasterPanel(wx.Dialog):
         
     def onMsg1(self, evt):
         if self.Result_index == None :  
-            wx.MessageBox('None of them Choosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
 
     def onDiscard(self, evt):
@@ -845,7 +826,7 @@ class AntibodyMasterPanel(wx.Dialog):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing any Antibody that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.Antibdy_index != None:
@@ -876,36 +857,62 @@ class AntibodyMasterPanel(wx.Dialog):
         #     self.Antibdy_index = None
 
         self.discardBtnResult.Bind(wx.EVT_BUTTON, self.onDiscardResult)
+
         self.Layout()
         # self.panel.SetSizerAndFit(self.sizer)
+    def onMouseOver(self, event):
+        #Loop through all items and set bgcolor to default, then:
+        item_index, flag = self.listResult.HitTest(event.GetPosition())
+        # print("previous-{}".format(self.previousDefaultIndex))
+        # print(item_index)
+        tip = self.listResult.GetToolTip()
+        if item_index != -1 and item_index == self.previousDefaultIndex:
+            if flag == wx.LIST_HITTEST_ONITEMLABEL:
+                self.listResult.SetToolTipString("DEFAULT " + self.listResult.GetItemText(item_index))
+        else:
+            self.listResult.SetToolTip(None)
+        # event.Skip()
+    def add_tooltip(self, widget, text):
+        """Add a tooltip to widget with the specified text."""
+        tooltip = wx.ToolTip(text)
+        widget.SetToolTip(tooltip)
+        tooltip.SetAutoPop(0.0000000) 
+
+    def onMouseLeave(self, event):
+        #Loop through all items and set bgcolor to default, then:
+        self.RefreshItems()
+        event.Skip()
 
     def onDiscardResult(self, evt):
         if self.Result_index != None:
-            self.selected_String1 = str(self.listResult.GetItemText(self.Result_index))#.GetString(self.Result_index))
-            dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Option->{0} for {1} Antibody?'.format(self.selected_String1, self.antibdy_selectedText), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
-            dia = dialog.ShowModal() 
-            if dia == wx.ID_YES:
-                optionId = self.choicesid[self.selected_String1]
-                print(optionId)
-                ret_value = db.disableOption(self.assayId, self.antiId, optionId)
-                if ret_value != -1:
-                    del self.choicesid[self.selected_String1]
-                    self.choices.remove(self.selected_String1)
-                    self.discardBtnResult.Hide()
-                    if not self.choices:
-                        self.flag = 0
-                        # self.discardBtnResult.Hide()
-                    self.listResult.DeleteItem(self.Result_index)
-                    # self.listResult.Deselect(self.Result_index)
-                    self.listResult.Select(-1)
-                    self.Result_index = None
-                    # self.listResult.Set(self.choices)
-                    print(self.choicesid)
-                else:
-                    wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+            if self.Result_index != self.previousDefaultIndex:
+                self.selected_String1 = str(self.listResult.GetItemText(self.Result_index))#.GetString(self.Result_index))
+                dialog = wx.MessageDialog(self, 'Are you sure, Do you want to Discard Option->{0} for {1} Antibody?'.format(self.selected_String1, self.antibdy_selectedText), 'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+                dia = dialog.ShowModal() 
+                if dia == wx.ID_YES:
+                    optionId = self.choicesid[self.selected_String1]
+                    print(optionId)
+                    ret_value = db.disableOption(self.assayId, self.antiId, optionId)
+                    if ret_value != -1:
+                        del self.choicesid[self.selected_String1]
+                        self.choices.remove(self.selected_String1)
+                        self.discardBtnResult.Hide()
+                        if not self.choices:
+                            self.flag = 0
+                            # self.discardBtnResult.Hide()
+                        self.listResult.DeleteItem(self.Result_index)
+                        # self.listResult.Deselect(self.Result_index)
+                        self.listResult.Select(-1)
+                        self.Result_index = None
+                        # self.listResult.Set(self.choices)
+                        print(self.choicesid)
+                    else:
+                        wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
+            else:
+                wx.MessageBox('SET ANY OTHER OPTION AS DEFAULT TO DISCARD THIS OPTION', 'DEFAULT CHOSEN', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing any Option that you want to Disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAddResult(self, evt):
         if self.Result_index != None:
@@ -1129,7 +1136,7 @@ class HospitalMasterPanel(wx.Dialog):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Hospital that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Hospital that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.index != None:
@@ -1274,7 +1281,7 @@ class LabMasterPanel(wx.Dialog):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Lab that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Lab that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.index != None:
@@ -1419,7 +1426,7 @@ class DepartmentMasterPanel(wx.Dialog):
                     wx.MessageBox('--------------', 'Error', wx.OK| wx.ICON_WARNING)
 
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Department that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Department that you want to disable', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onAdd(self, evt):
         if self.index != None:
@@ -1593,7 +1600,7 @@ class PatientDetails(wx.Dialog):
         #self.highligt_color = wx.Colour(HIGHLIGHT_COLOR)
         self.windowFrameColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME)
         self.SetBackgroundColour(wx.LIGHT_GREY)
-        self.InitUI(self) 
+        self.InitUI(self.parentFrame) 
         self.Centre() 
         self.Show()      
 
@@ -1788,6 +1795,7 @@ class PatientDetails(wx.Dialog):
                         if dic['Gender']:
                             _requestId = db.registerPatient(dic['UHID'], dic['Patient Name'], dic['Date of Birth'], dic['Referring Hospital'], dic['Gender'], dic['MRD No'], dic['Ward Name/Collection Centre'], dic['Sample Collection Date'], dic['Lab Reference No'], dic['Referring Dept'], dic['Lab Name'], dic['Email'], dic['phone'])
                             TestRegisterScreen(self, -1, 'Register Tests', _requestId, dic['Patient Name']).ShowModal()
+                            self.Close()
                         else:
                             #color = self.windowFrameColor if self.textctrl.GetValue() else self.highligt_color
                             #self.gender.SetHint("Mandatory field")
@@ -1846,7 +1854,7 @@ class TestRegisterScreen(wx.Dialog):
         # text = wx.StaticText(panel, label = "Tests")
         # self.testsListbox = wx.ListBox(panel, -1, size=(170, 130), choices=self.test_items, style=wx.LB_SINGLE)
         # #self.testsListbox.SetSelection(0)
-        # text2 = wx.StaticText(panel, label = "Choosen Tests")
+        # text2 = wx.StaticText(panel, label = "Chosen Tests")
         # self.testsChosenListbox = wx.ListBox(panel, -1, size=(170, 130), choices=[], style=wx.LB_SINGLE)
 
         # #self.Bind(wx.EVT_LISTBOX, self.OnSelectFirst, self.testsListbox)
@@ -1907,7 +1915,7 @@ class TestRegisterScreen(wx.Dialog):
         self.testsListbox = wx.ListBox(panel, -1, size=(270, 230), choices=self.test_items, style=wx.LB_SINGLE)
         text.SetFont(font)
         #self.testsListbox.SetSelection(0)
-        text2 = wx.StaticText(panel, label = "Choosen Tests", size = (170,80))
+        text2 = wx.StaticText(panel, label = "Chosen Tests", size = (170,80))
         self.testsChosenListbox = wx.ListBox(panel, -1, size=(270, 230), choices=[], style=wx.LB_SINGLE)
         text2.SetFont(font)
         name = wx.StaticText(self, label= "Name: " +patientName, size = (220, 120))
@@ -1965,12 +1973,12 @@ class TestRegisterScreen(wx.Dialog):
             dialog = wx.MessageBox('Registered Tests are {0}'.format(self.testsUpdateList_items), 'Successfully Registered', wx.OK)
             if dialog == wx.OK:
                 self.Close()
-                self.parent.Close()
+                # self.parent.Close()
         else:
             if self.test_itemsChosenid:
                 wx.MessageBox('Test not Registered', 'Error', wx.OK | wx.ICON_WARNING)
             else:
-                wx.MessageBox('None of them Choosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
+                wx.MessageBox('None of them Chosen, Try Choosing Test', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def OnSelectFirst(self, event):
         index = event.GetSelection()
@@ -1982,8 +1990,8 @@ class TestRegisterScreen(wx.Dialog):
             print(self.testsUpdateList_items)
         else:
             print('Already selected')
-            wx.MessageBox('Choosen Already, Try selecting other', 'Selected Already', wx.OK | wx.CANCEL | wx.ICON_WARNING)
-            #self.testsListbox.SetString(index, 'Already Choosen')
+            wx.MessageBox('Chosen Already, Try selecting other', 'Selected Already', wx.OK | wx.CANCEL | wx.ICON_WARNING)
+            #self.testsListbox.SetString(index, 'Already Chosen')
 
 
     def OnSelectSecond(self, event):
@@ -2146,7 +2154,7 @@ class GeneratePanel(wx.Dialog):
             print(rqstId)
             ResultDetails(self, -1, 'Result Details', rqstId).ShowModal()
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
 
     def onClose(self, event):
@@ -2427,7 +2435,7 @@ class TestPanel(scrolled.ScrolledPanel):
             #self.Centre()
             self.Layout()
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Test that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
 
     def onMsgbox(self,event):
         dia = Confirmation(self, "Confirmation").ShowModal() 
@@ -2845,7 +2853,7 @@ class ViewPanel(wx.Dialog):
             db.updateFileName(jsonHeader['requestId'], jsonHead['reportFile'])
             OpenReport(self, "Open Report", self.details[rqstId]["Email"], self.details[rqstId]["Name"], jsonHead['reportFile']).ShowModal()
         else:
-            wx.MessageBox('None of them Choosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
+            wx.MessageBox('None of them Chosen, Try Choosing Patient that you want to generate Report for', 'Selection Error', wx.OK| wx.ICON_WARNING)
         #pass
 
     def onClose(self, event):
